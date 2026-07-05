@@ -94,7 +94,7 @@ async function ask(){
           const d = j.choices && j.choices[0] && j.choices[0].delta;
           if (d && d.content){
             full += d.content;
-            botEl.textContent = full.replace(/\[\[ESCALATE\]\]/g, "").trimStart();
+            botEl.textContent = full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trimStart();
             msgs.scrollTop = msgs.scrollHeight;
           }
         }catch(_){}
@@ -102,7 +102,8 @@ async function ask(){
     }
     if (!full){ botEl.textContent = "…Смотритель задумался и промолчал. Попробуйте ещё раз."; }
     else {
-      history.push({ role: "assistant", content: full.replace(/\[\[ESCALATE\]\]/g, "").trim() });
+      history.push({ role: "assistant", content: full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trim() });
+      // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
       if (full.includes("[[ESCALATE]]")){
         add("sys", "Смотритель позвал человека — владелец магазина получил уведомление в Telegram.");
       }
