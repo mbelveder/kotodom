@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://contributions-available-obtaining-coordinated.trycloudflare.com";
+window.KOTODOM_API = "https://adding-visitors-tribunal-comprehensive.trycloudflare.com";
