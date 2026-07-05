@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://oven-limited-links-algorithms.trycloudflare.com";
+window.KOTODOM_API = "https://extra-termination-under-skilled.trycloudflare.com";
