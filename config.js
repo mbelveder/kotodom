@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://ended-weeks-gmc-latitude.trycloudflare.com";
+window.KOTODOM_API = "https://cho-shore-armstrong-intensive.trycloudflare.com";
