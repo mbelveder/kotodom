@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://extra-termination-under-skilled.trycloudflare.com";
+window.KOTODOM_API = "https://api.trycloudflare.com";
