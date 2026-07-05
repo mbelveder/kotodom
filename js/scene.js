@@ -169,15 +169,16 @@ function makeCat(parent){
 /* ---------- комната ---------- */
 function makeRoom(parent){
   const room = new Zdog.Anchor({ addTo: parent });
-  const FW = 620, FD = 340, WH = 330;
+  // стены и пол шире холста — комната «обнимает» сцену, а не плавает в пустоте
+  const FW = 1100, FD = 430, WH = 470;
   // пол
   box(room, { width:FW, height:10, depth:FD, translate:{ y:GROUND+5, z:-40 },
     topFace:P.floor, bottomFace:P.floorSide, leftFace:P.floorSide, rightFace:P.floorSide,
     frontFace:P.floorSide, rearFace:P.floorSide, color:P.floor });
   // швы досок
-  for (let k=-2;k<=2;k++){
+  for (let k=-4;k<=4;k++){
     new Zdog.Shape({ addTo:room, stroke:1.2, color:P.floorSide, closed:false,
-      path:[ { x:k*95, y:GROUND-0.5, z:-40-FD/2+8 }, { x:k*95, y:GROUND-0.5, z:-40+FD/2-8 } ] });
+      path:[ { x:k*115, y:GROUND-0.5, z:-40-FD/2+8 }, { x:k*115, y:GROUND-0.5, z:-40+FD/2-8 } ] });
   }
   // задняя стена
   new Zdog.Rect({ addTo:room, width:FW, height:WH, fill:true, stroke:2, color:P.wall,
@@ -190,7 +191,7 @@ function makeRoom(parent){
   new Zdog.Shape({ addTo:room, stroke:7, color:P.floorSide, closed:false,
     path:[ { x:-FW/2+2, y:GROUND-3, z:-40-FD/2+6 }, { x:-FW/2+2, y:GROUND-3, z:-40+FD/2-6 } ] });
   // сёдзи-окно на задней стене
-  const win = new Zdog.Anchor({ addTo:room, translate:{ x:96, y:GROUND-204, z:-40-FD/2+1.5 } });
+  const win = new Zdog.Anchor({ addTo:room, translate:{ x:40, y:GROUND-216, z:-40-FD/2+1.5 } });
   new Zdog.Rect({ addTo:win, width:150, height:120, fill:true, stroke:6, color:P.windowGlow });
   new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:P.shoji, translate:{ z:0.8 } });
   new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
@@ -212,7 +213,7 @@ function makeRoom(parent){
   new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+40, height:CELL+60, cornerRadius:12,
     stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:6 } });
   // растение справа
-  const plant = new Zdog.Anchor({ addTo:room, translate:{ x:FW/2-86, y:GROUND, z:64 } });
+  const plant = new Zdog.Anchor({ addTo:room, translate:{ x:330, y:GROUND, z:64 } });
   new Zdog.Cylinder({ addTo:plant, diameter:44, length:34, rotate:{ x:TAU/4 },
     translate:{ y:-17 }, color:P.pot, frontFace:P.pot, backface:P.matchaDark, stroke:false });
   [[0,-0.1],[-0.45,0.25],[0.5,0.2],[-0.2,0.6],[0.25,-0.55]].forEach(([rz,ry],k) => {
@@ -223,13 +224,19 @@ function makeRoom(parent){
   new Zdog.Shape({ addTo:plant, stroke:4, color:P.matchaDark, closed:false,
     path:[ { y:-34 }, { y:-70 } ] });
   // бумажный торшер слева
-  const lamp = new Zdog.Anchor({ addTo:room, translate:{ x:-FW/2+78, y:GROUND, z:-70 } });
+  const lamp = new Zdog.Anchor({ addTo:room, translate:{ x:-300, y:GROUND, z:-70 } });
   new Zdog.Cylinder({ addTo:lamp, diameter:36, length:8, rotate:{ x:TAU/4 },
     translate:{ y:-4 }, color:P.stand, frontFace:P.stand, backface:P.stand, stroke:false });
   new Zdog.Shape({ addTo:lamp, stroke:3.4, color:P.stand, closed:false, path:[ { y:-6 }, { y:-58 } ] });
   new Zdog.Shape({ addTo:lamp, stroke:52, color:P.lamp, closed:false,
     path:[ { y:-72 }, { y:-176 } ] });
   new Zdog.Shape({ addTo:lamp, stroke:64, color:P.lampGlow, path:[{ y:-124 }] });
+  // миска у передней кромки — обжитой угол
+  const bowl = new Zdog.Anchor({ addTo:room, translate:{ x:-235, y:GROUND, z:118 } });
+  new Zdog.Cylinder({ addTo:bowl, diameter:34, length:12, rotate:{ x:TAU/4 },
+    translate:{ y:-6 }, color:P.aka, frontFace:P.akaDeep, backface:P.aka, stroke:false });
+  new Zdog.Ellipse({ addTo:bowl, diameter:22, rotate:{ x:TAU/4 },
+    translate:{ y:-12.5 }, stroke:4, fill:true, color:P.wood2 });
   return room;
 }
 
@@ -239,9 +246,9 @@ function build(){
   P = darkMq.matches ? PALETTES.dark : PALETTES.light;
   if (illo){ illo.children = []; illo = null; }
   illo = new Zdog.Illustration({
-    element: canvas, zoom: 1.06, dragRotate: false,
+    element: canvas, zoom: 1.18, dragRotate: false,
   });
-  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: 14, y: -44 } });
+  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: -70, y: -30 } });
   // комната — единая Group: рисуется целиком ДО домика и кота,
   // чтобы большие плоскости (пол, ковёр) не перекрывали модули при сортировке
   const roomG = new Zdog.Group({ addTo: world });

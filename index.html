@@ -18,7 +18,7 @@
     <div class="hanko" aria-hidden="true">猫</div>
     <div class="brand disp">КотоДом<small>модульные домики</small></div>
     <nav class="head-nav">
-      <a href="#studio">Конструктор</a>
+      <a href="#builder">Конструктор</a>
       <a href="#gallery" class="hide-m">Готовые</a>
       <a href="#how" class="hide-m">Как это работает</a>
       <span class="demo-pill">демо-магазин</span>
@@ -29,13 +29,22 @@
 <main>
 
 <div class="hero wrap">
-  <div class="eyebrow"><span class="jp">ねこのいえ</span>дом, который растёт вместе с котом</div>
-  <h1>Соберите домик — Мару проверит</h1>
-  <p>Перетаскивайте модули в комнату и смотрите, как складывается домик.
-     Чем интереснее постройка — тем дольше кот будет её обживать.</p>
+  <div class="eyebrow"><span class="jp">ねこのいえ</span>модульные домики для котов</div>
+  <h1>Дом, который растёт вместе с котом</h1>
+  <p>Начните с одного куба-норы — и добавляйте тоннели, башни и гамаки,
+     когда кот попросит больше. Секции переставляются и докупаются в любой момент.</p>
 </div>
 
-<div class="wrap">
+<div class="wrap" id="gallery">
+  <div class="gallery" id="galleryGrid"></div>
+</div>
+
+<section id="builder">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
+    <h2>Соберите свой — Мару проверит</h2>
+    <p class="sec-sub">Перетаскивайте модули из лотка в комнату — подсвеченные места покажут, куда можно ставить.
+       Чем интереснее постройка, тем дольше кот будет её обживать. Цены — на модулях, итог считается сам.</p>
   <div class="studio" id="studio">
     <div class="scene-wrap" id="sceneWrap">
       <canvas id="scene" width="980" height="540"></canvas>
@@ -61,15 +70,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<section id="gallery">
-  <div class="wrap">
-    <div class="sec-eyebrow"><span class="jp">しゃしん</span>готовые конфигурации</div>
-    <h2>Как это выглядит в квартире</h2>
-    <p class="sec-sub">Три собранные конфигурации — от первого куба до башни. Каждую можно
-       открыть в конструкторе и переделать под своего кота: докупить секции или переставить их можно в любой момент.</p>
-    <div class="gallery" id="galleryGrid"></div>
   </div>
 </section>
 

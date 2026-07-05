@@ -114,7 +114,13 @@ button{font-family:inherit}
   overflow:hidden;
   position:relative;
 }
-.scene-wrap{position:relative;user-select:none;-webkit-user-select:none}
+.scene-wrap{
+  position:relative;user-select:none;-webkit-user-select:none;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--wood) 14%, var(--panel)) 0%,
+    color-mix(in srgb, var(--wood) 24%, var(--panel)) 58%,
+    color-mix(in srgb, var(--wood) 42%, var(--panel)) 100%);
+}
 #scene{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
 #scene.placing{cursor:copy}
 

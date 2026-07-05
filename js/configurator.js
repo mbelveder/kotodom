@@ -297,6 +297,7 @@ document.querySelectorAll(".preset").forEach(b => {
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return;
+  KD.studioBooted = true;
   snapshot();
   clearAll(true);
   const entries = Object.entries(p.cells).sort((a, b) => a[0] - b[0]);
@@ -380,5 +381,16 @@ KD.configurator = {
 KD.scene.init();
 buildTray();
 refresh();
-setTimeout(() => say("Привет! Я Мару, приёмщик домов. Соберите мне что-нибудь!", 4200), 900);
+
+/* конструктор оживает, когда доезжаешь до него: грузим «Мост» с анимацией сборки
+   (если пользователь уже выбрал план в галерее — оставляем его выбор) */
+const io = new IntersectionObserver(entries => {
+  if (!entries[0].isIntersecting) return;
+  io.disconnect();
+  if (!KD.studioBooted){
+    loadPreset("wide");
+    setTimeout(() => say("Это план «Мост» — мой любимый. Перетащите что-нибудь из лотка или соберите свой!", 5200), 1600);
+  }
+}, { threshold: 0.35 });
+io.observe(sceneWrap);
 })();
