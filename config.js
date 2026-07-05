@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://cho-shore-armstrong-intensive.trycloudflare.com";
+window.KOTODOM_API = "https://pixels-cutting-evaluate-nsw.trycloudflare.com";
