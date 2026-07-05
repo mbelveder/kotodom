@@ -5,10 +5,12 @@ const $ = s => document.querySelector(s);
 const fab = $("#chatFab"), panel = $("#chatPanel"), msgs = $("#chatMsgs"),
       input = $("#chatInput"), send = $("#chatSend"), status = $("#chatStatus");
 
-/* адрес API: ?api=… > localStorage > config.js */
+/* адрес API: ?api=… > config.js (свежий из репозитория) > localStorage.
+   config.js важнее localStorage: иначе устаревший сохранённый адрес
+   перекрывает только что запушенный туннель */
 const qs = new URLSearchParams(location.search).get("api");
 if (qs){ localStorage.setItem("kd_api", qs.replace(/\/+$/, "")); }
-KD.API = (qs && qs.replace(/\/+$/, "")) || localStorage.getItem("kd_api") || window.KOTODOM_API || "";
+KD.API = (qs && qs.replace(/\/+$/, "")) || window.KOTODOM_API || localStorage.getItem("kd_api") || "";
 
 const history = [];   // {role, content}
 let busy = false, online = false, greeted = false;
