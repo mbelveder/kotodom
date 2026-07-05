@@ -19,7 +19,7 @@ pkill -f "node server.js" 2>/dev/null
 pkill -f "cloudflared tunnel --url http://localhost:$PORT" 2>/dev/null
 sleep 1
 
-NODE_PID=""; CF_PID=""; URL=""
+NODE_PID=""; CF_PID=""; URL=""; URL_TS=0; FAILS=0
 
 start_node(){ node server.js & NODE_PID=$!; }
 start_tunnel(){
@@ -70,13 +70,20 @@ while true; do
   # появился/сменился адрес → публикуем
   NEW=$(get_url || true)
   if [ -n "$NEW" ] && [ "$NEW" != "$URL" ]; then
-    URL="$NEW"; publish "$URL"
+    URL="$NEW"; URL_TS=$(date +%s); FAILS=0; publish "$URL"
   fi
-  # процесс жив, но после сна edge мог отвалиться: проверяем сквозь туннель
-  if [ -n "$URL" ]; then
-    if ! curl -s -m 8 "$URL/api/health" | grep -q '"ok"'; then
-      echo "$(date +%H:%M:%S) ⚠ туннель не отвечает (сон/обрыв) — пересоздаю"
-      kill "$CF_PID" 2>/dev/null; URL=""
+  # процесс жив, но после сна edge мог отвалиться: проверяем сквозь туннель.
+  # DNS нового quick-туннеля прогревается до ~90 с — до этого не трогаем;
+  # пересоздаём только после 3 неудач подряд.
+  if [ -n "$URL" ] && [ $(( $(date +%s) - URL_TS )) -gt 90 ]; then
+    if curl -s -m 8 "$URL/api/health" | grep -q '"ok"'; then
+      FAILS=0
+    else
+      FAILS=$((FAILS+1))
+      if [ "$FAILS" -ge 3 ]; then
+        echo "$(date +%H:%M:%S) ⚠ туннель не отвечает 3 проверки подряд (сон/обрыв) — пересоздаю"
+        kill "$CF_PID" 2>/dev/null; URL=""; FAILS=0
+      fi
     fi
   fi
   sleep 15
