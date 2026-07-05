@@ -1,2 +1,1 @@
-/* Адрес backend-сервера КотоДома (обновляется скриптом server/run.sh) */
-window.KOTODOM_API = "";
+window.KOTODOM_API = "https://oven-limited-links-algorithms.trycloudflare.com";
