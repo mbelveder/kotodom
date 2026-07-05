@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://affects-silent-newest-agricultural.trycloudflare.com";
+window.KOTODOM_API = "https://swimming-methodology-illustrated-spray.trycloudflare.com";
