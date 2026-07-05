@@ -4,6 +4,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { execFile } = require("child_process");
 
 /* ---------- .env ---------- */
 const envPath = path.join(__dirname, ".env");
@@ -15,13 +16,22 @@ if (fs.existsSync(envPath)){
 }
 const POLZA_KEY = process.env.POLZA_API_KEY || "";
 const TG_TOKEN  = process.env.TG_BOT_TOKEN || "";
-let   TG_CHAT   = process.env.TG_CHAT_ID || "";
+let   TG_CHATS  = (process.env.TG_CHAT_IDS || process.env.TG_CHAT_ID || "")
+                    .split(",").map(s => s.trim()).filter(Boolean);
 const MODEL     = process.env.KD_MODEL || "z-ai/glm-5.2";
 const PORT      = +(process.env.PORT || 8787);
 const POLZA     = "https://api.polza.ai/api/v1";
 
+/* Hermes Agent (операционный контур): обработка заказов и эскалаций */
+const HERMES_URL = process.env.HERMES_URL || "http://127.0.0.1:8642/v1";
+const HERMES_KEY = process.env.HERMES_KEY || "";
+const HERMES_OPS = process.env.HERMES_OPS === "1";
+/* KD_UPSTREAM=hermes — Смотритель на сайте отвечает через Hermes-агента (медленнее, но со скиллами) */
+const UPSTREAM   = process.env.KD_UPSTREAM === "hermes" ? "hermes" : "polza";
+
 if (!POLZA_KEY) console.warn("⚠ POLZA_API_KEY не задан — чат Смотрителя работать не будет");
 if (!TG_TOKEN)  console.warn("⚠ TG_BOT_TOKEN не задан — заказы будут только логироваться локально");
+if (HERMES_OPS && !HERMES_KEY) console.warn("⚠ HERMES_OPS=1, но HERMES_KEY не задан");
 
 /* ---------- каталог (цены проверяются на сервере) ---------- */
 const CATALOG = {
@@ -64,28 +74,70 @@ function systemPrompt(configSummary){
 - Ты ИИ и не скрываешь этого, если спрашивают.`;
 }
 
-/* ---------- Telegram ---------- */
+/* ---------- Telegram (получателей может быть несколько: владелец + друг) ---------- */
+async function tgDiscoverChats(){
+  try{
+    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates`);
+    const j = await r.json();
+    const seen = new Map();
+    (j.result || []).forEach(u => {
+      const c = u.message && u.message.chat;
+      if (c) seen.set(String(c.id), c.username || c.first_name || "?");
+    });
+    return seen;
+  }catch(e){ log("TG getUpdates error: " + e.message); return new Map(); }
+}
 async function tg(text){
   if (!TG_TOKEN) { log("TG (не отправлено, нет токена):\n" + text); return false; }
-  if (!TG_CHAT){
-    // пробуем найти chat_id по последнему сообщению боту
-    try{
-      const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates`);
-      const j = await r.json();
-      const msg = (j.result || []).reverse().find(u => u.message);
-      if (msg){ TG_CHAT = String(msg.message.chat.id); log("TG_CHAT_ID найден: " + TG_CHAT); }
-      else { log("TG: напишите боту любое сообщение, чтобы я узнал chat_id"); return false; }
-    }catch(e){ log("TG getUpdates error: " + e.message); return false; }
+  if (!TG_CHATS.length){
+    const seen = await tgDiscoverChats();
+    if (!seen.size){ log("TG: напишите боту любое сообщение, чтобы я узнал chat_id"); return false; }
+    TG_CHATS = [...seen.keys()];
+    log("TG: получатели найдены автоматически: " +
+        [...seen.entries()].map(([id, n]) => `${n} (${id})`).join(", "));
   }
-  try{
-    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: TG_CHAT, text, parse_mode: "HTML", disable_web_page_preview: true })
+  let ok = false;
+  for (const chat of TG_CHATS){
+    try{
+      const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chat, text, parse_mode: "HTML", disable_web_page_preview: true })
+      });
+      const j = await r.json();
+      if (j.ok) ok = true; else log(`TG error (${chat}): ` + JSON.stringify(j).slice(0, 200));
+    }catch(e){ log(`TG send error (${chat}): ` + e.message); }
+  }
+  return ok;
+}
+
+/* карточка заказа на kanban-доске Hermes: детерминированно, без участия модели.
+   --triage: карточка ждёт человека, диспетчер её не подхватывает */
+function kanbanCard(orderId, title, body){
+  if (!HERMES_OPS) return;
+  execFile("hermes", ["kanban", "create", `${orderId} — ${title}`, "--body", body, "--triage"],
+    { timeout: 20_000 }, (err, stdout) => {
+      if (err) log(`kanban error: ${err.message}`);
+      else log(`kanban: ${String(stdout).trim().split("\n")[0]}`);
     });
+}
+
+/* ---------- Hermes: операционный агент ---------- */
+async function hermesOps(prompt, tag){
+  if (!HERMES_OPS || !HERMES_KEY) return null;
+  const t0 = Date.now();
+  try{
+    const r = await fetch(HERMES_URL + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + HERMES_KEY },
+      body: JSON.stringify({ model: "hermes-agent", messages: [{ role: "user", content: prompt }] }),
+      signal: AbortSignal.timeout(180_000)
+    });
+    if (!r.ok){ log(`hermes ${tag} HTTP ${r.status}`); return null; }
     const j = await r.json();
-    if (!j.ok) log("TG error: " + JSON.stringify(j));
-    return j.ok;
-  }catch(e){ log("TG send error: " + e.message); return false; }
+    const text = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+    log(`hermes ${tag}: ${Math.round((Date.now() - t0) / 1000)}s`);
+    return (text || "").trim() || null;
+  }catch(e){ log(`hermes ${tag} error: ` + e.message); return null; }
 }
 
 /* ---------- лог ---------- */
@@ -135,7 +187,10 @@ const server = http.createServer(async (req, res) => {
   const url = req.url.split("?")[0];
 
   try{
-    if (url === "/api/health") return json(res, 200, { ok: true, model: MODEL, telegram: !!TG_TOKEN });
+    if (url === "/api/health") return json(res, 200, {
+      ok: true, model: UPSTREAM === "hermes" ? "hermes-agent" : MODEL,
+      upstream: UPSTREAM, hermes_ops: HERMES_OPS, telegram: !!TG_TOKEN, tg_recipients: TG_CHATS.length
+    });
 
     if (url === "/api/chat" && req.method === "POST"){
       if (limited(ip, "chat", 30, 10 * 60_000)) return json(res, 429, { error: "Слишком часто. Подождите немного." });
@@ -147,11 +202,13 @@ const server = http.createServer(async (req, res) => {
         .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
       if (!clean.length) return json(res, 400, { error: "no messages" });
 
-      const upstream = await fetch(POLZA + "/chat/completions", {
+      const viaHermes = UPSTREAM === "hermes";
+      const upstream = await fetch((viaHermes ? HERMES_URL : POLZA) + "/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + POLZA_KEY },
+        headers: { "Content-Type": "application/json",
+                   "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) },
         body: JSON.stringify({
-          model: MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
+          model: viaHermes ? "hermes-agent" : MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
           messages: [ { role: "system", content: systemPrompt(String(config).slice(0, 400)) }, ...clean ]
         })
       });
@@ -187,8 +244,13 @@ const server = http.createServer(async (req, res) => {
       res.end();
       if (full.includes("[[ESCALATE]]")){
         const lastUser = clean.filter(m => m.role === "user").pop();
-        tg(`🚨 <b>КотоДом: нужен человек</b>\n\nКлиент: «${esc(lastUser ? lastUser.content : "?")}»\n\nСмотритель: «${esc(full.replace("[[ESCALATE]]", "").trim().slice(0, 500))}»`);
+        const userText = lastUser ? lastUser.content : "?";
+        const botText = full.replace("[[ESCALATE]]", "").trim().slice(0, 500);
+        tg(`🚨 <b>КотоДом: нужен человек</b>\n\nКлиент: «${esc(userText)}»\n\nСмотритель: «${esc(botText)}»`);
         log("ESCALATE → Telegram");
+        // Hermes-агент готовит рекомендацию по регламенту (skill kotodom-operations)
+        hermesOps(`[KOTODOM ESCALATION]\nКлиент: «${userText}»\nОтвет Смотрителя: «${botText}»`, "escalation")
+          .then(r => { if (r) tg(`🧠 <b>Hermes: разбор эскалации</b>\n\n${esc(r.slice(0, 3000))}`); });
       }
       return;
     }
@@ -222,6 +284,16 @@ const server = http.createServer(async (req, res) => {
       ].filter(x => x !== null).join("\n");
       const sent = await tg(txt);
       log(`ORDER ${orderId} total=${total} sent_tg=${sent} :: ${JSON.stringify(o).slice(0, 500)}`);
+      kanbanCard(orderId, `${c.name}, ${fmt(total)}`,
+        lines.map(l => `${CATALOG[l.type].name}×${l.n}`).join(", ") +
+        `; контакт: ${c.contact}; адрес: ${c.address}` + (c.comment ? `; коммент: ${c.comment}` : ""));
+      // Hermes-агент обрабатывает заказ по регламенту (проверка, kanban, черновик подтверждения)
+      hermesOps(`[KOTODOM ORDER]\n` + JSON.stringify({
+        orderId, total, disc,
+        lines: lines.map(l => ({ модуль: CATALOG[l.type].name, шт: l.n, сумма: CATALOG[l.type].price * l.n })),
+        клиент: { имя: c.name, контакт: c.contact, адрес: c.address, комментарий: c.comment || "" }
+      }, null, 1), "order " + orderId)
+        .then(r => { if (r) tg(`🧠 <b>Hermes: заказ ${orderId} обработан</b>\n\n${esc(r.slice(0, 3000))}`); });
       return json(res, 200, { ok: true, orderId, total, telegram: sent });
     }
 
