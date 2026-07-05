@@ -169,29 +169,25 @@ function makeCat(parent){
 /* ---------- комната ---------- */
 function makeRoom(parent){
   const room = new Zdog.Anchor({ addTo: parent });
-  // стены и пол шире холста — комната «обнимает» сцену, а не плавает в пустоте
-  const FW = 1100, FD = 430, WH = 470;
+  // пол и стена сильно больше холста: сцена заполнена целиком, ничего не «плавает»
+  const FW = 1700, FD = 900, WH = 470;
+  const WALLZ = -255; // стена не привязана к глубине пола
   // пол
   box(room, { width:FW, height:10, depth:FD, translate:{ y:GROUND+5, z:-40 },
     topFace:P.floor, bottomFace:P.floorSide, leftFace:P.floorSide, rightFace:P.floorSide,
     frontFace:P.floorSide, rearFace:P.floorSide, color:P.floor });
   // швы досок
-  for (let k=-4;k<=4;k++){
+  for (let k=-7;k<=7;k++){
     new Zdog.Shape({ addTo:room, stroke:1.2, color:P.floorSide, closed:false,
-      path:[ { x:k*115, y:GROUND-0.5, z:-40-FD/2+8 }, { x:k*115, y:GROUND-0.5, z:-40+FD/2-8 } ] });
+      path:[ { x:k*115, y:GROUND-0.5, z:WALLZ+8 }, { x:k*115, y:GROUND-0.5, z:-40+FD/2-8 } ] });
   }
   // задняя стена
   new Zdog.Rect({ addTo:room, width:FW, height:WH, fill:true, stroke:2, color:P.wall,
-    translate:{ y:GROUND-WH/2, z:-40-FD/2 } });
+    translate:{ y:GROUND-WH/2, z:WALLZ } });
   new Zdog.Shape({ addTo:room, stroke:7, color:P.floorSide, closed:false,
-    path:[ { x:-FW/2+4, y:GROUND-3, z:-40-FD/2+2 }, { x:FW/2-4, y:GROUND-3, z:-40-FD/2+2 } ] });
-  // левая стена
-  new Zdog.Rect({ addTo:room, width:FD, height:WH, fill:true, stroke:2, color:P.wallSide,
-    rotate:{ y:TAU/4 }, translate:{ x:-FW/2, y:GROUND-WH/2, z:-40 } });
-  new Zdog.Shape({ addTo:room, stroke:7, color:P.floorSide, closed:false,
-    path:[ { x:-FW/2+2, y:GROUND-3, z:-40-FD/2+6 }, { x:-FW/2+2, y:GROUND-3, z:-40+FD/2-6 } ] });
+    path:[ { x:-FW/2+4, y:GROUND-3, z:WALLZ+2 }, { x:FW/2-4, y:GROUND-3, z:WALLZ+2 } ] });
   // сёдзи-окно на задней стене
-  const win = new Zdog.Anchor({ addTo:room, translate:{ x:40, y:GROUND-216, z:-40-FD/2+1.5 } });
+  const win = new Zdog.Anchor({ addTo:room, translate:{ x:40, y:GROUND-216, z:WALLZ+1.5 } });
   new Zdog.Rect({ addTo:win, width:150, height:120, fill:true, stroke:6, color:P.windowGlow });
   new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:P.shoji, translate:{ z:0.8 } });
   new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
@@ -201,8 +197,8 @@ function makeRoom(parent){
     path:[ { x:-70, y:-34 }, { bezier:[ { x:-30, y:-26 }, { x:0, y:-30 }, { x:40, y:-14 } ] } ] });
   [[-44,-32],[-16,-26],[8,-27],[26,-19],[44,-13]].forEach(([x,y]) =>
     new Zdog.Shape({ addTo:win, stroke:7, color:P.sakura, translate:{ z:2.4 }, path:[{ x, y }] }));
-  // свиток на левой стене
-  const scroll = new Zdog.Anchor({ addTo:room, rotate:{ y:TAU/4 }, translate:{ x:-FW/2+1.5, y:GROUND-215, z:-120 } });
+  // свиток на задней стене
+  const scroll = new Zdog.Anchor({ addTo:room, translate:{ x:-430, y:GROUND-235, z:WALLZ+1.5 } });
   new Zdog.Rect({ addTo:scroll, width:56, height:110, fill:true, stroke:4, color:P.rugIn });
   new Zdog.Shape({ addTo:scroll, stroke:5, color:P.aka, path:[{ y:-20 }] });
   new Zdog.Shape({ addTo:scroll, stroke:2, color:P.ink, closed:false,

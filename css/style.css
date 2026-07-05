@@ -114,12 +114,14 @@ button{font-family:inherit}
   overflow:hidden;
   position:relative;
 }
+/* подложка = цвет торца пола: нижняя кромка холста читается как ребро пола */
+:root{ --scene-edge:#C9AC80 }
+@media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244 } }
+:root[data-theme="light"]{ --scene-edge:#C9AC80 }
+:root[data-theme="dark"]{ --scene-edge:#3B3244 }
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
-  background:linear-gradient(180deg,
-    color-mix(in srgb, var(--wood) 14%, var(--panel)) 0%,
-    color-mix(in srgb, var(--wood) 24%, var(--panel)) 58%,
-    color-mix(in srgb, var(--wood) 42%, var(--panel)) 100%);
+  background:var(--scene-edge);
 }
 #scene{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
 #scene.placing{cursor:copy}
