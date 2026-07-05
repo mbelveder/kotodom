@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://adding-visitors-tribunal-comprehensive.trycloudflare.com";
+window.KOTODOM_API = "https://affects-silent-newest-agricultural.trycloudflare.com";
