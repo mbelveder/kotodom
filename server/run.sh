@@ -1,56 +1,83 @@
 #!/usr/bin/env bash
-# КотоДом: запускает backend + Cloudflare quick tunnel и прописывает адрес в config.js
-# Использование:  ./run.sh          — сервер + туннель
-#                 ./run.sh --push   — то же + git commit/push config.js (обновит GitHub Pages)
-set -euo pipefail
+# КотоДом: backend + Cloudflare quick tunnel с самовосстановлением (сон, обрывы, лимиты).
+# Использование:  ./run.sh          — сервер + туннель, адрес пишется в config.js
+#                 ./run.sh --push   — плюс автопуш адреса в GitHub Pages при каждой смене
+# Скрипт живёт в терминале и чинит себя сам. Перезапускать после сна НЕ нужно.
+# Повторный запуск в любой момент безопасен: прежние экземпляры убираются автоматически.
+set -uo pipefail
 cd "$(dirname "$0")"
 
-if ! command -v cloudflared >/dev/null; then
-  echo "cloudflared не найден. Установите: brew install cloudflared"
-  exit 1
-fi
-if [ ! -f .env ]; then
-  echo "Нет server/.env — скопируйте .env.example и заполните ключи."
-  exit 1
-fi
-
 PORT="${PORT:-8787}"
+PUSH="${1:-}"
+CF_LOG="/tmp/kotodom_tunnel.log"
 
-node server.js &
-NODE_PID=$!
-trap 'kill $NODE_PID 2>/dev/null; kill ${CF_PID:-0} 2>/dev/null; exit' INT TERM
+command -v cloudflared >/dev/null || { echo "cloudflared не найден: brew install cloudflared"; exit 1; }
+[ -f .env ] || { echo "Нет server/.env — скопируйте .env.example и заполните."; exit 1; }
 
-echo "Поднимаю Cloudflare quick tunnel…"
-TUNNEL_LOG=$(mktemp)
-cloudflared tunnel --url "http://localhost:$PORT" --no-autoupdate > "$TUNNEL_LOG" 2>&1 &
-CF_PID=$!
+# ── идемпотентность: убираем прежние экземпляры ─────────────────────────
+pkill -f "node server.js" 2>/dev/null
+pkill -f "cloudflared tunnel --url http://localhost:$PORT" 2>/dev/null
+sleep 1
 
-URL=""
-for i in $(seq 1 30); do
-  URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$TUNNEL_LOG" | head -1 || true)
-  [ -n "$URL" ] && break
-  sleep 1
+NODE_PID=""; CF_PID=""; URL=""
+
+start_node(){ node server.js & NODE_PID=$!; }
+start_tunnel(){
+  : > "$CF_LOG"
+  cloudflared tunnel --url "http://localhost:$PORT" --no-autoupdate >> "$CF_LOG" 2>&1 &
+  CF_PID=$!
+}
+get_url(){ grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$CF_LOG" | head -1; }
+
+publish(){
+  echo "window.KOTODOM_API = \"$1\";" > ../config.js
+  echo "$(date +%H:%M:%S) ✅ Туннель: $1"
+  if [ "$PUSH" = "--push" ]; then
+    git -C .. add config.js
+    if git -C .. commit -m "chore: адрес туннеля" >/dev/null 2>&1; then
+      git -C .. push >/dev/null 2>&1 \
+        && echo "$(date +%H:%M:%S) ✅ Запушено — Pages подхватит за ~1 минуту." \
+        || echo "$(date +%H:%M:%S) ⚠ push не удался (нет сети?) — повторю при смене адреса"
+    fi
+  else
+    echo "ℹ Или откройте сайт так: https://mbelveder.github.io/kotodom/?api=$1"
+  fi
+}
+
+trap 'kill $NODE_PID $CF_PID 2>/dev/null; echo; echo "Остановлено."; exit' INT TERM
+
+start_node
+start_tunnel
+echo "Запуск… (Ctrl+C — остановить сервер и туннель)"
+
+# ── цикл-сторож ──────────────────────────────────────────────────────────
+while true; do
+  # backend жив?
+  if ! kill -0 "$NODE_PID" 2>/dev/null; then
+    echo "$(date +%H:%M:%S) ↻ backend упал — перезапускаю"
+    start_node
+  fi
+  # процесс туннеля жив?
+  if ! kill -0 "$CF_PID" 2>/dev/null; then
+    echo "$(date +%H:%M:%S) ↻ туннель упал — перезапускаю"
+    sleep 3; start_tunnel; URL=""
+  fi
+  # trycloudflare отказал (лимит на частые quick-туннели) → пауза и повтор
+  if [ -z "$URL" ] && grep -q "failed to .* quick Tunnel" "$CF_LOG"; then
+    echo "$(date +%H:%M:%S) ⚠ quick tunnel не выдан (лимит) — жду 20 с и пробую снова"
+    kill "$CF_PID" 2>/dev/null; sleep 20; start_tunnel
+  fi
+  # появился/сменился адрес → публикуем
+  NEW=$(get_url || true)
+  if [ -n "$NEW" ] && [ "$NEW" != "$URL" ]; then
+    URL="$NEW"; publish "$URL"
+  fi
+  # процесс жив, но после сна edge мог отвалиться: проверяем сквозь туннель
+  if [ -n "$URL" ]; then
+    if ! curl -s -m 8 "$URL/api/health" | grep -q '"ok"'; then
+      echo "$(date +%H:%M:%S) ⚠ туннель не отвечает (сон/обрыв) — пересоздаю"
+      kill "$CF_PID" 2>/dev/null; URL=""
+    fi
+  fi
+  sleep 15
 done
-if [ -z "$URL" ]; then
-  echo "Не удалось получить адрес туннеля. Лог: $TUNNEL_LOG"
-  kill $NODE_PID $CF_PID 2>/dev/null; exit 1
-fi
-
-echo "window.KOTODOM_API = \"$URL\";" > ../config.js
-echo ""
-echo "✅ Backend:  http://localhost:$PORT"
-echo "✅ Туннель:  $URL"
-echo "✅ config.js обновлён."
-
-if [ "${1:-}" = "--push" ]; then
-  git -C .. add config.js
-  git -C .. commit -m "chore: обновить адрес туннеля" >/dev/null && git -C .. push && \
-    echo "✅ Запушено — GitHub Pages подхватит адрес через ~1 минуту." || \
-    echo "ℹ config.js не изменился либо push не удался."
-else
-  echo "ℹ Чтобы сайт на GitHub Pages увидел новый адрес: ./run.sh --push"
-  echo "ℹ Или откройте сайт с параметром: https://mbelveder.github.io/kotodom/?api=$URL"
-fi
-echo ""
-echo "Останов: Ctrl+C"
-wait $NODE_PID
