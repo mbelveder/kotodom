@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>КотоДом — модульные домики для котов</title>
+<meta name="description" content="Соберите домик для кота из модулей — как конструктор. Начните с одного куба и расширяйте, когда кот захочет больше.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23C7423A'/%3E%3Cpath d='M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z' fill='%23FFFBF3'/%3E%3Ccircle cx='32' cy='36' r='17' fill='%23FFFBF3'/%3E%3Cpath d='M25 34 q2 3 4 0 M35 34 q2 3 4 0' stroke='%232E2A33' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M30 40 q2 2 4 0' stroke='%23C7423A' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&family=Comfortaa:wght@700&family=Nunito:wght@400;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <div class="hanko" aria-hidden="true">猫</div>
+    <div class="brand disp">КотоДом<small>модульные домики</small></div>
+    <nav class="head-nav">
+      <a href="#studio">Конструктор</a>
+      <a href="#gallery" class="hide-m">Готовые</a>
+      <a href="#how" class="hide-m">Как это работает</a>
+      <span class="demo-pill">демо-магазин</span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<div class="hero wrap">
+  <div class="eyebrow"><span class="jp">ねこのいえ</span>дом, который растёт вместе с котом</div>
+  <h1>Соберите домик — Мару проверит</h1>
+  <p>Перетаскивайте модули в комнату и смотрите, как складывается домик.
+     Чем интереснее постройка — тем дольше кот будет её обживать.</p>
+</div>
+
+<div class="wrap">
+  <div class="studio" id="studio">
+    <div class="scene-wrap" id="sceneWrap">
+      <canvas id="scene" width="980" height="540"></canvas>
+      <div class="maru-say" id="maruSay"><span class="who">Мару</span><span id="maruTxt"></span></div>
+      <div class="price-tag">
+        <div class="lbl">итого</div>
+        <div class="sum" id="sumOut">0 ₽</div>
+        <div class="disc" id="discOut"></div>
+      </div>
+    </div>
+    <div class="hint-bar" id="hintBar">Потяните модуль из лотка внизу — подсвеченные места покажут, куда его можно поставить. Клик по модулю в сцене — убрать.</div>
+    <div class="tray" id="tray"></div>
+    <div class="studio-actions">
+      <button class="btn btn-aka" id="btnMoveIn" disabled>Заселить Мару</button>
+      <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>
+      <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
+      <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
+      <div class="presets">
+        <span class="lbl">Готовые планы:</span>
+        <button class="preset" data-preset="start">Старт</button>
+        <button class="preset" data-preset="wide">Мост</button>
+        <button class="preset" data-preset="tower">Башня</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="gallery">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">しゃしん</span>готовые конфигурации</div>
+    <h2>Как это выглядит в квартире</h2>
+    <p class="sec-sub">Три собранные конфигурации — от первого куба до башни. Каждую можно
+       открыть в конструкторе и переделать под своего кота: докупить секции или переставить их можно в любой момент.</p>
+    <div class="gallery" id="galleryGrid"></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">しくみ</span>магазин, где работает агент</div>
+    <h2>Как устроен КотоДом</h2>
+    <p class="sec-sub">Магазином управляет ИИ-агент «Смотритель». Он отвечает на вопросы, принимает заказы
+       и зовёт человека, когда нужен человек.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="ico">組</div>
+        <h3>Соберите конфигурацию</h3>
+        <p>В конструкторе выше — из модулей, как из кубиков. Не знаете, с чего начать, — возьмите готовый план и меняйте его.</p>
+      </div>
+      <div class="step">
+        <div class="ico">話</div>
+        <h3>Спросите Смотрителя</h3>
+        <p>Кнопка с лапой справа внизу. Смотритель знает все модули, цены и правила доставки — и отвечает за секунды, в любое время.</p>
+      </div>
+      <div class="step">
+        <div class="ico">箱</div>
+        <h3>Закажите — и готово</h3>
+        <p>Заказ мгновенно улетает владельцу магазина в Telegram. Оплата в этом демо не настоящая — ни один рубль не пострадает.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="info">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">おしらせ</span>полезное</div>
+    <h2>Доставка и возврат</h2>
+    <div class="two-col" style="margin-top:18px">
+      <div class="info-card">
+        <h3>Доставка</h3>
+        <ul>
+          <li>По всей России, СДЭК или Почта — 3–7 дней.</li>
+          <li>Модули приезжают плоским пакетом, сборка без инструментов — пазы и шканты.</li>
+          <li>Докупили секцию позже — она встанет в уже собранный домик.</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>Возврат и материалы</h3>
+        <ul>
+          <li>14 дней на возврат, если домик не подошёл (модули без следов когтей).</li>
+          <li>Берёзовая фанера, обивка с повышенной стойкостью к когтям.</li>
+          <li>Кромки шлифованные, без острых углов — проверено на очень настойчивых котах.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© КотоДом, 2026</span>
+    <span>Демо-прототип: заказы и оплата не настоящие.</span>
+    <span>Смотритель — ИИ-агент; сложные вопросы он передаёт человеку.</span>
+  </div>
+</footer>
+
+<!-- drag ghost -->
+<div id="dragGhost"></div>
+
+<!-- checkout modal -->
+<div class="modal-back" id="modalBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="x" id="modalX" aria-label="Закрыть">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- chat -->
+<button id="chatFab" aria-label="Чат со Смотрителем">
+  <svg viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z" fill="#FFFBF3"/>
+    <circle cx="32" cy="36" r="17" fill="#FFFBF3"/>
+    <path d="M25 34 q2 3 4 0 M35 34 q2 3 4 0" stroke="#2E2A33" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M29 40 q3 3 6 0" stroke="#C7423A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  </svg>
+</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="ava">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z" fill="#FFFBF3"/>
+        <circle cx="32" cy="36" r="17" fill="#FFFBF3"/>
+        <path d="M25 34 q2 3 4 0 M35 34 q2 3 4 0" stroke="#2E2A33" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="t">Смотритель</div>
+      <div class="s" id="chatStatus"><span class="dot"></span>на связи</div>
+    </div>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-in">
+    <input id="chatInput" type="text" placeholder="Спросите про модули, доставку…" maxlength="500">
+    <button id="chatSend" aria-label="Отправить">➤</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="js/zdog.dist.min.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/configurator.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+server/.env
+server/orders.log
+.DS_Store
