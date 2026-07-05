@@ -46,8 +46,8 @@ let canvas;
 let cellAnchors = [];      // якоря центров ячеек (для проекции)
 let moduleAnchors = {};    // cellIndex -> anchor модуля
 let ghostShapes = [];
-let sway = 0;
 let dirty = true;
+let catSettled = false;
 let popAnims = [];         // {anchor, t0, dur}
 
 /* ---------- helpers ---------- */
@@ -55,72 +55,74 @@ function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o))
 
 function makeModule(type, parent){
   const a = new Zdog.Anchor({ addTo: parent });
-  const S = CELL - 10; // видимый размер
+  const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
+  const B = CELL / 2;    // низ ячейки: всё стоит на нём
+  const H = CELL - 2;    // высота корпуса: стыкуется с верхним модулем почти без зазора
+  const woodBox = extra => box(a, Object.assign({
+    topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood,
+    frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
-    box(a, { width:S, height:S, depth:S,
-      topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood,
-      frontFace:P.wood, rearFace:P.wood2, color:P.wood });
-    new Zdog.Ellipse({ addTo:a, diameter:S*0.52, translate:{ z:S/2+0.8 }, fill:true, stroke:1, color:P.hole });
+    woodBox({ width:S, height:H, depth:S, translate:{ y: B - H/2 } });
+    new Zdog.Ellipse({ addTo:a, diameter:S*0.52, translate:{ y: B - H/2, z:S/2+0.8 },
+      fill:true, stroke:1, color:P.hole });
   }
   else if (type === "lounge"){
-    const h = S*0.5;
-    box(a, { width:S, height:h, depth:S, translate:{ y:(S-h)/2 },
-      topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood,
-      frontFace:P.wood, rearFace:P.wood2, color:P.wood });
+    const h = 30;
+    woodBox({ width:S, height:h, depth:S, translate:{ y: B - h/2 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.74, height:S*0.6,
-      rotate:{ x:TAU/4 }, translate:{ y:(S-h)/2 - h/2 - 4 },
+      rotate:{ x:TAU/4 }, translate:{ y: B - h - 1 },
       stroke:10, fill:true, color:P.cushion });
   }
   else if (type === "tunnel"){
-    // слегка развёрнут, чтобы был виден тёмный вход
-    const t = new Zdog.Anchor({ addTo:a, rotate:{ y:-0.55 } });
-    new Zdog.Cylinder({ addTo:t, diameter:S*0.78, length:S+2,
+    // слегка развёрнут, чтобы был виден тёмный вход; лежит на полу ячейки
+    const D = S*0.78;
+    const t = new Zdog.Anchor({ addTo:a, rotate:{ y:-0.55 }, translate:{ y: B - D/2 - 1 } });
+    new Zdog.Cylinder({ addTo:t, diameter:D, length:S+2,
       rotate:{ y:TAU/4 }, color:P.wood, frontFace:P.hole, backface:P.hole, stroke:false });
-    new Zdog.Ellipse({ addTo:t, diameter:S*0.78, rotate:{ y:TAU/4 }, translate:{ x:(S+2)/2 },
+    new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:(S+2)/2 },
       stroke:4, color:P.wood2 });
-    new Zdog.Ellipse({ addTo:t, diameter:S*0.78, rotate:{ y:TAU/4 }, translate:{ x:-(S+2)/2 },
+    new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:-(S+2)/2 },
       stroke:4, color:P.wood2 });
   }
   else if (type === "tower"){
-    box(a, { width:14, height:S-8, depth:14, translate:{ y:4 },
+    box(a, { width:14, height:H-9, depth:14, translate:{ y: B - (H-9)/2 },
       topFace:P.wood2, color:P.wood2, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark });
-    box(a, { width:S+4, height:9, depth:S-4, translate:{ y:-(S/2)+4 },
-      topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood,
-      frontFace:P.wood, rearFace:P.wood2, color:P.wood });
+    woodBox({ width:S+4, height:9, depth:S-4, translate:{ y: -B + 5.5 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.6, height:S*0.44,
-      rotate:{ x:TAU/4 }, translate:{ y:-(S/2)-1 }, stroke:7, fill:true, color:P.cushion });
+      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.cushion });
   }
   else if (type === "hammock"){
-    const H = S-6;
-    box(a, { width:6, height:H, depth:6, translate:{ x:-S/2+5 }, color:P.wood2,
-      topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2, frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark });
-    box(a, { width:6, height:H, depth:6, translate:{ x:S/2-5 }, color:P.wood2,
-      topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2, frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark });
+    [-1,1].forEach(s => box(a, { width:6, height:H, depth:6,
+      translate:{ x:s*(S/2-4), y: B - H/2 }, color:P.wood2,
+      topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
+      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
     new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
-      path:[ { x:-S/2+7, y:-H/2+6 },
-             { bezier:[ { x:-10, y:8 }, { x:10, y:8 }, { x:S/2-7, y:-H/2+6 } ] } ] });
+      path:[ { x:-S/2+6, y: B - H + 8 },
+             { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
   }
   else if (type === "roof"){
+    // крыша прижата к низу своей ячейки — сидит на модуле снизу
     const W = S+8, slope = S*0.72;
     new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.aka,
-      rotate:{ x:-TAU/8 }, translate:{ y:13, z: S/4+2 } });
+      rotate:{ x:TAU/8 }, translate:{ y:16, z: S/4+2 } });
     new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.akaDeep,
-      rotate:{ x:TAU/8 }, translate:{ y:13, z:-S/4-2 } });
+      rotate:{ x:-TAU/8 }, translate:{ y:16, z:-S/4-2 } });
     // фронтоны
     [-1,1].forEach(s => new Zdog.Shape({ addTo:a, fill:true, stroke:1, color:P.wood,
-      path:[ { x:s*(W/2-2), y:S/2+4, z:S/2-4 }, { x:s*(W/2-2), y:-S*0.1, z:0 }, { x:s*(W/2-2), y:S/2+4, z:-S/2+4 } ] }));
+      path:[ { x:s*(W/2-2), y:B-2, z:S/2-4 }, { x:s*(W/2-2), y:3, z:0 }, { x:s*(W/2-2), y:B-2, z:-S/2+4 } ] }));
   }
   else if (type === "scratch"){
-    new Zdog.Cylinder({ addTo:a, diameter:17, length:S-12, rotate:{ x:TAU/4 },
-      translate:{ y:-2 }, color:P.jute, frontFace:P.juteDark, backface:P.juteDark, stroke:false });
+    const L = 50;
+    new Zdog.Cylinder({ addTo:a, diameter:17, length:L, rotate:{ x:TAU/4 },
+      translate:{ y: B - 7 - L/2 }, color:P.jute, frontFace:P.juteDark, backface:P.juteDark, stroke:false });
     for (let k=0;k<5;k++){
       new Zdog.Ellipse({ addTo:a, diameter:17.5, rotate:{ x:TAU/4 },
-        translate:{ y:-2 - (S-16)/2 + k*(S-16)/4 }, stroke:1.4, color:P.juteDark });
+        translate:{ y: B - 7 - k*(L/4) - 1 }, stroke:1.4, color:P.juteDark });
     }
     new Zdog.Cylinder({ addTo:a, diameter:40, length:7, rotate:{ x:TAU/4 },
-      translate:{ y:S/2-6 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
-    new Zdog.Shape({ addTo:a, stroke:9, color:P.sakura, path:[{ y:-S/2+7 }] }); // помпон
+      translate:{ y: B - 3.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
+    new Zdog.Shape({ addTo:a, stroke:9, color:P.sakura, path:[{ y: B - 7 - L - 3 }] }); // помпон
   }
   return a;
 }
@@ -189,14 +191,14 @@ function makeRoom(parent){
   // сёдзи-окно на задней стене
   const win = new Zdog.Anchor({ addTo:room, translate:{ x:96, y:GROUND-204, z:-40-FD/2+1.5 } });
   new Zdog.Rect({ addTo:win, width:150, height:120, fill:true, stroke:6, color:P.windowGlow });
-  new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:P.shoji });
-  new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
-  new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, path:[ { x:-75, y:0 }, { x:75, y:0 } ] });
+  new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:P.shoji, translate:{ z:0.8 } });
+  new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
+  new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:-75, y:0 }, { x:75, y:0 } ] });
   // ветка сакуры за окном
-  new Zdog.Shape({ addTo:win, stroke:2.4, color:P.juteDark, closed:false,
+  new Zdog.Shape({ addTo:win, stroke:2.4, color:P.juteDark, closed:false, translate:{ z:2 },
     path:[ { x:-70, y:-34 }, { bezier:[ { x:-30, y:-26 }, { x:0, y:-30 }, { x:40, y:-14 } ] } ] });
   [[-44,-32],[-16,-26],[8,-27],[26,-19],[44,-13]].forEach(([x,y]) =>
-    new Zdog.Shape({ addTo:win, stroke:7, color:P.sakura, path:[{ x, y }] }));
+    new Zdog.Shape({ addTo:win, stroke:7, color:P.sakura, translate:{ z:2.4 }, path:[{ x, y }] }));
   // свиток на левой стене
   const scroll = new Zdog.Anchor({ addTo:room, rotate:{ y:TAU/4 }, translate:{ x:-FW/2+1.5, y:GROUND-215, z:-120 } });
   new Zdog.Rect({ addTo:scroll, width:56, height:110, fill:true, stroke:4, color:P.rugIn });
@@ -344,6 +346,9 @@ async function tween(dur, step){
   }
 }
 
+/* высота «пола для лап» каждого модуля: смещение от центра ячейки */
+const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, roof:2, scratch:-27 };
+
 /* прыжок кота в точку (x,y) мировых координат */
 async function hopTo(tx, ty, dur){
   const fx = catA.translate.x, fy = catA.translate.y;
@@ -364,6 +369,8 @@ async function hopTo(tx, ty, dur){
 /* заселение: visits — упорядоченный список индексов ячеек */
 api.moveIn = async function(visits, onVisit, onDone){
   if (!visits.length) return;
+  if (leaving) await leaving;
+  catSettled = false;
   catA.group.scale.set({ x:1, y:1, z:1 });
   catA.rotate.y = 0;
   // вход из-за правого края
@@ -382,7 +389,7 @@ api.moveIn = async function(visits, onVisit, onDone){
     const i = visits[k];
     const type = onVisit(i, k); // конфигуратор вернёт тип и покажет сердечко
     const tx = cellX(colOf(i));
-    const ty = cellY(rowOf(i)) - (CELL/2) - 12; // сверху на модуль
+    const ty = cellY(rowOf(i)) + (SIT_Y[type] ?? -29) - 13; // лапы на «крышу» модуля
     await hopTo(tx, ty, REDUCED ? 1 : 520);
     api.pulse(i);
     if (MODULES[type] && MODULES[type].hasEntrance && k === 0){
@@ -394,22 +401,37 @@ api.moveIn = async function(visits, onVisit, onDone){
       await new Promise(r => setTimeout(r, REDUCED ? 0 : 420));
     }
   }
-  // финал: сесть, довольно покачаться
+  // финал: сесть, довольно покачаться — и остаться жить
   await tween(700, t => { catA.rotate.y = Math.sin(t * TAU) * 0.14; });
+  catSettled = true;
   onDone && onDone();
 };
 
-function parkCat(){ catA.translate.set({ x: 0, y: 4000, z: 0 }); }
+function parkCat(){ catSettled = false; catA.translate.set({ x: 0, y: 4000, z: 0 }); }
 api.hideCat = function(){ parkCat(); dirty = true; };
+api.isCatSettled = () => catSettled;
+
+/* кот уже заселён, а дом меняют: спрыгнуть и убежать за правый край */
+let leaving = null;
+api.catLeave = function(){
+  if (!catSettled) return leaving || Promise.resolve();
+  catSettled = false;
+  leaving = (async () => {
+    const exitX = 330;
+    await hopTo(exitX, GROUND - 16, REDUCED ? 1 : 460);
+    await tween(REDUCED ? 1 : 420, t => {
+      catA.translate.x = tw(exitX, 430, t);
+      catA.translate.y = GROUND - 16 - Math.abs(Math.sin(t * TAU * 1.2)) * 8;
+    });
+    parkCat(); dirty = true;
+    leaving = null;
+  })();
+  return leaving;
+};
 
 /* ---------- цикл отрисовки ---------- */
 function animate(){
   const now = performance.now();
-  if (!REDUCED){
-    sway += 0.008;
-    world.rotate.y = 0.30 + Math.sin(sway) * 0.010;
-    dirty = true;
-  }
   popAnims = popAnims.filter(pa => {
     const t = Math.min(1, (now - pa.t0) / pa.dur);
     if (pa.pulse){

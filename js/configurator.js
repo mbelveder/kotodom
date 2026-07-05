@@ -122,17 +122,20 @@ function refresh(){
 function snapshot(){ undoStack.push(grid.slice()); if (undoStack.length > 40) undoStack.shift(); }
 
 function place(i, type, opts){
+  const evicted = KD.scene.isCatSettled();
+  KD.scene.catLeave();
   grid[i] = type;
   KD.scene.place(i, type, opts && opts.instant);
   if (!opts || !opts.silent){
     popSound();
-    say(pick(MODULES[type].say));
+    say(evicted ? "Ремонт? Ладно, подожду снаружи." : pick(MODULES[type].say));
   }
   refresh();
 }
 function removeAt(i){
   const type = grid[i];
   if (!type) return;
+  KD.scene.catLeave();
   grid[i] = null;
   KD.scene.remove(i);
   say(pick(SAY.removed));
@@ -251,6 +254,7 @@ canvas.addEventListener("pointerup", e => {
 /* ---------- кнопки ---------- */
 btnUndo.addEventListener("click", () => {
   if (!undoStack.length || animating) return;
+  KD.scene.catLeave();
   const prev = undoStack.pop();
   for (let i = 0; i < N; i++){
     if (grid[i] && !prev[i]) { grid[i] = null; KD.scene.remove(i); }
@@ -316,6 +320,7 @@ btnMoveIn.addEventListener("click", async () => {
   animating = true;
   refresh();
   say(pick(SAY.movein), 2000);
+  await KD.scene.catLeave(); // если уже живёт — сперва выбегает, потом новый обход
   const order = visitOrder();
   await KD.scene.moveIn(
     order,
