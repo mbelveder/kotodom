@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://springs-investors-bufing-westminster.trycloudflare.com";
+window.KOTODOM_API = "https://contributions-available-obtaining-coordinated.trycloudflare.com";
