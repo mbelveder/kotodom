@@ -106,6 +106,7 @@ function totals(){
 }
 let hadDiscount = false;
 function refresh(){
+  syncTunnels();
   const t = totals();
   sumOut.textContent = fmt(t.total);
   discOut.textContent = t.disc ? `скидка 5% (−${fmt(t.disc)}) 🎉` : (t.count ? `модулей: ${t.count}` : "");
@@ -121,11 +122,36 @@ function refresh(){
 /* ---------- операции ---------- */
 function snapshot(){ undoStack.push(grid.slice()); if (undoStack.length > 40) undoStack.shift(); }
 
+/* тоннель: с соседом в ряду — вдоль ряда, одиночный — входом к зрителю */
+function tunnelAxis(i){
+  const col = i % COLS;
+  const left = col > 0 && grid[i - 1];
+  const right = col < COLS - 1 && grid[i + 1];
+  return (left || right) ? "x" : "z";
+}
+const tunnelAxes = {};
+function syncTunnels(){
+  for (let i = 0; i < N; i++){
+    if (grid[i] !== "tunnel"){ delete tunnelAxes[i]; continue; }
+    const want = tunnelAxis(i);
+    if (tunnelAxes[i] !== want){
+      KD.scene.remove(i);
+      KD.scene.place(i, "tunnel", true, { tunnelAxis: want });
+      tunnelAxes[i] = want;
+    }
+  }
+}
+
 function place(i, type, opts){
   const evicted = KD.scene.isCatSettled();
   KD.scene.catLeave();
   grid[i] = type;
-  KD.scene.place(i, type, opts && opts.instant);
+  if (type === "tunnel"){
+    tunnelAxes[i] = tunnelAxis(i);
+    KD.scene.place(i, type, opts && opts.instant, { tunnelAxis: tunnelAxes[i] });
+  } else {
+    KD.scene.place(i, type, opts && opts.instant);
+  }
   if (!opts || !opts.silent){
     popSound();
     say(evicted ? "Ремонт? Ладно, подожду снаружи." : pick(MODULES[type].say));

@@ -53,7 +53,7 @@ let popAnims = [];         // {anchor, t0, dur}
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
 
-function makeModule(type, parent){
+function makeModule(type, parent, opts){
   const a = new Zdog.Anchor({ addTo: parent });
   const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
   const B = CELL / 2;    // низ ячейки: всё стоит на нём
@@ -74,9 +74,10 @@ function makeModule(type, parent){
       stroke:10, fill:true, color:P.cushion });
   }
   else if (type === "tunnel"){
-    // слегка развёрнут, чтобы был виден тёмный вход; лежит на полу ячейки
+    // ось: "x" — соединяет соседние модули, "z" — одиночный, входом к зрителю
     const D = S*0.78;
-    const t = new Zdog.Anchor({ addTo:a, rotate:{ y:-0.55 }, translate:{ y: B - D/2 - 1 } });
+    const t = new Zdog.Anchor({ addTo:a, translate:{ y: B - D/2 - 1 },
+      rotate:{ y: (opts && opts.tunnelAxis === "z") ? TAU/4 : 0 } });
     new Zdog.Cylinder({ addTo:t, diameter:D, length:S+2,
       rotate:{ y:TAU/4 }, color:P.wood, frontFace:P.hole, backface:P.hole, stroke:false });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:(S+2)/2 },
@@ -241,7 +242,10 @@ function build(){
     element: canvas, zoom: 1.06, dragRotate: false,
   });
   world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: 14, y: -44 } });
-  makeRoom(world);
+  // комната — единая Group: рисуется целиком ДО домика и кота,
+  // чтобы большие плоскости (пол, ковёр) не перекрывали модули при сортировке
+  const roomG = new Zdog.Group({ addTo: world });
+  makeRoom(roomG);
   houseA = new Zdog.Anchor({ addTo: world, translate:{ z: 6 } });
   ghostA = new Zdog.Anchor({ addTo: world, translate:{ z: 6 } });
   peekA  = new Zdog.Anchor({ addTo: world, translate:{ z: 6 } });
@@ -273,8 +277,8 @@ api.restore = function(grid){
   grid.forEach((t, i) => { if (t) api.place(i, t, true); });
 };
 
-api.place = function(i, type, instant){
-  const a = makeModule(type, houseA);
+api.place = function(i, type, instant, opts){
+  const a = makeModule(type, houseA, opts);
   a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
   moduleAnchors[i] = a;
   if (!instant && !REDUCED){
@@ -373,13 +377,13 @@ api.moveIn = async function(visits, onVisit, onDone){
   catSettled = false;
   catA.group.scale.set({ x:1, y:1, z:1 });
   catA.rotate.y = 0;
-  // вход из-за правого края
-  catA.translate.set({ x: 380, y: GROUND - 16, z: 40 });
+  // вход из-за левого края (справа стоит растение — не бежим «сквозь» него)
+  catA.translate.set({ x: -380, y: GROUND - 16, z: 40 });
   const first = visits[0];
   // подбежать к первому модулю
   const fx = cellX(colOf(first)), fy = cellY(rowOf(first));
   await tween(REDUCED ? 1 : 900, t => {
-    catA.translate.x = tw(380, fx + CELL*0.9, easeOut(t));
+    catA.translate.x = tw(-380, fx - CELL*0.9, easeOut(t));
     catA.translate.y = GROUND - 16 - Math.abs(Math.sin(t * TAU * 1.5)) * 10;
   });
   // обнюхать
@@ -417,10 +421,10 @@ api.catLeave = function(){
   if (!catSettled) return leaving || Promise.resolve();
   catSettled = false;
   leaving = (async () => {
-    const exitX = 330;
+    const exitX = -330;
     await hopTo(exitX, GROUND - 16, REDUCED ? 1 : 460);
     await tween(REDUCED ? 1 : 420, t => {
-      catA.translate.x = tw(exitX, 430, t);
+      catA.translate.x = tw(exitX, -430, t);
       catA.translate.y = GROUND - 16 - Math.abs(Math.sin(t * TAU * 1.2)) * 8;
     });
     parkCat(); dirty = true;
