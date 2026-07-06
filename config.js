@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://api.trycloudflare.com";
+window.KOTODOM_API = "https://devel-acknowledge-discussing-mime.trycloudflare.com";
