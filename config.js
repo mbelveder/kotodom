@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://menus-seriously-finest-philosophy.trycloudflare.com";
+window.KOTODOM_API = "https://derby-appendix-stronger-ceremony.trycloudflare.com";
