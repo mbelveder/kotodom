@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://alone-journals-yesterday-booth.trycloudflare.com";
+window.KOTODOM_API = "https://administered-orbit-material-receiving.trycloudflare.com";
