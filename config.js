@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://save-stays-deputy-gamma.trycloudflare.com";
+window.KOTODOM_API = "https://slight-types-south-innovation.trycloudflare.com";
