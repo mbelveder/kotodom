@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://domains-gazette-declaration-pac.trycloudflare.com";
+window.KOTODOM_API = "https://designation-opponent-from-song.trycloudflare.com";
