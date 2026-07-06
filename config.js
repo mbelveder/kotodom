@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://statement-virginia-dicke-tactics.trycloudflare.com";
+window.KOTODOM_API = "https://domains-gazette-declaration-pac.trycloudflare.com";
