@@ -49,7 +49,7 @@ $("#btnOrder").addEventListener("click", () => {
   const t = KD.configurator.totals();
   open(`
     <h3>Ваш КотоДом</h3>
-    <p class="m-sub">Проверьте состав и оставьте контакты — Смотритель примет заказ.</p>
+    <p class="m-sub">Проверьте состав и оставьте контакты — Момо примет заказ.</p>
     <ul class="order-lines">
       ${lines.map(l => `<li><span>${l.name} × ${l.n}</span><span class="n">${fmt(l.sum)}</span></li>`).join("")}
       ${t.disc ? `<li><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n">−${fmt(t.disc)}</span></li>` : ""}
@@ -131,7 +131,7 @@ function successStep(orderId){
     </div>
     <h3 style="text-align:center">Заказ принят!</h3>
     <div class="order-id">${orderId}</div>
-    <p class="m-sub" style="text-align:center">Смотритель уже отправил заказ владельцу в Telegram.
+    <p class="m-sub" style="text-align:center">Момо уже отправил заказ владельцу в Telegram.
        Мару шлёт довольное «мяу» и просит собрать домик поскорее.</p>
     <button class="btn btn-aka" style="width:100%" onclick="document.getElementById('modalBack').classList.remove('open')">Отлично!</button>
   `);

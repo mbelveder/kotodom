@@ -1,4 +1,4 @@
-/* КотоДом — чат со Смотрителем (SSE через backend) */
+/* КотоДом — чат с Момо (SSE через backend) */
 "use strict";
 (function(){
 const $ = s => document.querySelector(s);
@@ -45,7 +45,7 @@ fab.addEventListener("click", () => {
     input.focus();
     if (!greeted){
       greeted = true;
-      add("bot", "Мяу! Я Смотритель — веду этот магазин. Спрашивайте про модули, цены, доставку или вашу сборку в конфигураторе. Отвечаю честно: я ИИ, но в домиках разбираюсь.");
+      add("bot", "Мяу! Я Момо — веду этот магазин. Спрашивайте про модули, цены, доставку или вашу сборку в конфигураторе. Отвечаю честно: я ИИ, но в домиках разбираюсь.");
       health();
     }
   }
@@ -59,7 +59,7 @@ async function ask(){
   history.push({ role: "user", content: text });
 
   if (!KD.API){
-    add("sys", "Смотритель недоступен: backend не настроен (нет адреса API).");
+    add("sys", "Момо недоступен: backend не настроен (нет адреса API).");
     return;
   }
   busy = true; send.disabled = true;
@@ -100,17 +100,17 @@ async function ask(){
         }catch(_){}
       }
     }
-    if (!full){ botEl.textContent = "…Смотритель задумался и промолчал. Попробуйте ещё раз."; }
+    if (!full){ botEl.textContent = "…Момо задумался и промолчал. Попробуйте ещё раз."; }
     else {
       history.push({ role: "assistant", content: full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trim() });
       // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
       if (full.includes("[[ESCALATE]]")){
-        add("sys", "Смотритель позвал человека — владелец магазина получил уведомление в Telegram.");
+        add("sys", "Момо позвал человека — владелец магазина получил уведомление в Telegram.");
       }
     }
     setOnline(true);
   }catch(e){
-    botEl.textContent = "Не получилось связаться со Смотрителем. Проверьте, запущен ли сервер (server/run.sh).";
+    botEl.textContent = "Не получилось связаться с Момо. Проверьте, запущен ли сервер (server/run.sh).";
     setOnline(false);
   }
   busy = false; send.disabled = false;
