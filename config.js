@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://fix-postal-wires-heaven.trycloudflare.com";
+window.KOTODOM_API = "https://wishing-pool-apnic-brief.trycloudflare.com";
