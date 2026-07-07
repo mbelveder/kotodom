@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://wake-antibodies-heading-handed.trycloudflare.com";
+window.KOTODOM_API = "https://api.trycloudflare.com";
