@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://explaining-mechanics-easier-pie.trycloudflare.com";
+window.KOTODOM_API = "https://retirement-essays-everyday-clara.trycloudflare.com";
