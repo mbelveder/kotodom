@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://wishing-pool-apnic-brief.trycloudflare.com";
+window.KOTODOM_API = "https://customise-refers-secretary-parade.trycloudflare.com";
