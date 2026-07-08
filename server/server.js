@@ -1,4 +1,4 @@
-/* КотоДом — backend: прокси Момо (Polza GLM-5.2) + заказы в Telegram.
+/* Котоши — backend: прокси Момо (Polza GLM-5.2) + заказы в Telegram.
  * Zero-dependency Node ≥18.  Запуск: node server.js  (или ./run.sh с туннелем) */
 "use strict";
 const http = require("http");
@@ -22,6 +22,10 @@ let   TG_CHATS  = (process.env.TG_CHAT_IDS || process.env.TG_CHAT_ID || "")
 const TG_SEC_TOKEN = process.env.TG_SECURITY_BOT_TOKEN || "";
 let   TG_SEC_CHATS = (process.env.TG_SECURITY_CHAT_IDS || "")
                     .split(",").map(s => s.trim()).filter(Boolean);
+/* @koto_operations_bot — чек-лист подзадач с кнопкой подтверждения (long polling, см. ниже) */
+const TG_OPS_TOKEN = process.env.TG_OPS_BOT_TOKEN || "";
+let   TG_OPS_CHATS = (process.env.TG_OPS_CHAT_IDS || "")
+                    .split(",").map(s => s.trim()).filter(Boolean);
 const MODEL     = process.env.KD_MODEL || "z-ai/glm-5.2";
 const PORT      = +(process.env.PORT || 8787);
 const POLZA     = "https://api.polza.ai/api/v1";
@@ -30,12 +34,17 @@ const POLZA     = "https://api.polza.ai/api/v1";
 const HERMES_URL = process.env.HERMES_URL || "http://127.0.0.1:8642/v1";
 const HERMES_KEY = process.env.HERMES_KEY || "";
 const HERMES_OPS = process.env.HERMES_OPS === "1";
+/* заказ обычно укладывается в ~210s (5 турнов GLM-5.2 + браузер), но бывает медленнее
+   (задержки Polza, лимит расходов) — таймаут с запасом, иначе клиент обрывает fetch
+   раньше, чем агент реально закончит, и шлёт ложное "не смог обработать" */
+const HERMES_OPS_TIMEOUT_MS = +(process.env.HERMES_OPS_TIMEOUT_MS || 420_000);
 /* KD_UPSTREAM=hermes — Момо на сайте отвечает через Hermes-агента (медленнее, но со скиллами) */
 const UPSTREAM   = process.env.KD_UPSTREAM === "hermes" ? "hermes" : "polza";
 
 if (!POLZA_KEY) console.warn("⚠ POLZA_API_KEY не задан — чат Момо работать не будет");
 if (!TG_TOKEN)  console.warn("⚠ TG_BOT_TOKEN не задан — заказы будут только логироваться локально");
 if (HERMES_OPS && !HERMES_KEY) console.warn("⚠ HERMES_OPS=1, но HERMES_KEY не задан");
+if (HERMES_OPS && !TG_OPS_TOKEN) console.warn("⚠ TG_OPS_BOT_TOKEN не задан — кнопка подтверждения подзадач работать не будет");
 
 /* ---------- каталог (цены проверяются на сервере) ---------- */
 const CATALOG = {
@@ -48,7 +57,7 @@ const fmt = n => n.toLocaleString("ru-RU") + " ₽";
 
 /* ---------- системный промпт Момо ---------- */
 function systemPrompt(configSummary){
-  return `Ты — «Момо», усатый ИИ-консультант интернет-магазина «КотоДом» (модульные домики для котов из берёзовой фанеры). Ты вежливый, тёплый, экспертный консультант. Это ДЕМО-магазин: оплата не настоящая, о чём можно честно сказать, если спросят.
+  return `Ты — «Момо», усатый ИИ-консультант интернет-магазина «Котоши» (модульные домики для котов из берёзовой фанеры). Ты вежливый, тёплый, экспертный консультант. Это ДЕМО-магазин: оплата не настоящая, о чём можно честно сказать, если спросят.
 
 ГОЛОС БРЕНДА:
 - Обращение на «вы» (с маленькой буквы). Без канцелярита («осуществляется доставка» → «доставим»).
@@ -128,14 +137,160 @@ function tgSecurity(text){
    Hermes раньше именно так и разложил демо-заказ на «собрать дерево», «нагрузочный тест
    20 кг», «оформить отгрузку через перевозчика», «дождаться оплаты» — реальные логистические
    подзадачи для ДЕМО-магазина без настоящей оплаты и без физического производства).
-   Фактическую обработку заказа выполняет hermesOps() ниже, через skill kotodom-operations. */
+   Фактическую обработку заказа выполняет hermesOps() ниже, через skill kotoshi-operations. */
+/* orderId → kanban task id, чтобы кнопка подтверждения могла оставить комментарий
+   на нужной карточке. Переживает рестарт сервера (файл рядом с orders.log). */
+const KANBAN_MAP_PATH = path.join(__dirname, "kanban-map.json");
+let kanbanMap = {};
+try{ kanbanMap = JSON.parse(fs.readFileSync(KANBAN_MAP_PATH, "utf8")); }catch(_){}
+function saveKanbanMap(){ fs.writeFile(KANBAN_MAP_PATH, JSON.stringify(kanbanMap), () => {}); }
+
 function kanbanCard(orderId, title, body){
   if (!HERMES_OPS) return;
-  execFile("hermes", ["kanban", "create", `${orderId} — ${title}`, "--body", body, "--initial-status", "blocked"],
+  execFile("hermes", ["kanban", "create", `${orderId} — ${title}`, "--body", body, "--initial-status", "blocked", "--json"],
     { timeout: 20_000 }, (err, stdout) => {
-      if (err) log(`kanban error: ${err.message}`);
-      else log(`kanban: ${String(stdout).trim().split("\n")[0]}`);
+      if (err) return log(`kanban error: ${err.message}`);
+      try{
+        const id = JSON.parse(stdout).id;
+        if (id){ kanbanMap[orderId] = id; saveKanbanMap(); log(`kanban: ${id}`); }
+        else log(`kanban: ${String(stdout).trim().split("\n")[0]}`);
+      }catch(_){ log(`kanban: ${String(stdout).trim().split("\n")[0]}`); }
     });
+}
+
+/* ---------- @koto_operations_bot: чек-лист подзадач с кнопкой подтверждения ----------
+   Отправка и обработка нажатия — детерминированный код (не LLM): инлайн-клавиатуру
+   надёжнее собирать JSON'ом здесь, чем просить агента вручную URL-кодировать её внутри
+   browser_navigate. Получение нажатий — long polling (тот же паттерн, что и у самого
+   Hermes-гейтвея для telegram), не webhook — независимо от туннеля cloudflared, чей
+   URL меняется при каждом рестарте. */
+async function tgOpsCall(method, params){
+  if (!TG_OPS_TOKEN) return null;
+  try{
+    const r = await fetch(`https://api.telegram.org/bot${TG_OPS_TOKEN}/${method}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params)
+    });
+    const j = await r.json();
+    if (!j.ok) log(`TG ops ${method} error: ` + JSON.stringify(j).slice(0, 200));
+    return j;
+  }catch(e){ log(`TG ops ${method} error: ` + e.message); return null; }
+}
+async function sendOpsApproval(orderId, checklist){
+  if (!TG_OPS_TOKEN) return;
+  let chats = TG_OPS_CHATS;
+  if (!chats.length){
+    const seen = await tgDiscoverChats(TG_OPS_TOKEN);
+    if (!seen.size){ log("TG ops: напишите боту любое сообщение, чтобы я узнал chat_id"); return; }
+    chats = TG_OPS_CHATS = [...seen.keys()];
+  }
+  const text = `🧰 <b>Заказ ${orderId}: подзадачи</b>\n\n${checklist}\n\nНажмите кнопку, когда всё выполнено.`;
+  for (const chat of chats){
+    await tgOpsCall("sendMessage", {
+      chat_id: chat, text, parse_mode: "HTML",
+      reply_markup: { inline_keyboard: [[{ text: "✅ Подзадачи выполнены", callback_data: `ops_confirm:${orderId}` }]] }
+    });
+  }
+}
+/* orderId ожидающий трек-номер → { chatId, requestMsgId }. Матчим ответ исполнителя
+   через reply_to_message_id (надёжно при нескольких заказах в одном чате одновременно);
+   если он не нажал "Ответить" — фоллбек на "если для этого чата ждём ровно один заказ,
+   бери его". Переживает рестарт (файл рядом с kanban-map.json). */
+const PENDING_TRACK_PATH = path.join(__dirname, "pending-track.json");
+let pendingTrack = {};
+try{ pendingTrack = JSON.parse(fs.readFileSync(PENDING_TRACK_PATH, "utf8")); }catch(_){}
+function savePendingTrack(){ fs.writeFile(PENDING_TRACK_PATH, JSON.stringify(pendingTrack), () => {}); }
+
+async function handleOpsConfirm(cq){
+  const orderId = cq.data.slice("ops_confirm:".length);
+  const chatId = String(cq.message.chat.id);
+  if (TG_OPS_CHATS.length && !TG_OPS_CHATS.includes(chatId)){
+    return tgOpsCall("answerCallbackQuery", { callback_query_id: cq.id, text: "Нет доступа", show_alert: true });
+  }
+  const who = [cq.from.first_name, cq.from.last_name].filter(Boolean).join(" ") || cq.from.username || String(cq.from.id);
+  const when = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  await tgOpsCall("answerCallbackQuery", { callback_query_id: cq.id, text: "Подтверждено ✅" });
+  /* меняем только клавиатуру — так исходный текст (жирный, эмодзи) не теряется:
+     Telegram отдаёт message.text уже без HTML-разметки, пересборка сообщения из него
+     потеряла бы форматирование */
+  await tgOpsCall("editMessageReplyMarkup", {
+    chat_id: cq.message.chat.id, message_id: cq.message.message_id,
+    reply_markup: { inline_keyboard: [[{ text: `✅ ${who}, ${when}`, callback_data: "noop" }]] }
+  });
+  const taskId = kanbanMap[orderId];
+  if (taskId) execFile("hermes", ["kanban", "comment", taskId,
+    `Подзадачи подтверждены исполнителем (${who}) через кнопку в @koto_operations_bot, ${when}.`],
+    { timeout: 20_000 }, err => { if (err) log(`kanban comment error: ${err.message}`); });
+  const req = await tgOpsCall("sendMessage", {
+    chat_id: cq.message.chat.id,
+    text: `📦 Заказ <b>${orderId}</b>: пришлите трек-номер отправки ответом на это сообщение.`,
+    parse_mode: "HTML"
+  });
+  if (req && req.ok){
+    pendingTrack[orderId] = { chatId, requestMsgId: req.result.message_id, t: Date.now() };
+    savePendingTrack();
+  }
+  log(`ops confirm: order=${orderId} by=${who} kanban=${taskId || "?"}`);
+}
+async function handleOpsMessage(msg){
+  const chatId = String(msg.chat.id);
+  if (TG_OPS_CHATS.length && !TG_OPS_CHATS.includes(chatId)) return;
+  const text = (msg.text || "").trim();
+  if (!text) return;
+  const replyId = msg.reply_to_message && msg.reply_to_message.message_id;
+  let orderId = replyId && Object.keys(pendingTrack).find(id =>
+    pendingTrack[id].chatId === chatId && pendingTrack[id].requestMsgId === replyId);
+  if (!orderId){
+    const waiting = Object.keys(pendingTrack).filter(id => pendingTrack[id].chatId === chatId);
+    if (waiting.length === 1) orderId = waiting[0]; // единственный ожидаемый в чате — принимаем без reply
+  }
+  if (!orderId) return; // не трек-номер, а обычное сообщение — игнорируем
+  delete pendingTrack[orderId];
+  savePendingTrack();
+  const trackNumber = text.slice(0, 100);
+  await tgOpsCall("sendMessage", {
+    chat_id: chatId, parse_mode: "HTML",
+    text: `🚚 <b>Заказ ${orderId}</b>: начал отслеживать статус доставки.\n\nТрек: <code>${esc(trackNumber)}</code>`
+  });
+  tg(`📋 Заказ <b>${orderId}</b> передан в доставку. Трек: ${esc(trackNumber)}`);
+  const taskId = kanbanMap[orderId];
+  if (taskId) execFile("hermes", ["kanban", "comment", taskId, `Трек-номер получен: ${trackNumber}. Начато отслеживание доставки.`],
+    { timeout: 20_000 }, err => { if (err) log(`kanban comment error: ${err.message}`); });
+  log(`ops track: order=${orderId} track=${trackNumber}`);
+  // Этап 3 (черновик клиенту голосом бренда) всё ещё нужен LLM — остальное сервер уже сделал сам
+  hermesOps(`[KOTOSHI TRACK] Открой skill kotoshi-operations (skill_view) и выполни ТОЛЬКО Этап 3 (черновик клиенту в DM Мише). Уведомления в @koto_operations_bot и @koto_module_bot сервер уже отправил сам — не повторяй их.\n` +
+    JSON.stringify({ orderId, trackNumber }), "track " + orderId)
+    .then(({ ok, text: draft, reason }) => {
+      if (draft) tg(`👾 <b>Hermes: черновик по заказу ${orderId}</b>\n\n${mdBoldToHtml(esc(draft.slice(0, 3000)))}`);
+      else if (!ok) log(`hermes track ${orderId} error: ${reason}`);
+    });
+}
+let opsOffset = 0;
+const OPS_OFFSET_PATH = path.join(__dirname, "ops-bot-offset.json");
+try{ opsOffset = JSON.parse(fs.readFileSync(OPS_OFFSET_PATH, "utf8")).offset || 0; }catch(_){}
+async function pollOpsBot(){
+  if (!TG_OPS_TOKEN) return;
+  try{
+    const r = await fetch(
+      `https://api.telegram.org/bot${TG_OPS_TOKEN}/getUpdates?timeout=25&offset=${opsOffset}&allowed_updates=%5B%22callback_query%22%2C%22message%22%5D`,
+      { signal: AbortSignal.timeout(30_000) }
+    );
+    const j = await r.json();
+    if (j.ok){
+      for (const u of j.result || []){
+        opsOffset = u.update_id + 1;
+        if (u.callback_query){
+          const cq = u.callback_query;
+          if (typeof cq.data !== "string") continue;
+          if (cq.data.startsWith("ops_confirm:")) await handleOpsConfirm(cq);
+          else await tgOpsCall("answerCallbackQuery", { callback_query_id: cq.id });
+        } else if (u.message){
+          await handleOpsMessage(u.message);
+        }
+      }
+      fs.writeFile(OPS_OFFSET_PATH, JSON.stringify({ offset: opsOffset }), () => {});
+    }
+  }catch(e){ log("TG ops poll error: " + e.message); }
+  setTimeout(pollOpsBot, 1000);
 }
 
 /* ---------- Hermes: операционный агент ---------- */
@@ -147,7 +302,7 @@ async function hermesOps(prompt, tag){
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + HERMES_KEY },
       body: JSON.stringify({ model: "hermes-agent", messages: [{ role: "user", content: prompt }] }),
-      signal: AbortSignal.timeout(180_000)
+      signal: AbortSignal.timeout(HERMES_OPS_TIMEOUT_MS)
     });
     if (!r.ok){
       const errBody = await r.text().catch(() => "");
@@ -161,7 +316,10 @@ async function hermesOps(prompt, tag){
     return { ok: true, text: (text || "").trim() || null };
   }catch(e){
     log(`hermes ${tag} error: ` + e.message);
-    return { ok: false, text: null, reason: e.message };
+    /* AbortSignal.timeout не отменяет обработку на стороне Hermes — агент мог доделать
+       заказ (и сам уведомить в telegram) уже после того, как клиент перестал ждать.
+       Не выдаём это за реальную ошибку. */
+    return { ok: false, text: null, reason: e.message, timedOut: e.name === "TimeoutError" };
   }
 }
 
@@ -270,20 +428,21 @@ const server = http.createServer(async (req, res) => {
       res.end();
       if (full.includes("[[ATTACK]]")){
         const lastUser = clean.filter(m => m.role === "user").pop();
-        tgSecurity(`🛡️ <b>КотоДом: ПОПЫТКА АТАКИ на чат</b>\n\nСообщение: «${esc((lastUser ? lastUser.content : "?").slice(0, 600))}»\n\nОтвет Момо: «${esc(full.replace(/\[\[(ATTACK|ESCALATE)\]\]/g, "").trim().slice(0, 400))}»\n\nIP-класс: ${esc(ip.replace(/^.*:/, "").slice(0, 20))}`);
+        tgSecurity(`🛡️ <b>Котоши: ПОПЫТКА АТАКИ на чат</b>\n\nСообщение: «${esc((lastUser ? lastUser.content : "?").slice(0, 600))}»\n\nОтвет Момо: «${esc(full.replace(/\[\[(ATTACK|ESCALATE)\]\]/g, "").trim().slice(0, 400))}»\n\nIP-класс: ${esc(ip.replace(/^.*:/, "").slice(0, 20))}`);
         log("ATTACK detected → Telegram (security bot)");
       }
       if (full.includes("[[ESCALATE]]")){
         const lastUser = clean.filter(m => m.role === "user").pop();
         const userText = lastUser ? lastUser.content : "?";
         const botText = full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trim().slice(0, 500);
-        tg(`🚨 <b>КотоДом: нужен человек</b>\n\nКлиент: «${esc(userText)}»\n\nМомо: «${esc(botText)}»`);
+        tg(`🚨 <b>Котоши: нужен человек</b>\n\nКлиент: «${esc(userText)}»\n\nМомо: «${esc(botText)}»`);
         log("ESCALATE → Telegram");
-        // Hermes-агент готовит рекомендацию по регламенту (skill kotodom-operations)
+        // Hermes-агент готовит рекомендацию по регламенту (skill kotoshi-operations)
         if (HERMES_OPS && HERMES_KEY) tg(`👾 Hermes: начинаю разбор эскалации...`);
-        hermesOps(`[KOTODOM ESCALATION] Открой skill kotodom-operations (skill_view) и действуй строго по разделу «Эскалация».\nКлиент: «${userText}»\nОтвет Момо: «${botText}»`, "escalation")
-          .then(({ ok, text, reason }) => {
-            if (text) tg(`👾 <b>Hermes: разбор эскалации</b>\n\n${esc(text.slice(0, 3000))}`);
+        hermesOps(`[KOTOSHI ESCALATION] Открой skill kotoshi-operations (skill_view) и действуй строго по разделу «Эскалация».\nКлиент: «${userText}»\nОтвет Момо: «${botText}»`, "escalation")
+          .then(({ ok, text, reason, timedOut }) => {
+            if (text) tg(`👾 <b>Hermes: разбор эскалации</b>\n\n${mdBoldToHtml(esc(text.slice(0, 3000)))}`);
+            else if (timedOut) tg(`⏳ <b>Hermes: разбор эскалации занимает дольше обычного</b>\nОтвет не получен за ${Math.round(HERMES_OPS_TIMEOUT_MS / 1000)}s, но агент мог доделать задачу самостоятельно — проверь последние уведомления.`);
             else if (!ok && HERMES_OPS && HERMES_KEY) tg(`⚠️ <b>Hermes не смог разобрать эскалацию</b>\n${esc((reason || "см. orders.log").slice(0, 300))}`);
           });
       }
@@ -302,9 +461,9 @@ const server = http.createServer(async (req, res) => {
       const count = lines.reduce((s, l) => s + l.n, 0);
       const disc = count >= 5 ? Math.round(sum * 0.05) : 0;
       const total = sum - disc;
-      const orderId = "КД-" + Date.now().toString(36).toUpperCase().slice(-5);
+      const orderId = "КШ-" + Date.now().toString(36).toUpperCase().slice(-5);
       const txt = [
-        `🐾 <b>КотоДом: новый заказ ${orderId}</b> <i>(демо)</i>`,
+        `🐾 <b>Котоши: новый заказ ${orderId}</b> <i>(демо)</i>`,
         "",
         ...lines.map(l => `• ${CATALOG[l.type].name} × ${l.n} — ${fmt(CATALOG[l.type].price * l.n)}`),
         disc ? `• Скидка 5%: −${fmt(disc)}` : null,
@@ -322,15 +481,20 @@ const server = http.createServer(async (req, res) => {
       kanbanCard(orderId, `${c.name}, ${fmt(total)}`,
         lines.map(l => `${CATALOG[l.type].name}×${l.n}`).join(", ") +
         `; контакт: ${c.contact}; адрес: ${c.address}` + (c.comment ? `; коммент: ${c.comment}` : ""));
+      // чек-лист подзадач + кнопка подтверждения — детерминированно, без участия модели
+      sendOpsApproval(orderId,
+        ["• Сборка модулей", "• QA-тест (нагрузка, зазоры, покрытие)", "• Упаковка", "• Маркировка"].join("\n") +
+        (c.comment ? `\n\n💬 Комментарий клиента: ${esc(c.comment)}` : ""));
       // Hermes-агент обрабатывает заказ по регламенту (проверка, kanban, черновик подтверждения)
       if (HERMES_OPS && HERMES_KEY) tg(`👾 Hermes: начинаю обработку заказа ${orderId}...`);
-      hermesOps(`[KOTODOM ORDER] Открой skill kotodom-operations (skill_view) и выполни ВСЕ его шаги для этого заказа, включая отправку подзадач в telegram-бот и уведомление об этом — ничего не пропускай.\n` + JSON.stringify({
+      hermesOps(`[KOTOSHI ORDER] Открой skill kotoshi-operations (skill_view) и выполни его шаги для этого заказа (проверка состава, подтверждение клиенту). Подзадачи и кнопку подтверждения сервер уже отправил в @koto_operations_bot — этот шаг НЕ повторяй.\n` + JSON.stringify({
         orderId, total, disc,
         lines: lines.map(l => ({ модуль: CATALOG[l.type].name, шт: l.n, сумма: CATALOG[l.type].price * l.n })),
         клиент: { имя: c.name, контакт: c.contact, адрес: c.address, комментарий: c.comment || "" }
       }, null, 1), "order " + orderId)
-        .then(({ ok, text, reason }) => {
-          if (text) tg(`👾 <b>Hermes: заказ ${orderId} обработан</b>\n\n${esc(text.slice(0, 3000))}`);
+        .then(({ ok, text, reason, timedOut }) => {
+          if (text) tg(`👾 <b>Hermes: заказ ${orderId} обработан</b>\n\n${mdBoldToHtml(esc(text.slice(0, 3000)))}`);
+          else if (timedOut) tg(`⏳ <b>Hermes: заказ ${orderId} обрабатывается дольше обычного</b>\nОтвет не получен за ${Math.round(HERMES_OPS_TIMEOUT_MS / 1000)}s, но агент мог доделать задачу самостоятельно — проверь канбан и последние уведомления.`);
           else if (!ok && HERMES_OPS && HERMES_KEY) tg(`⚠️ <b>Hermes не смог обработать заказ ${orderId}</b>\n${esc((reason || "см. orders.log").slice(0, 300))}`);
         });
       return json(res, 200, { ok: true, orderId, total, telegram: sent });
@@ -344,7 +508,14 @@ const server = http.createServer(async (req, res) => {
 });
 
 function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+/* Hermes-агент по привычке пишет **жирный** (Markdown), а не <b>жирный</b> (HTML) — так
+   отвечает почти любая LLM, даже когда skill явно просит HTML. Вместо того чтобы полагаться
+   на то, что модель ни разу не собьётся, конвертируем сами: esc() сначала (чтобы случайные
+   "<"/">" в тексте агента не сломали parse_mode=HTML), потом ** → <b>, уже поверх
+   экранированного текста — звёздочки экранированием не затрагиваются. */
+function mdBoldToHtml(escapedText){ return escapedText.replace(/\*\*(.+?)\*\*/gs, "<b>$1</b>"); }
 
 server.listen(PORT, () => {
-  console.log(`КотоДом backend: http://localhost:${PORT}  (модель: ${MODEL}, telegram: ${TG_TOKEN ? "да" : "нет"})`);
+  console.log(`Котоши backend: http://localhost:${PORT}  (модель: ${MODEL}, telegram: ${TG_TOKEN ? "да" : "нет"})`);
 });
+pollOpsBot();

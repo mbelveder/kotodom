@@ -1,4 +1,4 @@
-/* КотоДом — галерея, оформление заказа (демо-оплата), Telegram-уведомление */
+/* Котоши — галерея, оформление заказа (демо-оплата), Telegram-уведомление */
 "use strict";
 (function(){
 const $ = s => document.querySelector(s);
@@ -8,7 +8,7 @@ const fmt = KD.fmt;
 /* ---------- галерея ---------- */
 const GALLERY = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Старт»",
-    ds: "Первый куб-нора и когтеточка. С этого начинается любой КотоДом — остальное докупается, когда захочется." },
+    ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
   { img: "assets/render_wide.jpg", preset: "wide", nm: "«Мост»",
     ds: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек, засад и послеобеденного сна." },
   { img: "assets/render_tower.jpg", preset: "tower", nm: "«Башня»",
@@ -48,7 +48,7 @@ $("#btnOrder").addEventListener("click", () => {
   if (!lines.length) return;
   const t = KD.configurator.totals();
   open(`
-    <h3>Ваш КотоДом</h3>
+    <h3>Ваш Котоши</h3>
     <p class="m-sub">Проверьте состав и оставьте контакты — Момо примет заказ.</p>
     <ul class="order-lines">
       ${lines.map(l => `<li><span>${l.name} × ${l.n}</span><span class="n">${fmt(l.sum)}</span></li>`).join("")}
@@ -108,7 +108,7 @@ function payStep(order){
       });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json();
-      successStep(j.orderId || "КД-????");
+      successStep(j.orderId || "КШ-????");
     }catch(e){
       btn.disabled = false; btn.textContent = `Оплатить ${fmt(order.total)}`;
       err.textContent = e.message === "no-api"
@@ -121,18 +121,12 @@ function payStep(order){
 function successStep(orderId){
   open(`
     <div class="success-cat">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="30" fill="var(--sakura)"/>
-        <path d="M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z" fill="#FFFDF8" stroke="var(--ink)" stroke-width="1.2"/>
-        <circle cx="32" cy="36" r="17" fill="#FFFDF8" stroke="var(--ink)" stroke-width="1.2"/>
-        <path d="M25 34 q2 3 4 0 M35 34 q2 3 4 0" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <path d="M29 41 q3 3 6 0" stroke="var(--aka)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-      </svg>
+      <img src="assets/logo-momo.png" alt="">
     </div>
     <h3 style="text-align:center">Заказ принят!</h3>
     <div class="order-id">${orderId}</div>
     <p class="m-sub" style="text-align:center">Момо уже отправил заказ владельцу в Telegram.
-       Мару шлёт довольное «мяу» и просит собрать домик поскорее.</p>
+       Момо шлёт довольное «мяу» и просит собрать домик поскорее.</p>
     <button class="btn btn-aka" style="width:100%" onclick="document.getElementById('modalBack').classList.remove('open')">Отлично!</button>
   `);
 }

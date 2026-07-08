@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>КотоДом — модульные домики для котов</title>
+<title>Котоши — модульные домики для котов</title>
 <meta name="description" content="Соберите домик для кота из модулей — как конструктор. Начните с одного куба и расширяйте, когда кот захочет больше.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23C7423A'/%3E%3Cpath d='M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z' fill='%23FFFBF3'/%3E%3Ccircle cx='32' cy='36' r='17' fill='%23FFFBF3'/%3E%3Cpath d='M25 34 q2 3 4 0 M35 34 q2 3 4 0' stroke='%232E2A33' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M30 40 q2 2 4 0' stroke='%23C7423A' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="assets/logo-momo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&family=Comfortaa:wght@700&family=Nunito:wght@400;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
@@ -15,8 +15,8 @@
 
 <header class="site-head">
   <div class="wrap">
-    <div class="hanko" aria-hidden="true">猫</div>
-    <div class="brand disp">КотоДом<small>модульные домики</small></div>
+    <div class="hanko" aria-hidden="true"><img src="assets/logo-momo.png" alt=""></div>
+    <div class="brand disp">Котоши<small>модульные домики</small></div>
     <nav class="head-nav">
       <a href="#builder">Конструктор</a>
       <a href="#gallery" class="hide-m">Готовые</a>
@@ -29,8 +29,8 @@
 <main>
 
 <div class="hero wrap">
-  <div class="eyebrow"><span class="jp">ねこのいえ</span>модульные домики для котов</div>
-  <h1>Дом, который растёт вместе с котом</h1>
+  <div class="eyebrow"><span class="jp">ねこのいえ</span>модульные домики для кошек и котов</div>
+  <h1>Домик, который растёт вместе с вашим питомцем</h1>
   <p>Начните с одного куба-норы — и добавляйте тоннели, башни и гамаки,
      когда кот попросит больше. Секции переставляются и докупаются в любой момент.</p>
 </div>
@@ -42,23 +42,23 @@
 <section id="builder">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
-    <h2>Соберите свой — Мару проверит</h2>
-    <p class="sec-sub">Перетаскивайте модули из лотка в комнату — подсвеченные места покажут, куда можно ставить.
+    <h2>Соберите свой — Момо проверит</h2>
+    <p class="sec-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
        Чем интереснее постройка, тем дольше кот будет её обживать. Цены — на модулях, итог считается сам.</p>
   <div class="studio" id="studio">
     <div class="scene-wrap" id="sceneWrap">
       <canvas id="scene" width="980" height="540"></canvas>
-      <div class="maru-say" id="maruSay"><span class="who">Мару</span><span id="maruTxt"></span></div>
+      <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
       <div class="price-tag">
         <div class="lbl">итого</div>
         <div class="sum" id="sumOut">0 ₽</div>
         <div class="disc" id="discOut"></div>
       </div>
     </div>
-    <div class="hint-bar" id="hintBar">Потяните модуль из лотка внизу — подсвеченные места покажут, куда его можно поставить. Клик по модулю в сцене — убрать.</div>
+    <div class="hint-bar" id="hintBar">Потяните модуль внизу — подсвеченные места покажут, куда его можно поставить. Клик по модулю в сцене — убрать.</div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
-      <button class="btn btn-aka" id="btnMoveIn" disabled>Заселить Мару</button>
+      <button class="btn btn-aka" id="btnMoveIn" disabled>Заселить Момо</button>
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>
       <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
       <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
@@ -76,7 +76,7 @@
 <section id="how">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">しくみ</span>магазин, где работает агент</div>
-    <h2>Как устроен КотоДом</h2>
+    <h2>Как устроен Котоши</h2>
     <p class="sec-sub">Магазином управляет ИИ-агент «Момо». Он отвечает на вопросы, принимает заказы
        и зовёт человека, когда нужен человек.</p>
     <div class="steps">
@@ -128,7 +128,7 @@
 
 <footer>
   <div class="wrap">
-    <span>© КотоДом, 2026</span>
+    <span>© Котоши, 2026</span>
     <span>Демо-прототип: заказы и оплата не настоящие.</span>
     <span>Момо — ИИ-агент; сложные вопросы он передаёт человеку.</span>
   </div>
@@ -147,25 +147,16 @@
 
 <!-- chat -->
 <button id="chatFab" aria-label="Чат со Смотрителем">
-  <svg viewBox="0 0 64 64" aria-hidden="true">
-    <path d="M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z" fill="#FFFBF3"/>
-    <circle cx="32" cy="36" r="17" fill="#FFFBF3"/>
-    <path d="M25 34 q2 3 4 0 M35 34 q2 3 4 0" stroke="#2E2A33" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M29 40 q3 3 6 0" stroke="#C7423A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  </svg>
+  <img src="assets/logo-momo.png" alt="">
 </button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-head">
     <div class="ava">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <path d="M18 26 L22 14 L29 22 Z M46 26 L42 14 L35 22 Z" fill="#FFFBF3"/>
-        <circle cx="32" cy="36" r="17" fill="#FFFBF3"/>
-        <path d="M25 34 q2 3 4 0 M35 34 q2 3 4 0" stroke="#2E2A33" stroke-width="2" fill="none" stroke-linecap="round"/>
-      </svg>
+      <img src="assets/logo-momo.png" alt="">
     </div>
     <div>
       <div class="t">Момо</div>
-      <div class="sub">усатый консультант</div>
+      <div class="sub">пушистый консультант</div>
       <div class="s" id="chatStatus"><span class="dot"></span>на связи</div>
     </div>
   </div>

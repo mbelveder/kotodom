@@ -1,4 +1,4 @@
-/* КотоДом — конфигуратор: drag-and-drop, правила, цены, заселение */
+/* Котоши — конфигуратор: drag-and-drop, правила, цены, заселение */
 "use strict";
 (function(){
 const { COLS, ROWS, CELL, MODULES, PRESETS, SAY, ICONS, fmt } = KD;
@@ -14,8 +14,8 @@ const sceneWrap = $("#sceneWrap");
 const canvas = $("#scene");
 const sumOut = $("#sumOut");
 const discOut = $("#discOut");
-const maruSay = $("#maruSay");
-const maruTxt = $("#maruTxt");
+const momoSay = $("#momoSay");
+const momoTxt = $("#momoTxt");
 const btnMoveIn = $("#btnMoveIn");
 const btnOrder = $("#btnOrder");
 const btnUndo = $("#btnUndo");
@@ -41,13 +41,13 @@ function blip(f0, f1, dur, vol){
 const popSound  = () => blip(420, 640, 0.12, 0.06);
 const purrSound = () => { blip(300, 380, 0.3, 0.05); setTimeout(() => blip(380, 480, 0.3, 0.05), 180); };
 
-/* ---------- Мару говорит ---------- */
+/* ---------- Момо говорит ---------- */
 let sayTimer = null;
 function say(text, dur){
-  maruTxt.textContent = " " + text;
-  maruSay.classList.add("show");
+  momoTxt.textContent = " " + text;
+  momoSay.classList.add("show");
   clearTimeout(sayTimer);
-  sayTimer = setTimeout(() => maruSay.classList.remove("show"), dur || 3000);
+  sayTimer = setTimeout(() => momoSay.classList.remove("show"), dur || 3000);
 }
 KD.say = say;
 

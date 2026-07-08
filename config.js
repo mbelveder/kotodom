@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://bras-queensland-intake-thumbnail.trycloudflare.com";
+window.KOTOSHI_API = "https://bras-queensland-intake-thumbnail.trycloudflare.com";

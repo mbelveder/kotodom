@@ -1,4 +1,4 @@
-/* КотоДом — чат с Момо (SSE через backend) */
+/* Котоши — чат с Момо (SSE через backend) */
 "use strict";
 (function(){
 const $ = s => document.querySelector(s);
@@ -10,7 +10,7 @@ const fab = $("#chatFab"), panel = $("#chatPanel"), msgs = $("#chatMsgs"),
    перекрывает только что запушенный туннель */
 const qs = new URLSearchParams(location.search).get("api");
 if (qs){ localStorage.setItem("kd_api", qs.replace(/\/+$/, "")); }
-KD.API = (qs && qs.replace(/\/+$/, "")) || window.KOTODOM_API || localStorage.getItem("kd_api") || "";
+KD.API = (qs && qs.replace(/\/+$/, "")) || window.KOTOSHI_API || localStorage.getItem("kd_api") || "";
 
 const history = [];   // {role, content}
 let busy = false, online = false, greeted = false;

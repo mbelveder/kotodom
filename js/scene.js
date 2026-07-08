@@ -1,4 +1,4 @@
-/* КотоДом — Zdog-сцена: комната, модули, кот Мару */
+/* Котоши — Zdog-сцена: комната, модули, кот Момо */
 "use strict";
 (function(){
 const { COLS, ROWS, CELL, MODULES } = KD;
@@ -128,7 +128,7 @@ function makeModule(type, parent, opts){
   return a;
 }
 
-/* ---------- кот Мару ---------- */
+/* ---------- кот Момо ---------- */
 function makeCat(parent){
   const a = new Zdog.Anchor({ addTo: parent });
   const g = new Zdog.Anchor({ addTo: a });   // масштабируемая группа
@@ -336,7 +336,7 @@ api.pulse = function(i){
   dirty = true;
 };
 
-/* ---------- Мару: анимация заселения ---------- */
+/* ---------- Момо: анимация заселения ---------- */
 function tw(from, to, t){ return from + (to - from) * t; }
 function easeOut(t){ return 1 - Math.pow(1-t, 3); }
 function easeIn(t){ return t*t*t; }

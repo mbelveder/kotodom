@@ -1,4 +1,4 @@
-# КотоДом — демо-магазин модульных домиков для котов
+# Котоши — демо-магазин модульных домиков для котов
 
 Прототип магазина, которым управляет ИИ-агент: 3D-конфигуратор (Zdog), Момо на GLM-5.2 (Polza), заказы в Telegram. Оплата — демо.
 
@@ -16,7 +16,7 @@
 ## Hermes в контуре операций
 
 При `HERMES_OPS=1` каждый заказ и каждая эскалация уходят Hermes-агенту (gateway на :8642).
-Агент работает по скиллу `~/.hermes/skills/ops/kotodom-operations/SKILL.md`: проверяет состав
+Агент работает по скиллу `~/.hermes/skills/ops/kotoshi-operations/SKILL.md`: проверяет состав
 и суммы, заводит карточку в kanban (если доступен), пишет черновик подтверждения голосом бренда —
 и результат прилетает в Telegram вторым сообщением («🧠 Hermes: …»).
 
@@ -33,7 +33,7 @@
 ## Что где
 
 - `index.html`, `css/`, `js/` — сайт (без сборки, чистый JS)
-- `js/scene.js` — комната и модули в Zdog, кот Мару
+- `js/scene.js` — комната и модули в Zdog, кот Момо
 - `js/configurator.js` — drag-and-drop, правила сборки, цены
 - `server/server.js` — `/api/chat` (SSE-прокси к Polza), `/api/order` (Telegram), `/api/health`
 - `server/run.sh` — сервер + cloudflared quick tunnel

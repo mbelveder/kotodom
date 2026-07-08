@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# КотоДом: backend + Cloudflare quick tunnel с самовосстановлением (сон, обрывы, лимиты).
+# Котоши: backend + Cloudflare quick tunnel с самовосстановлением (сон, обрывы, лимиты).
 # Использование:  ./run.sh          — сервер + туннель, адрес пишется в config.js
 #                 ./run.sh --push   — плюс автопуш адреса в GitHub Pages при каждой смене
 # Скрипт живёт в терминале и чинит себя сам. Перезапускать после сна НЕ нужно.
@@ -34,7 +34,7 @@ get_url(){ grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$CF_LOG" | head -1
 
 PUSH_PENDING=0
 publish(){
-  echo "window.KOTODOM_API = \"$1\";" > ../config.js
+  echo "window.KOTOSHI_API = \"$1\";" > ../config.js
   echo "$(date +%H:%M:%S) ✅ Туннель: $1"
   if [ "$PUSH" = "--push" ]; then
     PUSH_PENDING=1; try_push
