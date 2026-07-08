@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://spatial-finger-asbestos-headquarters.trycloudflare.com";
+window.KOTODOM_API = "https://disk-outreach-hoped-academics.trycloudflare.com";
