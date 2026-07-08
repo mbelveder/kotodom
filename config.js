@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://disk-outreach-hoped-academics.trycloudflare.com";
+window.KOTODOM_API = "https://api.trycloudflare.com";
