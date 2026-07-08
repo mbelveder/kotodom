@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://spokesman-twin-genuine-designs.trycloudflare.com";
+window.KOTODOM_API = "https://spatial-finger-asbestos-headquarters.trycloudflare.com";
