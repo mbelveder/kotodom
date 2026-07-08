@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://arising-excited-respiratory-ghz.trycloudflare.com";
+window.KOTODOM_API = "https://simply-lunch-publicity-donate.trycloudflare.com";
