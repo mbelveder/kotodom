@@ -11,3 +11,6 @@ server/pending-track.json
 
 # logo master (kept locally, only the web-size logo-momo.png is tracked)
 assets/logo-momo-full.png
+
+# local backup of original hero renders (kept on disk, not tracked)
+assets/_originals_render/
