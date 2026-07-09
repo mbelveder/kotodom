@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://blonde-connected-touched-wallpaper.trycloudflare.com";
+window.KOTODOM_API = "https://api.trycloudflare.com";
