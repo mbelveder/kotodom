@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://childrens-roulette-interpretation-organisations.trycloudflare.com";
+window.KOTODOM_API = "https://api.trycloudflare.com";
