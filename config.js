@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://api.trycloudflare.com";
+window.KOTODOM_API = "https://hope-answering-philips-gotten.trycloudflare.com";
