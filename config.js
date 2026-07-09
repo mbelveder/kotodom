@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://winds-webpage-ladies-equally.trycloudflare.com";
+window.KOTODOM_API = "https://separation-finally-allowing-elimination.trycloudflare.com";
