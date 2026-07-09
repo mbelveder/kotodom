@@ -35,6 +35,13 @@ GALLERY.forEach(g => {
   });
 });
 
+/* ---------- логотип = кнопка «домой» ---------- */
+const homeLink = document.querySelector(".hanko");
+if (homeLink) homeLink.addEventListener("click", e => {
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
 /* ---------- модалка ---------- */
 function open(html){ body.innerHTML = html; back.classList.add("open"); }
 function close(){ back.classList.remove("open"); }
@@ -121,7 +128,7 @@ function payStep(order){
 function successStep(orderId){
   open(`
     <div class="success-cat">
-      <img src="assets/logo-momo.png" alt="">
+      <img src="assets/logo-momo.png?v=2" alt="">
     </div>
     <h3 style="text-align:center">Заказ принят!</h3>
     <div class="order-id">${orderId}</div>
