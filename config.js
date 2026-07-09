@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://granted-missions-makers-columnists.trycloudflare.com";
+window.KOTODOM_API = "https://blonde-connected-touched-wallpaper.trycloudflare.com";
