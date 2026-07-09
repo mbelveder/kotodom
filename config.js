@@ -1,1 +1,1 @@
-window.KOTODOM_API = "https://save-diabetes-began-trial.trycloudflare.com";
+window.KOTODOM_API = "https://granted-missions-makers-columnists.trycloudflare.com";
