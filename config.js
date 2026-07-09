@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://fought-commonwealth-additionally-norm.trycloudflare.com";
+window.KOTOSHI_API = "https://idol-fellow-modeling-previously.trycloudflare.com";
