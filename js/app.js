@@ -42,6 +42,13 @@ if (homeLink) homeLink.addEventListener("click", e => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
+/* ---------- ролик: уважаем «поменьше движения» ---------- */
+const filmVid = document.getElementById("filmVid");
+if (filmVid && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  filmVid.removeAttribute("autoplay");
+  filmVid.pause();
+}
+
 /* ---------- модалка ---------- */
 function open(html){ body.innerHTML = html; back.classList.add("open"); }
 function close(){ back.classList.remove("open"); }
