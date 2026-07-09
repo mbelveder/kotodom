@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://downloads-continue-mumbai-punch.trycloudflare.com";
+window.KOTOSHI_API = "https://alpine-salvation-wallet-charger.trycloudflare.com";
