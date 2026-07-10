@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://comparison-sink-plots-hawaiian.trycloudflare.com";
+window.KOTOSHI_API = "https://controller-stay-elements-actively.trycloudflare.com";
