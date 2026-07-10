@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://laden-consist-tokyo-literally.trycloudflare.com";
+window.KOTOSHI_API = "https://resources-software-clusters-med.trycloudflare.com";
