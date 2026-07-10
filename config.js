@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://resources-software-clusters-med.trycloudflare.com";
+window.KOTOSHI_API = "https://persons-older-arabia-route.trycloudflare.com";
