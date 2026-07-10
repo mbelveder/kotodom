@@ -75,9 +75,10 @@ sugg.appendChild(sendBtn);
 sendBtn.addEventListener("click", () => {
   const extra = input.value.trim();
   if (!picked.size && !extra) return;
-  const parts = [...picked];
-  const desc = "Мой кот: " + parts.join("; ") + (extra ? ". " + extra : "") +
-    ". Подбери, пожалуйста, подходящую конфигурацию.";
+  let desc = [...picked].join("; ") + (extra ? (picked.size ? ". " : "") + extra : "");
+  desc = desc.charAt(0).toUpperCase() + desc.slice(1);
+  if (!/[.!?]$/.test(desc)) desc += ".";
+  desc += " Подберите, пожалуйста, подходящий домик.";
   input.value = "";
   collapseSugg();
   ask(desc);
