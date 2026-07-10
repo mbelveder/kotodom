@@ -44,11 +44,24 @@
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
     <h2>Соберите свой Котоши</h2>
-    <p class="sec-sub">Расскажите Момо о питомце — он подберёт конфигурацию. Или перетаскивайте модули
-       в комнату сами: подсвеченные места покажут, куда можно ставить.</p>
+    <p class="sec-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
+       Не знаете, с чего начать? Нажмите на Момо в углу сцены: он расспросит о питомце и соберёт домик за вас.</p>
   <div class="studio" id="studio">
-    <div class="studio-main">
-      <aside class="chat-side" aria-label="Чат с Момо">
+    <div class="studio-main" id="studioMain">
+      <div class="scene-wrap" id="sceneWrap">
+        <canvas id="scene" width="980" height="540"></canvas>
+        <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
+        <button class="momo-fab" id="momoFab" aria-label="Открыть чат с Момо" aria-expanded="false">
+          <img src="assets/logo-momo-chat.png?v=2" alt="">
+          <span class="fab-lbl">чат</span>
+        </button>
+        <div class="price-tag">
+          <div class="lbl">итого</div>
+          <div class="sum" id="sumOut">0 ₽</div>
+          <div class="disc" id="discOut"></div>
+        </div>
+      </div>
+      <aside class="chat-panel" id="chatPanel" aria-label="Чат с Момо">
         <div class="chat-head">
           <div class="ava">
             <img src="assets/logo-momo-chat.png?v=2" alt="">
@@ -58,29 +71,21 @@
             <div class="sub">подберёт домик под кота</div>
             <div class="s" id="chatStatus"><span class="dot"></span>на связи</div>
           </div>
+          <button class="chat-x" id="chatX" aria-label="Свернуть чат">✕</button>
         </div>
         <div class="chat-msgs" id="chatMsgs"></div>
         <div class="chat-sugg" id="chatSugg">
-          <div class="sug-lbl">Выберите, что подходит, и отправьте:</div>
+          <div class="sug-lbl">Нажмите — слова добавятся в сообщение:</div>
           <div class="sug-row" id="sugPhys"></div>
           <div class="sug-row" id="sugMind"></div>
         </div>
         <div class="chat-in">
-          <input id="chatInput" type="text" placeholder="…или опишите кота словами" maxlength="500">
+          <input id="chatInput" type="text" placeholder="Опишите кота или спросите о модулях" maxlength="500">
           <button id="chatSend" aria-label="Отправить">➤</button>
         </div>
       </aside>
-      <div class="scene-wrap" id="sceneWrap">
-        <canvas id="scene" width="980" height="540"></canvas>
-        <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
-        <div class="price-tag">
-          <div class="lbl">итого</div>
-          <div class="sum" id="sumOut">0 ₽</div>
-          <div class="disc" id="discOut"></div>
-        </div>
-      </div>
     </div>
-    <div class="hint-bar" id="hintBar">Потяните модуль с полки — подсвеченные места покажут, куда его можно поставить. Модуль в сцене можно перетащить на новое место; короткий клик — убрать.</div>
+    <div class="hint-bar" id="hintBar">Модуль в сцене можно перетащить на новое место; короткий клик — убрать.</div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>
@@ -179,7 +184,7 @@
       <div class="step">
         <div class="ico">話</div>
         <h3>Спросите Момо</h3>
-        <p>Круглая кнопка с котом справа внизу. Момо знает все модули, цены и правила доставки — и отвечает за секунды, в любое время.</p>
+        <p>Момо живёт в конструкторе — нажмите на кота в углу сцены. Он знает все модули, цены и правила доставки, а подобранный домик собирает прямо в сцене.</p>
       </div>
       <div class="step">
         <div class="ico">箱</div>

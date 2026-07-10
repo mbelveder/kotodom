@@ -277,7 +277,9 @@ function build(){
   illo = new Zdog.Illustration({
     element: canvas, zoom: 1.18, dragRotate: false,
   });
-  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: -28, y: -26 } });
+  /* y:-10, не меньше: при -26 окно и свиток упирались в верхний край холста
+     и комната выглядела «обрезанной» сверху */
+  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: -28, y: -10 } });
   // комната — единая Group, ЖЁСТКО закреплённая позади всего:
   // средняя глубина группы зависит от размеров пола/швов, и при глубоком поле
   // сортировка начинала рисовать комнату ПОВЕРХ модулей (плоские кубы,

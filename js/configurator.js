@@ -44,9 +44,15 @@ const popSound  = () => blip(420, 640, 0.12, 0.06);
 /* ---------- Момо говорит ---------- */
 let sayTimer = null;
 function say(text, dur){
+  clearTimeout(sayTimer);
+  /* реплика поверх реплики: баббл «выныривает» заново, а не подменяет текст
+     на лету — подмена посреди показа выглядела мерцанием */
+  if (momoSay.classList.contains("show")){
+    momoSay.classList.remove("show");
+    void momoSay.offsetWidth; // перезапуск анимации .show
+  }
   momoTxt.textContent = " " + text;
   momoSay.classList.add("show");
-  clearTimeout(sayTimer);
   sayTimer = setTimeout(() => momoSay.classList.remove("show"), dur || 3000);
 }
 KD.say = say;
@@ -407,7 +413,7 @@ const io = new IntersectionObserver(entries => {
   io.disconnect();
   if (!KD.studioBooted){
     loadPreset("wide");
-    setTimeout(() => say("Это план «Мост» — мой любимый. Перетащите что-нибудь с полки или соберите свой!", 5200), 1600);
+    setTimeout(() => say("Это план «Мост» — мой любимый. Тяните модули с полки — или нажмите на меня, подберу домик под вашего кота.", 6200), 1600);
   }
 }, { threshold: 0.35 });
 io.observe(sceneWrap);

@@ -1,10 +1,12 @@
-/* Котоши — чат с Момо: сайдбар конфигуратора (SSE через backend) */
+/* Котоши — чат с Момо: спрятан в аватар, открывается панелью поверх сцены (SSE через backend) */
 "use strict";
 (function(){
 const $ = s => document.querySelector(s);
 const msgs = $("#chatMsgs"), input = $("#chatInput"), send = $("#chatSend"),
-      status = $("#chatStatus"), sugg = $("#chatSugg"),
-      sugPhys = $("#sugPhys"), sugMind = $("#sugMind");
+      status = $("#chatStatus"),
+      sugPhys = $("#sugPhys"), sugMind = $("#sugMind"),
+      panel = $("#chatPanel"), fab = $("#momoFab"),
+      closeBtn = $("#chatX"), studioMain = $("#studioMain");
 
 /* адрес API: ?api=… > config.js (свежий из репозитория) > localStorage.
    config.js важнее localStorage: иначе устаревший сохранённый адрес
@@ -34,6 +36,26 @@ function setOnline(v){
   status.classList.toggle("off", !v);
 }
 
+/* ---------- панель: аватар разворачивается в чат, ✕ сворачивает обратно ---------- */
+function openChat(){
+  panel.classList.add("open");
+  studioMain.classList.add("chat-open");
+  fab.setAttribute("aria-expanded", "true");
+  msgs.scrollTop = msgs.scrollHeight;
+  if (matchMedia("(min-width: 901px)").matches) input.focus();
+}
+function closeChat(){
+  panel.classList.remove("open");
+  studioMain.classList.remove("chat-open");
+  fab.setAttribute("aria-expanded", "false");
+}
+fab.addEventListener("click", openChat);
+closeBtn.addEventListener("click", closeChat);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && panel.classList.contains("open")) closeChat();
+});
+KD.openChat = openChat;
+
 function add(role, text){
   const el = document.createElement("div");
   el.className = "msg " + role;
@@ -43,7 +65,8 @@ function add(role, text){
   return el;
 }
 
-/* ---------- бабблы-подсказки: физика (сакура) + характер (матча) ---------- */
+/* ---------- бабблы-подсказки: клик кладёт слова прямо в поле сообщения ----------
+   физика — сакура, характер — матча; отправка одна — кнопкой у поля */
 const SUG_PHYS = [
   "котёнок", "крупный кот (6 кг+)", "пожилой кот", "у нас два кота"
 ];
@@ -51,7 +74,11 @@ const SUG_MIND = [
   "пугливый — прячется", "энергичный — носится",
   "любит высоту", "точит когти о мебель", "скучает один дома"
 ];
-const picked = new Set();
+function addToInput(txt){
+  const cur = input.value.replace(/[;,\s]+$/, "");
+  input.value = cur ? cur + "; " + txt : txt;
+  input.focus();
+}
 function chipRow(host, items, cls){
   host.classList.add(cls);
   items.forEach(txt => {
@@ -60,50 +87,15 @@ function chipRow(host, items, cls){
     b.className = "sug";
     b.textContent = txt;
     b.addEventListener("click", () => {
-      b.classList.toggle("on");
-      b.classList.contains("on") ? picked.add(txt) : picked.delete(txt);
-      sendBtn.classList.toggle("show", picked.size > 0);
+      addToInput(txt);
+      b.classList.add("added");
+      setTimeout(() => b.classList.remove("added"), 650);
     });
     host.appendChild(b);
   });
 }
 chipRow(sugPhys, SUG_PHYS, "sug-phys");
 chipRow(sugMind, SUG_MIND, "sug-mind");
-
-const sendBtn = document.createElement("button");
-sendBtn.type = "button";
-sendBtn.className = "sug-send";
-sendBtn.textContent = "Подобрать домик 🐾";
-sugg.appendChild(sendBtn);
-sendBtn.addEventListener("click", () => {
-  const extra = input.value.trim();
-  if (!picked.size && !extra) return;
-  let desc = [...picked].join("; ") + (extra ? (picked.size ? ". " : "") + extra : "");
-  desc = desc.charAt(0).toUpperCase() + desc.slice(1);
-  if (!/[.!?]$/.test(desc)) desc += ".";
-  desc += " Подберите, пожалуйста, подходящий домик.";
-  input.value = "";
-  collapseSugg();
-  ask(desc);
-});
-
-/* после первой отправки подсказки сворачиваются в кнопку */
-const toggleBtn = document.createElement("button");
-toggleBtn.type = "button";
-toggleBtn.className = "sug-toggle";
-toggleBtn.textContent = "🐾 подсказки о питомце";
-sugg.parentNode.insertBefore(toggleBtn, sugg.nextSibling);
-function collapseSugg(){
-  picked.clear();
-  sugg.querySelectorAll(".sug.on").forEach(b => b.classList.remove("on"));
-  sendBtn.classList.remove("show");
-  sugg.classList.add("hidden");
-  toggleBtn.classList.add("show");
-}
-toggleBtn.addEventListener("click", () => {
-  sugg.classList.remove("hidden");
-  toggleBtn.classList.remove("show");
-});
 
 /* ---------- предложение Момо: маркер [[BUILD:индекс:тип,…]] → кнопка ---------- */
 const BUILD_RE = /\[\[BUILD:([^\]]*)\]\]/;
@@ -125,6 +117,8 @@ function offerBuild(botEl, cells){
     if (!KD.applyConfig || !KD.applyConfig(cells)) return;
     b.disabled = true;
     b.textContent = "Собрано — смотрите сцену";
+    /* панель сворачивается: сборку видно во всю сцену, Момо ждёт в аватаре */
+    closeChat();
     document.getElementById("sceneWrap").scrollIntoView({ behavior: "smooth", block: "center" });
   });
   botEl.appendChild(b);
@@ -217,7 +211,7 @@ async function ask(textOverride){
 send.addEventListener("click", () => ask());
 input.addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
 
-/* сайдбар виден сразу — здороваемся и проверяем сервер при загрузке */
-add("bot", "Мяу! Я Момо — консультант этого магазина. Расскажите о питомце — бабблами ниже или своими словами — и я подберу домик. Ну или спрашивайте про модули, цены и доставку.");
+/* приветствие ждёт в панели заранее; сервер проверяем при загрузке */
+add("bot", "Мяу! Я Момо — консультант этого магазина. Расскажите о питомце — подсказками ниже или своими словами — и я подберу домик и соберу его прямо в сцене.");
 health();
 })();
