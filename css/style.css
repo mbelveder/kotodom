@@ -132,28 +132,32 @@ button{font-family:inherit}
   overflow:hidden;
   position:relative;
 }
-/* подложка = цвет торца пола: нижняя кромка холста читается как ребро пола */
-:root{ --scene-edge:#C9AC80 }
-@media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244 } }
-:root[data-theme="light"]{ --scene-edge:#C9AC80 }
-:root[data-theme="dark"]{ --scene-edge:#3B3244 }
+/* подложка = цвет торца пола: нижняя кромка холста читается как ребро пола;
+   --scene-wall = цвет стены из Zdog-палитры: полоса над холстом «продолжает» стену */
+:root{ --scene-edge:#C9AC80; --scene-wall:#EFE4CE }
+@media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244; --scene-wall:#33303F } }
+:root[data-theme="light"]{ --scene-edge:#C9AC80; --scene-wall:#EFE4CE }
+:root[data-theme="dark"]{ --scene-edge:#3B3244; --scene-wall:#33303F }
 /* чат слева, сцена справа.
    Высоту ряда задаёт ТОЛЬКО сцена: сайдбар позиционирован абсолютно и
    скроллится внутри — длинные ответы Момо не растягивают конфигуратор */
-.studio-main{position:relative;min-height:520px}
+.studio-main{position:relative;min-height:548px}
 .chat-side{position:absolute;top:0;bottom:0;left:0;width:300px}
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
   background:var(--scene-edge);
   min-width:0;
   margin-left:300px;
-  min-height:520px;
-  display:flex;flex-direction:column;justify-content:center;
+  min-height:548px;
+  display:flex;flex-direction:column;
 }
+/* запас высоты сверху — «стена», снизу — «пол»: комната не выглядит обрезанной */
+.scene-wrap::before{content:"";flex:1 1 0;background:var(--scene-wall)}
+.scene-wrap::after{content:"";flex:1.15 1 0;background:var(--scene-edge)}
 @media (max-width:900px){
-  .studio-main{display:flex;flex-direction:column}
+  .studio-main{display:flex;flex-direction:column;min-height:0}
   .chat-side{position:static;width:auto;order:2;border-right:none;border-top:1px solid var(--line);max-height:440px}
-  .scene-wrap{margin-left:0}
+  .scene-wrap{margin-left:0;min-height:0}
 }
 /* !important: Zdog проставляет inline width/height под devicePixelRatio —
    без него канвас застревает на 980px и справа остаётся пустая полоса */

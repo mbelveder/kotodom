@@ -480,6 +480,9 @@ const server = http.createServer(async (req, res) => {
          При обрыве соединения (stalled) не повторяем — сеть лежит */
       if (!full.trim() && !stalled){
         log("chat: пустой ответ после стрима — повторная попытка");
+        /* пока ждём повторный ответ, шлём SSE-комментарии: иначе клиентский
+           сторожевой таймаут (25s тишины) оборвёт соединение раньше времени */
+        const ping = setInterval(() => { try{ res.write(": ping\n\n"); }catch(_){} }, 8000);
         try{
           const r2 = await fetch(chatURL, { method: "POST", headers: chatHeaders, body: chatBody(false),
                                             signal: AbortSignal.timeout(90_000) });
@@ -492,6 +495,7 @@ const server = http.createServer(async (req, res) => {
             }
           } else log(`chat retry ${r2.status}`);
         }catch(e){ log("chat retry error: " + e.message); }
+        clearInterval(ping);
       }
       res.end();
       if (full.includes("[[ATTACK]]")){
