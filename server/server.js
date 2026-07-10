@@ -41,6 +41,11 @@ const HERMES_OPS = process.env.HERMES_OPS === "1";
    (задержки Polza, лимит расходов) — таймаут с запасом, иначе клиент обрывает fetch
    раньше, чем агент реально закончит, и шлёт ложное "не смог обработать" */
 const HERMES_OPS_TIMEOUT_MS = +(process.env.HERMES_OPS_TIMEOUT_MS || 420_000);
+/* чат Момо: если апстрим (Polza/Hermes) не прислал заголовки или замолчал посреди
+   стрима дольше этого — обрываем сами. Раньше тут таймаута не было вообще: если сеть
+   легла (например, мак ушёл в сон посреди диалога), fetch()/reader.read() висели
+   бесконечно, и клиент вечно видел "печатает…" без единой ошибки в логах. */
+const CHAT_STALL_TIMEOUT_MS = +(process.env.CHAT_STALL_TIMEOUT_MS || 20_000);
 /* KD_UPSTREAM=hermes — Момо на сайте отвечает через Hermes-агента (медленнее, но со скиллами) */
 const UPSTREAM   = process.env.KD_UPSTREAM === "hermes" ? "hermes" : "polza";
 
@@ -400,16 +405,32 @@ const server = http.createServer(async (req, res) => {
       if (!clean.length) return json(res, 400, { error: "no messages" });
 
       const viaHermes = UPSTREAM === "hermes";
-      const upstream = await fetch((viaHermes ? HERMES_URL : POLZA) + "/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json",
-                   "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) },
-        body: JSON.stringify({
-          model: viaHermes ? HERMES_MODEL : MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
-          messages: [ { role: "system", content: systemPrompt(String(config).slice(0, 400)) }, ...clean ]
-        })
-      });
+      const chatCtrl = new AbortController();
+      let chatWatchdog;
+      const armWatchdog = () => {
+        clearTimeout(chatWatchdog);
+        chatWatchdog = setTimeout(() => chatCtrl.abort(), CHAT_STALL_TIMEOUT_MS);
+      };
+      armWatchdog();
+      let upstream;
+      try{
+        upstream = await fetch((viaHermes ? HERMES_URL : POLZA) + "/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json",
+                     "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) },
+          body: JSON.stringify({
+            model: viaHermes ? HERMES_MODEL : MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
+            messages: [ { role: "system", content: systemPrompt(String(config).slice(0, 400)) }, ...clean ]
+          }),
+          signal: chatCtrl.signal
+        });
+      }catch(e){
+        clearTimeout(chatWatchdog);
+        log(`chat upstream ${e.name === "AbortError" ? "timeout" : "error"}: ${e.message}`);
+        return json(res, 504, { error: "upstream timeout" });
+      }
       if (!upstream.ok){
+        clearTimeout(chatWatchdog);
         const t = await upstream.text();
         log(`polza ${upstream.status}: ${t.slice(0, 300)}`);
         return json(res, 502, { error: "upstream " + upstream.status });
@@ -421,23 +442,34 @@ const server = http.createServer(async (req, res) => {
       const reader = upstream.body.getReader();
       const dec = new TextDecoder();
       let full = "", buf = "";
-      for(;;){
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = dec.decode(value, { stream: true });
-        res.write(chunk);
-        buf += chunk;
-        const lines = buf.split("\n"); buf = lines.pop();
-        for (const ln of lines){
-          if (!ln.startsWith("data: ")) continue;
-          try{
-            const j = JSON.parse(ln.slice(6));
-            const d = j.choices && j.choices[0] && j.choices[0].delta;
-            if (d && d.content) full += d.content;
-            if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub}`);
-          }catch(_){}
+      try{
+        for(;;){
+          armWatchdog();
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = dec.decode(value, { stream: true });
+          res.write(chunk);
+          buf += chunk;
+          const lines = buf.split("\n"); buf = lines.pop();
+          for (const ln of lines){
+            if (!ln.startsWith("data: ")) continue;
+            try{
+              const j = JSON.parse(ln.slice(6));
+              const d = j.choices && j.choices[0] && j.choices[0].delta;
+              if (d && d.content) full += d.content;
+              if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub}`);
+            }catch(_){}
+          }
         }
+      }catch(e){
+        log(`chat stream ${e.name === "AbortError" ? "stalled" : "error"}: ${e.message}`);
+        /* заголовки уже ушли клиенту (200 + SSE) — шлём это как обычный SSE-чанк,
+           тем же форматом, что и апстрим, чтобы существующий парсер на фронте
+           отобразил его без доп. правок */
+        const note = full ? " [обрыв соединения — ответ мог не докатиться]" : "Момо не ответил — соединение оборвалось. Попробуйте ещё раз.";
+        try{ res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: note } }] })}\n\n`); }catch(_){}
       }
+      clearTimeout(chatWatchdog);
       res.end();
       if (full.includes("[[ATTACK]]")){
         const lastUser = clean.filter(m => m.role === "user").pop();

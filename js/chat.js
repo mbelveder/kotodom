@@ -15,6 +15,9 @@ KD.API = (qs && qs.replace(/\/+$/, "")) || window.KOTOSHI_API || localStorage.ge
 
 const history = [];   // {role, content}
 let busy = false, online = false;
+/* если сервер вообще недоступен (спит, туннель мёртв) — fetch() к нему может висеть
+   бесконечно без единой ошибки; без этого таймаута индикатор "печатает…" не гаснет никогда */
+const CHAT_STALL_MS = 25_000;
 
 async function health(){
   if (!KD.API){ setOnline(false); return; }
@@ -146,20 +149,27 @@ async function ask(textOverride){
   const botEl = add("bot", "");
   botEl.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
 
+  const ctrl = new AbortController();
+  let watchdog;
+  const armWatchdog = () => { clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(), CHAT_STALL_MS); };
+
   try{
+    armWatchdog();
     const r = await fetch(KD.API + "/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: history.slice(-12),
         config: KD.configurator ? KD.configurator.summary() : ""
-      })
+      }),
+      signal: ctrl.signal
     });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const reader = r.body.getReader();
     const dec = new TextDecoder();
     let buf = "", full = "";
     for(;;){
+      armWatchdog();
       const { done, value } = await reader.read();
       if (done) break;
       buf += dec.decode(value, { stream: true });
@@ -180,6 +190,7 @@ async function ask(textOverride){
         }catch(_){}
       }
     }
+    clearTimeout(watchdog);
     if (!full){ botEl.textContent = "…Момо задумался и промолчал. Попробуйте ещё раз."; }
     else {
       botEl.textContent = stripMarkers(full).trim();
@@ -193,7 +204,10 @@ async function ask(textOverride){
     }
     setOnline(true);
   }catch(e){
-    botEl.textContent = "Не получилось связаться с Момо. Проверьте, запущен ли сервер (server/run.sh).";
+    clearTimeout(watchdog);
+    botEl.textContent = e.name === "AbortError"
+      ? "Момо долго не отвечает — сервер сейчас недоступен. Попробуйте чуть позже."
+      : "Не получилось связаться с Момо. Проверьте, запущен ли сервер (server/run.sh).";
     setOnline(false);
   }
   busy = false; send.disabled = false;
