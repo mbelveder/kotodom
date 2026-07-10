@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://healthy-mpeg-europe-perry.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
