@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://extension-correct-foods-accepting.trycloudflare.com";
+window.KOTOSHI_API = "https://particles-chemicals-farm-loc.trycloudflare.com";
