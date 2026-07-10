@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://upgrade-craft-father-african.trycloudflare.com";
+window.KOTOSHI_API = "https://resources-software-clusters-med.trycloudflare.com";
