@@ -105,6 +105,7 @@ function refresh(){
   const t = totals();
   sumOut.textContent = fmt(t.total);
   discOut.textContent = t.disc ? `скидка 5% (−${fmt(t.disc)}) 🎉` : (t.count ? `модулей: ${t.count}` : "");
+  btnOrder.textContent = t.count ? `Оформить заказ · ${fmt(t.total)}` : "Оформить заказ";
   const empty = t.count === 0;
   btnOrder.disabled = empty || animating;
   btnUndo.disabled = !undoStack.length || animating;
@@ -347,21 +348,33 @@ btnUndo.addEventListener("click", () => {
 });
 btnClear.addEventListener("click", () => { if (!animating){ snapshot(); clearAll(); } });
 
-document.querySelectorAll(".preset").forEach(b => {
-  b.addEventListener("click", () => { if (!animating) loadPreset(b.dataset.preset); });
-});
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return;
+  applyCells(p.cells);
+}
+KD.loadPreset = loadPreset;
+
+/* сборка произвольной конфигурации (пресеты, предложения Момо) с проверкой правил:
+   ставим снизу вверх, невалидные ячейки молча пропускаем */
+function applyCells(cells){
+  if (animating) return false;
   KD.studioBooted = true;
   snapshot();
   clearAll(true);
-  const entries = Object.entries(p.cells).sort((a, b) => a[0] - b[0]);
-  entries.forEach(([i, t], k) => {
-    setTimeout(() => { place(+i, t, { silent: k < entries.length - 1 }); }, k * 160);
+  const entries = Object.entries(cells)
+    .map(([i, t]) => [+i, t])
+    .filter(([i, t]) => Number.isInteger(i) && i >= 0 && i < N && MODULES[t])
+    .sort((a, b) => a[0] - b[0]);
+  entries.forEach(([i, t], step) => {
+    setTimeout(() => {
+      if (!validCells(t).includes(i)) return; // нет опоры/занято — пропускаем
+      place(i, t, { silent: step < entries.length - 1 });
+    }, step * 160);
   });
+  return entries.length > 0;
 }
-KD.loadPreset = loadPreset;
+KD.applyConfig = applyCells;
 
 /* ---------- API для заказа и чата ---------- */
 KD.configurator = {

@@ -29,45 +29,10 @@
 
 <main>
 
-<section class="hero">
-  <div class="wrap hero-grid">
-    <div class="hero-copy">
-      <div class="eyebrow"><span class="jp">ねこのいえ</span>модульные домики для кошек и котов</div>
-      <h1>Домик, который растёт вместе с вашим питомцем</h1>
-      <ul class="hero-points">
-        <li>
-          <span class="pt-ico">組</span>
-          <div>
-            <strong>Модульность</strong>
-            <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать.</p>
-          </div>
-        </li>
-        <li>
-          <span class="pt-ico">遊</span>
-          <div>
-            <strong>Умная игрушка</strong>
-            <p>Настройте игровые сценарии и запускайте их через приложение или голосового ассистента.</p>
-          </div>
-        </li>
-        <li>
-          <span class="pt-ico">丈</span>
-          <div>
-            <strong>Прочность и безопасность</strong>
-            <p>Материалы стойкие к когтям, без острых углов — и легко чистятся.</p>
-          </div>
-        </li>
-      </ul>
-      <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
-    </div>
-    <div class="hero-media">
-      <div class="film-frame">
-        <video id="filmVid" autoplay muted loop playsinline preload="metadata"
-               poster="assets/kotoshi-poster.jpg?v=2" aria-label="Кот обживает свой Котоши">
-          <source src="assets/kotoshi-loop.webm?v=2" type="video/webm">
-          <source src="assets/kotoshi-loop.mp4?v=2" type="video/mp4">
-        </video>
-      </div>
-    </div>
+<section class="hero2">
+  <div class="wrap">
+    <div class="eyebrow-jp">ねこのいえ</div>
+    <h1>Модульные домики для кошек и котов</h1>
   </div>
 </section>
 
@@ -79,32 +44,96 @@
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
     <h2>Соберите свой Котоши</h2>
-    <p class="sec-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
-       Чем интереснее постройка, тем дольше кот будет её обживать. Цены — на модулях, итог считается сам.</p>
+    <p class="sec-sub">Расскажите Момо о питомце — он подберёт конфигурацию. Или перетаскивайте модули
+       в комнату сами: подсвеченные места покажут, куда можно ставить.</p>
   <div class="studio" id="studio">
-    <div class="scene-wrap" id="sceneWrap">
-      <canvas id="scene" width="980" height="540"></canvas>
-      <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
-      <div class="price-tag">
-        <div class="lbl">итого</div>
-        <div class="sum" id="sumOut">0 ₽</div>
-        <div class="disc" id="discOut"></div>
+    <div class="studio-main">
+      <aside class="chat-side" aria-label="Чат с Момо">
+        <div class="chat-head">
+          <div class="ava">
+            <img src="assets/logo-momo-chat.png?v=2" alt="">
+          </div>
+          <div>
+            <div class="t">Момо</div>
+            <div class="sub">подберёт домик под кота</div>
+            <div class="s" id="chatStatus"><span class="dot"></span>на связи</div>
+          </div>
+        </div>
+        <div class="chat-msgs" id="chatMsgs"></div>
+        <div class="chat-sugg" id="chatSugg">
+          <div class="sug-lbl">Выберите, что подходит, и отправьте:</div>
+          <div class="sug-row" id="sugPhys"></div>
+          <div class="sug-row" id="sugMind"></div>
+        </div>
+        <div class="chat-in">
+          <input id="chatInput" type="text" placeholder="…или опишите кота словами" maxlength="500">
+          <button id="chatSend" aria-label="Отправить">➤</button>
+        </div>
+      </aside>
+      <div class="scene-wrap" id="sceneWrap">
+        <canvas id="scene" width="980" height="540"></canvas>
+        <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
+        <div class="price-tag">
+          <div class="lbl">итого</div>
+          <div class="sum" id="sumOut">0 ₽</div>
+          <div class="disc" id="discOut"></div>
+        </div>
       </div>
     </div>
-    <div class="hint-bar" id="hintBar">Потяните модуль внизу — подсвеченные места покажут, куда его можно поставить. Модуль в сцене можно перетащить на новое место; короткий клик — убрать.</div>
+    <div class="hint-bar" id="hintBar">Потяните модуль с полки — подсвеченные места покажут, куда его можно поставить. Модуль в сцене можно перетащить на новое место; короткий клик — убрать.</div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>
+      <button class="btn btn-ghost" id="btnBulk">Заказать списком</button>
       <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
       <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
-      <div class="presets">
-        <span class="lbl">Готовые планы:</span>
-        <button class="preset" data-preset="start">Старт</button>
-        <button class="preset" data-preset="wide">Мост</button>
-        <button class="preset" data-preset="tower">Башня</button>
-      </div>
+      <span class="order-hint">«Оформить заказ» — то, что собрано в сцене. «Заказать списком» — просто модули по счёту, без сборки.</span>
     </div>
   </div>
+  </div>
+</section>
+
+<section id="growth">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">せいちょう</span>растёт с котом</div>
+    <h2>Домик, который растёт вместе с вашим питомцем</h2>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <ul class="hero-points">
+          <li>
+            <span class="pt-ico">組</span>
+            <div>
+              <strong>Модульность</strong>
+              <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pt-ico">遊</span>
+            <div>
+              <strong>Умная игрушка</strong>
+              <p>Настройте игровые сценарии и запускайте их через приложение или голосового ассистента.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pt-ico">丈</span>
+            <div>
+              <strong>Прочность и безопасность</strong>
+              <p>Материалы стойкие к когтям, без острых углов — и легко чистятся.</p>
+            </div>
+          </li>
+        </ul>
+        <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
+      </div>
+      <div class="hero-media">
+        <div class="film-frame">
+          <video id="filmVid" autoplay muted loop playsinline preload="metadata"
+                 poster="assets/kotoshi-poster.jpg?v=2" aria-label="Кот обживает свой Котоши">
+            <source src="assets/kotoshi-loop.webm?v=2" type="video/webm">
+            <source src="assets/kotoshi-loop.mp4?v=2" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -211,28 +240,6 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <button class="x" id="modalX" aria-label="Закрыть">✕</button>
     <div id="modalBody"></div>
-  </div>
-</div>
-
-<!-- chat -->
-<button id="chatFab" aria-label="Чат со Смотрителем">
-  <img src="assets/logo-momo-chat.png?v=2" alt="">
-</button>
-<div class="chat-panel" id="chatPanel">
-  <div class="chat-head">
-    <div class="ava">
-      <img src="assets/logo-momo-chat.png?v=2" alt="">
-    </div>
-    <div>
-      <div class="t">Момо</div>
-      <div class="sub">пушистый консультант</div>
-      <div class="s" id="chatStatus"><span class="dot"></span>на связи</div>
-    </div>
-  </div>
-  <div class="chat-msgs" id="chatMsgs"></div>
-  <div class="chat-in">
-    <input id="chatInput" type="text" placeholder="Спросите про модули, доставку…" maxlength="500">
-    <button id="chatSend" aria-label="Отправить">➤</button>
   </div>
 </div>
 
