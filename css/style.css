@@ -124,7 +124,9 @@ button{font-family:inherit}
   position:relative;user-select:none;-webkit-user-select:none;
   background:var(--scene-edge);
 }
-#scene{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
+/* !important: Zdog проставляет inline width/height под devicePixelRatio —
+   без него канвас застревает на 980px и справа остаётся пустая полоса */
+#scene{display:block;width:100% !important;height:auto !important;touch-action:none;cursor:grab}
 #scene.placing{cursor:copy}
 
 /* ценник-бирка */
@@ -184,11 +186,25 @@ button{font-family:inherit}
 }
 .chip:hover{transform:translateY(-3px);border-color:var(--aka);box-shadow:var(--shadow)}
 .chip:active{cursor:grabbing}
-.chip svg{width:64px;height:52px;display:block;margin:0 auto 4px}
+.chip .ico{width:76px;height:64px;display:block;margin:0 auto 4px;-webkit-user-drag:none;user-select:none}
 .chip .nm{font-weight:800;font-size:13.5px;line-height:1.25}
+.chip .nm .nm-jp{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-top:1px}
 .chip .pr{font-size:13px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .chip.disabled{opacity:.45;cursor:not-allowed}
 .chip.disabled:hover{transform:none;border-color:var(--line);box-shadow:none}
+/* в тёмной теме фишки лотка остаются «бумажными»:
+   иконки нарисованы тёмным контуром и на тёмной панели пропадают */
+@media (prefers-color-scheme: dark){
+  .chip{background:#EFE7D6;border-color:#D8CDb8}
+  .chip .nm{color:#2E2A33}
+  .chip .nm .nm-jp,.chip .pr{color:#847B69}
+}
+:root[data-theme="dark"] .chip{background:#EFE7D6;border-color:#D8CDB8}
+:root[data-theme="dark"] .chip .nm{color:#2E2A33}
+:root[data-theme="dark"] .chip .nm .nm-jp,:root[data-theme="dark"] .chip .pr{color:#847B69}
+:root[data-theme="light"] .chip{background:var(--panel);border-color:var(--line)}
+:root[data-theme="light"] .chip .nm{color:var(--ink)}
+:root[data-theme="light"] .chip .nm .nm-jp,:root[data-theme="light"] .chip .pr{color:var(--muted)}
 
 /* панель действий */
 .studio-actions{
@@ -286,7 +302,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   transform:translate(-50%,-60%) scale(1.06);
   display:none;
 }
-#dragGhost svg{width:100%;height:100%}
+#dragGhost img{width:100%;height:100%;-webkit-user-drag:none}
 
 /* ============ модалка ============ */
 .modal-back{

@@ -27,14 +27,20 @@ const PALETTES = {
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
     lamp:"#F3D992", lampGlow:"rgba(243,217,146,0.22)", lampRib:"#C7A860", stand:"#8A7E6E",
     cat:"#FBF7EC", ink:"#221F2B", ghost:"rgba(224,90,78,0.20)", ghostHot:"rgba(224,90,78,0.5)",
-    windowGlow:"#4A4258", shoji:"#5A5166"
+    windowGlow:"#6B604B", shoji:"#6E6478"
   }
 };
 let P = PALETTES.light;
 const darkMq = matchMedia("(prefers-color-scheme: dark)");
+/* ?theme=light|dark — override для проверки обеих тем */
+const themeOverride = new URLSearchParams(location.search).get("theme");
+const isDark = () => themeOverride ? themeOverride === "dark" : darkMq.matches;
 
 /* ---------- геометрия сетки ---------- */
 const GROUND = 118;                       // y пола (вниз положительно)
+/* верхняя поверхность модуля (смещение от центра ЕГО ячейки):
+   опоры стоящего сверху тянутся до неё, а не до границы ячейки */
+const TOP_Y = { base:-27, lounge:1, tower:-30, tunnel:-12 };
 const cellX = c => (c - (COLS-1)/2) * CELL;
 const cellY = r => GROUND - CELL/2 - r*CELL;
 const colOf = i => i % COLS;
@@ -45,6 +51,7 @@ let illo, world, houseA, ghostA, catA, peekA;
 let canvas;
 let cellAnchors = [];      // якоря центров ячеек (для проекции)
 let moduleAnchors = {};    // cellIndex -> anchor модуля
+let moduleDy = {};         // cellIndex -> смещение вниз (крыша/тоннель на низкой опоре)
 let ghostShapes = [];
 let dirty = true;
 let catSettled = false;
@@ -56,19 +63,20 @@ function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o))
 function makeModule(type, parent, opts){
   const a = new Zdog.Anchor({ addTo: parent });
   const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
-  const B = CELL / 2;    // низ ячейки: всё стоит на нём
-  const H = CELL - 2;    // высота корпуса: стыкуется с верхним модулем почти без зазора
+  const B = CELL / 2;    // низ ячейки
+  const H = CELL - 2;    // высота корпуса
+  const SB = (opts && opts.supY) || B;   // фактическая опора: верх модуля снизу (или пол)
   const woodBox = extra => box(a, Object.assign({
     topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood,
     frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
-    woodBox({ width:S, height:H, depth:S, translate:{ y: B - H/2 } });
+    woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
     new Zdog.Ellipse({ addTo:a, diameter:S*0.52, translate:{ y: B - H/2, z:S/2+0.8 },
       fill:true, stroke:1, color:P.hole });
   }
   else if (type === "lounge"){
     const h = 30;
-    woodBox({ width:S, height:h, depth:S, translate:{ y: B - h/2 } });
+    woodBox({ width:S, height:SB-(B-h), depth:S, translate:{ y: (B-h+SB)/2 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.74, height:S*0.6,
       rotate:{ x:TAU/4 }, translate:{ y: B - h - 1 },
       stroke:10, fill:true, color:P.cushion });
@@ -86,7 +94,7 @@ function makeModule(type, parent, opts){
       stroke:4, color:P.wood2 });
   }
   else if (type === "tower"){
-    box(a, { width:14, height:H-9, depth:14, translate:{ y: B - (H-9)/2 },
+    box(a, { width:14, height:SB-(B-(H-9)), depth:14, translate:{ y: (B-(H-9)+SB)/2 },
       topFace:P.wood2, color:P.wood2, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark });
     woodBox({ width:S+4, height:9, depth:S-4, translate:{ y: -B + 5.5 } });
@@ -94,13 +102,26 @@ function makeModule(type, parent, opts){
       rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.cushion });
   }
   else if (type === "hammock"){
-    [-1,1].forEach(s => box(a, { width:6, height:H, depth:6,
-      translate:{ x:s*(S/2-4), y: B - H/2 }, color:P.wood2,
+    [-1,1].forEach(s => box(a, { width:6, height:SB-(B-H), depth:6,
+      translate:{ x:s*(S/2-4), y: (B-H+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
     new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
+  }
+  else if (type === "hammock2"){
+    // широкий гамак: якорь в левой ячейке, вторая стойка — в соседней справа
+    const SB2 = (opts && opts.supY2) || B;
+    const X2 = CELL; // центр правой ячейки
+    [{ x:-(S/2-4), s:SB }, { x:X2+(S/2-4), s:SB2 }].forEach(p => box(a, {
+      width:6, height:p.s-(B-H), depth:6,
+      translate:{ x:p.x, y:(B-H+p.s)/2 }, color:P.wood2,
+      topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
+      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+      path:[ { x:-S/2+6, y: B - H + 8 },
+             { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
   else if (type === "roof"){
     // крыша прижата к низу своей ячейки — сидит на модуле снизу
@@ -170,14 +191,14 @@ function makeCat(parent){
 function makeRoom(parent){
   const room = new Zdog.Anchor({ addTo: parent });
   // пол и стена сильно больше холста: сцена заполнена целиком, ничего не «плавает»
-  const FW = 1700, FD = 900, WH = 470;
+  const FW = 1900, FD = 1350, WH = 640; // пол с запасом перекрывает нижний край холста
   const WALLZ = -255; // стена не привязана к глубине пола
   // пол
   box(room, { width:FW, height:10, depth:FD, translate:{ y:GROUND+5, z:-40 },
     topFace:P.floor, bottomFace:P.floorSide, leftFace:P.floorSide, rightFace:P.floorSide,
     frontFace:P.floorSide, rearFace:P.floorSide, color:P.floor });
   // швы досок
-  for (let k=-7;k<=7;k++){
+  for (let k=-8;k<=8;k++){
     new Zdog.Shape({ addTo:room, stroke:1.2, color:P.floorSide, closed:false,
       path:[ { x:k*115, y:GROUND-0.5, z:WALLZ+8 }, { x:k*115, y:GROUND-0.5, z:-40+FD/2-8 } ] });
   }
@@ -192,22 +213,22 @@ function makeRoom(parent){
   new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:P.shoji, translate:{ z:0.8 } });
   new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
   new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:-75, y:0 }, { x:75, y:0 } ] });
-  // ветка сакуры за окном
-  new Zdog.Shape({ addTo:win, stroke:2.4, color:P.juteDark, closed:false, translate:{ z:2 },
+  // ветка сакуры ЗА окном: между свечением (z:0) и рамой сёдзи (z:0.8+)
+  new Zdog.Shape({ addTo:win, stroke:2.4, color:P.juteDark, closed:false, translate:{ z:0.3 },
     path:[ { x:-70, y:-34 }, { bezier:[ { x:-30, y:-26 }, { x:0, y:-30 }, { x:40, y:-14 } ] } ] });
   [[-44,-32],[-16,-26],[8,-27],[26,-19],[44,-13]].forEach(([x,y]) =>
-    new Zdog.Shape({ addTo:win, stroke:7, color:P.sakura, translate:{ z:2.4 }, path:[{ x, y }] }));
-  // свиток на задней стене
-  const scroll = new Zdog.Anchor({ addTo:room, translate:{ x:-430, y:GROUND-235, z:WALLZ+1.5 } });
-  new Zdog.Rect({ addTo:scroll, width:56, height:110, fill:true, stroke:4, color:P.rugIn });
-  new Zdog.Shape({ addTo:scroll, stroke:5, color:P.aka, path:[{ y:-20 }] });
-  new Zdog.Shape({ addTo:scroll, stroke:2, color:P.ink, closed:false,
-    path:[ { x:-8, y:0 }, { bezier:[ { x:8, y:6 }, { x:-6, y:16 }, { x:8, y:22 } ] } ] });
-  // татами-коврик под домиком
-  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+70, height:CELL+90, cornerRadius:16,
-    fill:true, stroke:4, color:P.rug, rotate:{ x:TAU/4 }, translate:{ y:GROUND-1, z:6 } });
-  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+40, height:CELL+60, cornerRadius:12,
-    stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:6 } });
+    new Zdog.Shape({ addTo:win, stroke:7, color:P.sakura, translate:{ z:0.5 }, path:[{ x, y }] }));
+  // свиток на задней стене — приглушённый, чтобы не спорил с домиком
+  const scroll = new Zdog.Anchor({ addTo:room, translate:{ x:-350, y:GROUND-218, z:WALLZ+1.5 } });
+  new Zdog.Rect({ addTo:scroll, width:46, height:92, fill:true, stroke:3, color:P.wallSide });
+  new Zdog.Shape({ addTo:scroll, stroke:3.5, color:P.akaDeep, path:[{ y:-18 }] });
+  new Zdog.Shape({ addTo:scroll, stroke:1.8, color:P.floorSide, closed:false,
+    path:[ { x:-7, y:0 }, { bezier:[ { x:7, y:5 }, { x:-5, y:13 }, { x:7, y:19 } ] } ] });
+  // татами-коврик под домиком — с запасом под большие постройки
+  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+160, height:CELL+140, cornerRadius:18,
+    fill:true, stroke:4, color:P.rug, rotate:{ x:TAU/4 }, translate:{ y:GROUND-1, z:4 } });
+  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+124, height:CELL+106, cornerRadius:14,
+    stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:4 } });
   // растение справа
   const plant = new Zdog.Anchor({ addTo:room, translate:{ x:330, y:GROUND, z:64 } });
   new Zdog.Cylinder({ addTo:plant, diameter:44, length:34, rotate:{ x:TAU/4 },
@@ -239,16 +260,22 @@ function makeRoom(parent){
 /* ---------- инициализация ---------- */
 function build(){
   canvas = document.getElementById("scene");
-  P = darkMq.matches ? PALETTES.dark : PALETTES.light;
+  P = isDark() ? PALETTES.dark : PALETTES.light;
   if (illo){ illo.children = []; illo = null; }
   illo = new Zdog.Illustration({
     element: canvas, zoom: 1.18, dragRotate: false,
   });
-  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: -70, y: -30 } });
-  // комната — единая Group: рисуется целиком ДО домика и кота,
-  // чтобы большие плоскости (пол, ковёр) не перекрывали модули при сортировке
+  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: -28, y: -26 } });
+  // комната — единая Group, ЖЁСТКО закреплённая позади всего:
+  // средняя глубина группы зависит от размеров пола/швов, и при глубоком поле
+  // сортировка начинала рисовать комнату ПОВЕРХ модулей (плоские кубы,
+  // пропавшая лежанка) — поэтому sortValue прибиваем, а не вычисляем
   const roomG = new Zdog.Group({ addTo: world });
   makeRoom(roomG);
+  roomG.updateSortValue = function(){
+    Zdog.Group.prototype.updateSortValue.call(this);
+    this.sortValue = -1e9;
+  };
   houseA = new Zdog.Anchor({ addTo: world, translate:{ z: 6 } });
   ghostA = new Zdog.Anchor({ addTo: world, translate:{ z: 6 } });
   peekA  = new Zdog.Anchor({ addTo: world, translate:{ z: 6 } });
@@ -261,6 +288,7 @@ function build(){
   catA = makeCat(world);
   parkCat();
   moduleAnchors = {};
+  moduleDy = {};
   dirty = true;
 }
 
@@ -269,7 +297,13 @@ const api = KD.scene = {};
 
 api.init = function(){
   build();
-  darkMq.addEventListener("change", () => { const st = api._snapshot; build(); if (st) api.restore(st); });
+  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конфигуратора
+     (раньше брали _snapshot, который никто не наполнял, — дом исчезал) */
+  darkMq.addEventListener("change", () => {
+    build();
+    const grid = KD.configurator ? KD.configurator.getGrid() : api._snapshot;
+    if (grid) api.restore(grid);
+  });
   animate();
 };
 
@@ -277,12 +311,30 @@ api._snapshot = null;
 api.restore = function(grid){
   api._snapshot = grid;
   Object.keys(moduleAnchors).forEach(i => api.remove(+i, true));
-  grid.forEach((t, i) => { if (t) api.place(i, t, true); });
+  grid.forEach((t, i) => {
+    if (!t || !MODULES[t]) return; // пусто или маркер широкого модуля
+    const opts = { below: i >= COLS ? grid[i - COLS] : null };
+    if (MODULES[t].w > 1) opts.below2 = i >= COLS ? grid[i - COLS + 1] : null;
+    if (t === "tunnel"){
+      const col = i % COLS;
+      opts.tunnelAxis = ((col > 0 && grid[i-1]) || (col < COLS-1 && grid[i+1])) ? "x" : "z";
+    }
+    api.place(i, t, true, opts);
+  });
 };
 
 api.place = function(i, type, instant, opts){
+  opts = Object.assign({}, opts);
+  /* до какой высоты тянутся опоры: верх модуля снизу (или граница ячейки/пол) */
+  const supOf = b => b && MODULES[b] ? CELL + (TOP_Y[b] ?? -CELL/2) : CELL/2;
+  opts.supY = supOf(opts.below);
+  if (MODULES[type].w > 1) opts.supY2 = supOf(opts.below2);
   const a = makeModule(type, houseA, opts);
   a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
+  /* крыша, тоннель и когтеточка не тянутся — целиком опускаются на опору */
+  const dy = opts.supY - CELL/2;
+  moduleDy[i] = (type === "roof" || type === "tunnel" || type === "scratch") && dy ? dy : 0;
+  a.translate.y += moduleDy[i];
   moduleAnchors[i] = a;
   if (!instant && !REDUCED){
     a.scale.set({ x: 0.01, y: 0.01, z: 0.01 });
@@ -296,17 +348,20 @@ api.remove = function(i){
   if (!a) return;
   houseA.removeChild(a);
   delete moduleAnchors[i];
+  delete moduleDy[i];
   dirty = true;
 };
 
-api.showGhosts = function(cells, hot){
+api.showGhosts = function(cells, hot, w){
   api.clearGhosts();
   const S = CELL - 12;
-  cells.forEach(i => {
+  w = w || 1;
+  // «горячая» ячейка рисуется последней, чтобы её подсветка не тонула под соседями
+  cells.slice().sort((a, b) => (a === hot) - (b === hot)).forEach(i => {
     const g = new Zdog.Box({
-      addTo: ghostA, width:S, height:S, depth:S, stroke:false,
+      addTo: ghostA, width: S + (w-1)*CELL, height:S, depth:S, stroke:false,
       color: i === hot ? P.ghostHot : P.ghost,
-      translate: { x: cellX(colOf(i)), y: cellY(rowOf(i)) }
+      translate: { x: cellX(colOf(i)) + (w-1)*CELL/2, y: cellY(rowOf(i)) }
     });
     ghostShapes.push(g);
   });
@@ -326,6 +381,40 @@ api.cellClientPos = function(i){
   const k = illo.zoom * (r.width / illo.width);
   return { x: r.left + r.width/2 + a.renderOrigin.x * k,
            y: r.top + r.height/2 + a.renderOrigin.y * k };
+};
+
+/* иконка модуля для лотка: рендерим НАСТОЯЩИЙ Zdog-модуль в offscreen-канвас,
+   обрезаем по непрозрачным пикселям и вписываем в 76×64 (@2x) — иконка
+   выглядит ровно так же, как модуль в сцене */
+api.moduleIcon = function(type){
+  const big = document.createElement("canvas");
+  big.width = 420; big.height = 320;
+  const savedP = P;
+  P = PALETTES.light; // чипы лотка всегда светлые (в тёмной теме — кремовые)
+  const mini = new Zdog.Illustration({ element: big, zoom: 2 });
+  const wld = new Zdog.Anchor({ addTo: mini, rotate: { x: -0.24, y: 0.30 } });
+  makeModule(type, wld, {});
+  P = savedP;
+  mini.updateRenderGraph();
+  const W = big.width, Hh = big.height;
+  const px = big.getContext("2d").getImageData(0, 0, W, Hh).data;
+  let x0 = W, y0 = Hh, x1 = 0, y1 = 0;
+  for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++){
+    if (px[(y*W + x)*4 + 3] > 8){
+      if (x < x0) x0 = x; if (x > x1) x1 = x;
+      if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+  }
+  if (x1 <= x0) return "";
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+  const OW = 152, OH = 128;
+  const out = document.createElement("canvas");
+  out.width = OW; out.height = OH;
+  const k = Math.min(OW*0.92/bw, OH*0.92/bh);
+  const ctx = out.getContext("2d");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(big, x0, y0, bw, bh, (OW-bw*k)/2, (OH-bh*k)/2, bw*k, bh*k);
+  return out.toDataURL();
 };
 
 /* пульс модуля (при визите кота) */
@@ -354,7 +443,7 @@ async function tween(dur, step){
 }
 
 /* высота «пола для лап» каждого модуля: смещение от центра ячейки */
-const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, roof:2, scratch:-27 };
+const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, hammock2:8, roof:2, scratch:-27 };
 
 /* прыжок кота в точку (x,y) мировых координат */
 async function hopTo(tx, ty, dur){
@@ -395,8 +484,9 @@ api.moveIn = async function(visits, onVisit, onDone){
   for (let k = 0; k < visits.length; k++){
     const i = visits[k];
     const type = onVisit(i, k); // конфигуратор вернёт тип и покажет сердечко
-    const tx = cellX(colOf(i));
-    const ty = cellY(rowOf(i)) + (SIT_Y[type] ?? -29) - 13; // лапы на «крышу» модуля
+    const mw = (MODULES[type] && MODULES[type].w) || 1;
+    const tx = cellX(colOf(i)) + (mw-1)*CELL/2; // широкий модуль: кот садится в середину
+    const ty = cellY(rowOf(i)) + (SIT_Y[type] ?? -29) + (moduleDy[i] || 0) - 13; // лапы на «крышу» модуля
     await hopTo(tx, ty, REDUCED ? 1 : 520);
     api.pulse(i);
     if (MODULES[type] && MODULES[type].hasEntrance && k === 0){
