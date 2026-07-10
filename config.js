@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://promising-counting-catalogs-rather.trycloudflare.com";
+window.KOTOSHI_API = "https://designated-mysql-automatically-occupations.trycloudflare.com";
