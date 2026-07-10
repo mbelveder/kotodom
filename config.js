@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://smaller-decade-adaptation-maria.trycloudflare.com";
+window.KOTOSHI_API = "https://cursor-will-medical-defined.trycloudflare.com";
