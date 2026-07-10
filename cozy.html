@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Котоши — собери домик</title>
+<style>
+  :root{
+    --sky:#C3E6F2; --panel:#47B2E5; --panel-deep:#2B97CE; --dock:#2490C9;
+    --card:#FFFFFF; --card-line:#D9EBF5; --title:#2BA8A2; --body:#8F877C; --ink:#4A3F35;
+    --cream:#FFF4D6; --cream-line:#EFCF83;
+    --mint:#4EC7A8; --mint-deep:#3BAE91;
+    --wood-top:#F0D6A5; --wood-r:#DFBB85; --wood-l:#C79C69; --line:#6E523C;
+    --roof:#E8794F; --roof-dark:#C75A38;
+    --fs-round: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{ margin:0; font-family:var(--fs-round); background:var(--sky); overflow:hidden;
+        -webkit-font-smoothing:antialiased; user-select:none; }
+  button{ font-family:inherit; border:none; cursor:pointer; background:none; padding:0; }
+  button:focus-visible{ outline:3px solid #1D7FB5; outline-offset:2px; border-radius:14px; }
+
+  #app{ position:fixed; inset:0; display:flex; flex-direction:column; }
+
+  /* ---------- scene ---------- */
+  #scene-wrap{ position:absolute; inset:0; }
+  #scene{ width:100%; height:100%; display:block; }
+  .module{ cursor:pointer; }
+  .module.pop{ animation:pop .5s cubic-bezier(.34,1.6,.64,1) both; transform-box:fill-box; transform-origin:50% 100%; }
+  @keyframes pop{ 0%{ transform:scale(.1);} 70%{ transform:scale(1.12);} 100%{ transform:scale(1);} }
+  .module:hover .m-body{ filter:brightness(1.06); }
+  #momo-g{ transition:transform .55s cubic-bezier(.45,1.4,.55,1); will-change:transform; }
+  #momo-inner.hop{ animation:hop .55s ease both; }
+  @keyframes hop{ 0%{transform:translateY(0) scaleY(1);} 35%{transform:translateY(-42px) scaleY(1.06);} 75%{transform:translateY(2px) scaleY(.92);} 100%{transform:translateY(0) scaleY(1);} }
+  .m-eyes{ transform-box:fill-box; transform-origin:center; animation:blink 5.2s infinite; }
+  @keyframes blink{ 0%,93%,100%{ transform:scaleY(1);} 96%{ transform:scaleY(.08);} }
+  .tail{ transform-box:fill-box; transform-origin:10% 90%; animation:sway 3.4s ease-in-out infinite; }
+  @keyframes sway{ 0%,100%{ transform:rotate(0deg);} 50%{ transform:rotate(9deg);} }
+  .cloud{ animation:drift 70s linear infinite; }
+  .cloud.c2{ animation-duration:95s; animation-delay:-40s; }
+  @keyframes drift{ from{ transform:translateX(-250px);} to{ transform:translateX(1050px);} }
+
+  /* ---------- HUD ---------- */
+  #hud{ position:absolute; top:0; left:50%; transform:translateX(-50%);
+        width:min(620px,100%); padding:calc(10px + env(safe-area-inset-top)) 12px 0;
+        display:flex; align-items:flex-start; gap:8px; z-index:5; pointer-events:none; }
+  #hud > *{ pointer-events:auto; }
+  .pill{ display:flex; align-items:center; gap:7px; background:var(--cream);
+         border:3px solid var(--cream-line); border-radius:999px; padding:5px 14px 5px 6px;
+         box-shadow:0 3px 0 rgba(110,82,60,.18); }
+  .pill svg{ width:26px; height:26px; }
+  .pill b{ font-size:15px; font-weight:900; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:.2px; }
+  .pill small{ font-size:10px; font-weight:800; color:#B4A98F; display:block; line-height:1; margin-top:1px; letter-spacing:.4px; }
+  #hud .spacer{ flex:1; }
+  .hud-btn{ width:44px; height:44px; border-radius:15px; background:rgba(255,255,255,.92);
+            border:3px solid rgba(255,255,255,0); box-shadow:0 3px 0 rgba(46,90,115,.25);
+            display:grid; place-items:center; transition:transform .12s; }
+  .hud-btn:active{ transform:scale(.9); }
+  .hud-btn svg{ width:22px; height:22px; stroke:#47A5D6; stroke-width:2.6; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* ---------- speech bubble ---------- */
+  #bubble{ position:absolute; left:50%; top:calc(74px + env(safe-area-inset-top));
+           transform:translateX(-50%) scale(.6); max-width:min(78vw,340px); z-index:4;
+           background:#FFFDF4; border:3px solid var(--cream-line); border-radius:18px;
+           padding:9px 14px; font-size:13.5px; font-weight:800; color:var(--ink); text-align:center;
+           box-shadow:0 4px 0 rgba(110,82,60,.15); opacity:0; pointer-events:none;
+           transition:opacity .25s, transform .3s cubic-bezier(.34,1.56,.64,1); }
+  #bubble.show{ opacity:1; transform:translateX(-50%) scale(1); }
+  #bubble::after{ content:""; position:absolute; left:50%; bottom:-11px; margin-left:-8px;
+                  border:8px solid transparent; border-top-color:var(--cream-line); }
+
+  /* ---------- bottom sheet ---------- */
+  #sheet{ position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+          width:min(620px,100%); z-index:6; display:flex; flex-direction:column; }
+  #panel{ background:var(--panel); border-radius:26px 26px 0 0; padding:10px 10px 4px;
+          box-shadow:0 -4px 24px rgba(30,90,120,.25); }
+  #panel::before{ content:""; display:block; width:44px; height:5px; border-radius:3px;
+                  background:rgba(255,255,255,.55); margin:0 auto 8px; }
+  .tabpane{ max-height:min(34dvh,320px); overflow-y:auto; display:flex; flex-direction:column; gap:8px;
+            padding:2px 2px 8px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.6) transparent; }
+  .tabpane.hidden{ display:none; }
+
+  .card{ display:flex; align-items:center; gap:10px; background:var(--card);
+         border-radius:20px; padding:8px 10px; box-shadow:0 3px 0 var(--panel-deep); }
+  .card .thumb{ flex:none; width:58px; height:58px; border-radius:15px; border:2.5px solid #F0E4CC;
+                display:grid; place-items:center; background:linear-gradient(#FDF8EC, #F6EBD3); }
+  .card .thumb svg{ width:50px; height:50px; }
+  .card .info{ flex:1; min-width:0; }
+  .card .info h3{ margin:0; font-size:15px; font-weight:800; color:var(--title); letter-spacing:.1px; }
+  .card .info h3 span{ font-size:11px; color:#B9C6CC; font-weight:800; margin-left:5px; }
+  .card .info p{ margin:2px 0 0; font-size:11.5px; line-height:1.35; font-weight:600; color:var(--body); }
+  .card .buy{ flex:none; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .price-chip{ display:flex; align-items:center; gap:4px; font-size:12.5px; font-weight:900;
+               color:var(--ink); font-variant-numeric:tabular-nums; }
+  .price-chip svg{ width:15px; height:15px; }
+  .add-btn{ width:54px; height:40px; border-radius:14px; background:var(--mint);
+            box-shadow:0 3px 0 var(--mint-deep); display:grid; place-items:center;
+            transition:transform .12s, filter .2s; }
+  .add-btn svg{ width:20px; height:20px; stroke:#fff; stroke-width:3.4; fill:none; stroke-linecap:round; }
+  .add-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--mint-deep); }
+  .card.disabled{ opacity:.55; }
+  .card.disabled .add-btn{ filter:saturate(.15) brightness(1.05); cursor:not-allowed; }
+  .card.shake{ animation:shake .4s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 65%{transform:translateX(5px);} }
+
+  /* presets */
+  .preset-card{ display:flex; align-items:center; gap:12px; background:var(--card);
+                border-radius:20px; padding:10px 12px; box-shadow:0 3px 0 var(--panel-deep); }
+  .preset-card .mini{ flex:none; width:96px; height:76px; border-radius:14px; border:2.5px solid var(--card-line);
+                      background:linear-gradient(#EAF7F0 60%, #D8EFC9 60%); overflow:hidden; }
+  .preset-card .mini svg{ width:100%; height:100%; }
+  .preset-card h3{ margin:0; font-size:15px; font-weight:800; color:var(--title); }
+  .preset-card p{ margin:2px 0 0; font-size:11.5px; font-weight:600; color:var(--body); }
+  .build-btn{ flex:none; background:var(--mint); box-shadow:0 3px 0 var(--mint-deep); color:#fff;
+              font-size:13px; font-weight:900; border-radius:14px; padding:10px 14px; letter-spacing:.2px;
+              transition:transform .12s; }
+  .build-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--mint-deep); }
+
+  /* order */
+  #order-list{ background:var(--card); border-radius:20px; padding:6px 14px; box-shadow:0 3px 0 var(--panel-deep); }
+  .o-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:2px dashed #EDF3F0; }
+  .o-row:last-child{ border-bottom:none; }
+  .o-row .o-ic{ width:30px; height:30px; flex:none; }
+  .o-row .o-name{ flex:1; font-size:13.5px; font-weight:800; color:var(--ink); }
+  .o-row .o-name em{ font-style:normal; color:#ADB8B4; font-size:12px; margin-left:4px; }
+  .o-row .o-price{ font-size:13.5px; font-weight:900; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .o-row.total .o-name{ font-size:15px; }
+  .o-row.total .o-price{ font-size:17px; color:var(--title); }
+  .o-row.disc .o-name, .o-row.disc .o-price{ color:#E07856; }
+  .o-empty{ text-align:center; font-size:13px; font-weight:700; color:#7FA8BF; background:rgba(255,255,255,.25);
+            border:2.5px dashed rgba(255,255,255,.7); border-radius:18px; padding:22px 16px; color:#fff; }
+  #order-cta{ margin-top:8px; width:100%; background:#FF9A5C; box-shadow:0 4px 0 #E0793C; color:#fff;
+              font-size:16px; font-weight:900; border-radius:18px; padding:14px; letter-spacing:.3px;
+              transition:transform .12s; }
+  #order-cta:active{ transform:translateY(2px); box-shadow:0 2px 0 #E0793C; }
+  .o-note{ margin:8px 4px 2px; font-size:11px; line-height:1.45; font-weight:700; color:rgba(255,255,255,.85); text-align:center; }
+
+  /* dock */
+  #dock{ display:flex; background:var(--dock); padding:8px 14px calc(10px + env(safe-area-inset-bottom)); gap:8px; }
+  .tab{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 0 5px;
+        border-radius:16px; transition:background .2s; }
+  .tab svg{ width:26px; height:26px; stroke:rgba(255,255,255,.9); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+  .tab span{ font-size:10.5px; font-weight:800; color:rgba(255,255,255,.9); letter-spacing:.3px; }
+  .tab.active{ background:#fff; box-shadow:0 3px 0 rgba(0,60,90,.18); }
+  .tab.active svg{ stroke:var(--panel); }
+  .tab.active span{ color:var(--panel); }
+  .tab .badge{ position:absolute; }
+
+  /* confirm overlay */
+  #overlay{ position:fixed; inset:0; background:rgba(36,66,82,.5); z-index:20; display:grid; place-items:center;
+            padding:20px; opacity:0; pointer-events:none; transition:opacity .25s; }
+  #overlay.show{ opacity:1; pointer-events:auto; }
+  #overlay .sheet-card{ background:#FFFDF4; border:4px solid var(--cream-line); border-radius:28px;
+            width:min(400px,100%); padding:22px 20px 18px; text-align:center;
+            transform:scale(.7); transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+            box-shadow:0 10px 0 rgba(110,82,60,.2); }
+  #overlay.show .sheet-card{ transform:scale(1); }
+  .sheet-card svg{ width:92px; height:92px; }
+  .sheet-card h2{ margin:6px 0 4px; font-size:21px; font-weight:900; color:var(--ink); }
+  .sheet-card .sum{ font-size:15px; font-weight:800; color:var(--title); margin:0 0 10px; }
+  .sheet-card p{ margin:0 0 14px; font-size:12.5px; line-height:1.5; font-weight:700; color:var(--body); }
+  .sheet-card button{ background:var(--mint); box-shadow:0 4px 0 var(--mint-deep); color:#fff; width:100%;
+            font-size:15px; font-weight:900; border-radius:16px; padding:13px; }
+  .sheet-card button:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--mint-deep); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+
+<div id="app">
+  <div id="scene-wrap">
+    <svg id="scene" viewBox="0 0 800 660" preserveAspectRatio="xMidYMid meet" aria-label="Сборка домика Котоши на лужайке">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#BEE3F2"/><stop offset="1" stop-color="#E2F2E0"/>
+        </linearGradient>
+        <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ABD47E"/><stop offset="1" stop-color="#84B656"/>
+        </linearGradient>
+        <linearGradient id="woodTop" x1="0" y1="0" x2=".6" y2="1">
+          <stop offset="0" stop-color="#F6E2B4"/><stop offset="1" stop-color="#E8CA8E"/>
+        </linearGradient>
+        <linearGradient id="woodR" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#E9C48C"/><stop offset="1" stop-color="#D5A96C"/>
+        </linearGradient>
+        <linearGradient id="woodL" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#DAB279"/><stop offset="1" stop-color="#C39355"/>
+        </linearGradient>
+        <linearGradient id="woodPost" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#D9B078"/><stop offset=".5" stop-color="#E9C990"/><stop offset="1" stop-color="#C89A5E"/>
+        </linearGradient>
+        <radialGradient id="hole" cx=".4" cy=".38" r=".9">
+          <stop offset="0" stop-color="#2E2620"/><stop offset="1" stop-color="#4E3C2E"/>
+        </radialGradient>
+        <radialGradient id="cushion" cx=".42" cy=".34" r="1">
+          <stop offset="0" stop-color="#F9DAD3"/><stop offset="1" stop-color="#EDAFA4"/>
+        </radialGradient>
+        <linearGradient id="roofG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#EE9166"/><stop offset="1" stop-color="#D4653C"/>
+        </linearGradient>
+        <radialGradient id="momoB" cx=".42" cy=".3" r="1">
+          <stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#EFE0C8"/>
+        </radialGradient>
+        <radialGradient id="lawnGlow" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#DFF0BB" stop-opacity=".9"/><stop offset="1" stop-color="#DFF0BB" stop-opacity="0"/>
+        </radialGradient>
+        <pattern id="plyP" width="6" height="7" patternUnits="userSpaceOnUse">
+          <rect width="6" height="7" fill="none"/>
+          <rect y="1.4" width="6" height="1.7" fill="#B4884E" opacity=".5"/>
+          <rect y="4.9" width="6" height="1.1" fill="#EBD3A2" opacity=".55"/>
+        </pattern>
+        <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="7"/>
+        </filter>
+        <filter id="grainF">
+          <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" stitchTiles="stitch"/>
+          <feColorMatrix type="saturate" values="0"/>
+        </filter>
+      </defs>
+      <rect x="-2000" y="-2000" width="4800" height="2290" fill="url(#sky)"/>
+      <g class="cloud"><ellipse cx="120" cy="80" rx="52" ry="20" fill="#fff" opacity=".92"/><ellipse cx="160" cy="68" rx="34" ry="16" fill="#fff" opacity=".92"/></g>
+      <g class="cloud c2"><ellipse cx="60" cy="150" rx="40" ry="15" fill="#fff" opacity=".8"/></g>
+      <rect x="-2000" y="210" width="4800" height="2600" fill="url(#grass)"/>
+      <g id="bg-deco"></g>
+      <g id="world" transform="translate(62,-84) scale(.82)">
+        <g id="house"></g>
+        <g id="momo-g"><g id="momo-inner"></g></g>
+      </g>
+      <rect x="-2000" y="-2000" width="4800" height="4800" filter="url(#grainF)"
+            style="mix-blend-mode:overlay;opacity:.12;pointer-events:none"/>
+    </svg>
+  </div>
+
+  <header id="hud">
+    <div class="pill" id="price-pill" title="Итого">
+      <svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#F7C948" stroke="#D9A521" stroke-width="2"/><text x="13" y="18" text-anchor="middle" font-size="13" font-weight="900" fill="#8A6510" font-family="inherit">₽</text></svg>
+      <div><b id="hud-price">0 ₽</b><small>ИТОГО</small></div>
+    </div>
+    <div class="pill" title="Модулей в сборке">
+      <svg viewBox="0 0 26 26"><rect x="4" y="8" width="18" height="14" rx="3" fill="#DFBB85" stroke="#6E523C" stroke-width="2"/><circle cx="13" cy="15" r="4" fill="#4A3A32"/></svg>
+      <div><b id="hud-count">0/12</b><small>МОДУЛИ</small></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="hud-btn" id="btn-reset" title="Начать заново" aria-label="Начать заново">
+      <svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 0 1 14-4l2 2M20 4v4h-4M20 14a8 8 0 0 1-14 4l-2-2M4 20v-4h4"/></svg>
+    </button>
+  </header>
+
+  <div id="bubble" role="status" aria-live="polite"></div>
+
+  <section id="sheet">
+    <div id="panel">
+      <div id="tab-modules" class="tabpane"></div>
+      <div id="tab-presets" class="tabpane hidden"></div>
+      <div id="tab-order" class="tabpane hidden"></div>
+    </div>
+    <nav id="dock" aria-label="Разделы">
+      <button class="tab active" data-tab="modules" style="position:relative">
+        <svg viewBox="0 0 24 24"><path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z"/><path d="M4 8.5 12 13l8-4.5M12 13v7"/></svg>
+        <span>Модули</span>
+      </button>
+      <button class="tab" data-tab="presets" style="position:relative">
+        <svg viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>
+        <span>Готовые</span>
+      </button>
+      <button class="tab" data-tab="order" style="position:relative">
+        <svg viewBox="0 0 24 24"><path d="M4 9h16l-1.6 10a2 2 0 0 1-2 1.7H7.6a2 2 0 0 1-2-1.7z"/><path d="M8.5 9 12 3.5 15.5 9"/></svg>
+        <span>Заказ</span>
+      </button>
+    </nav>
+  </section>
+
+  <div id="overlay">
+    <div class="sheet-card">
+      <svg viewBox="-60 -105 120 110" id="ov-momo"></svg>
+      <h2>Заявка собрана!</h2>
+      <p class="sum" id="ov-sum"></p>
+      <p id="ov-note">Момо запишет состав и передаст мастерской — как на основном сайте, заявка улетает в Telegram. Это прототип: кнопка пока ничего не отправляет.</p>
+      <button id="ov-close">Отлично</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= каталог (реальные модули и цены Котоши) ================= */
+const MODULES = {
+  base:   { name:"Куб-нора", jp:"はこ", price:4990, h:80, perch:false,
+    desc:"Базовый модуль: фанерный куб с круглым лазом. С него начинается любой Котоши.",
+    needsSupport:false, supportsAbove:true,
+    say:["О! Куб. Заезжаю немедленно.","Нора — это святое.","Пахнет свежей фанерой. Одобряю."] },
+  lounge: { name:"Лежанка", jp:"ざぶとん", price:5990, h:36, perch:true,
+    desc:"Открытая лежанка с мягкой подушкой. Ставится на пол или на крышу куба.",
+    needsSupport:false, supportsAbove:true,
+    say:["Подушка?! Считайте, я уже сплю.","Отсюда отлично видно кухню.","Мягко. Подозрительно мягко. Проверю часов восемь."] },
+  tunnel: { name:"Тоннель", jp:"トンネル", price:2490, h:56, perch:false,
+    desc:"Сквозной тоннель для засад и пробежек. Соединяет модули по горизонтали.",
+    needsSupport:false, supportsAbove:false,
+    say:["Тоннель — идеальное место для засады.","Туда-сюда. Туда-сюда. Гениально.","Никто не заметит меня здесь. Никто."] },
+  tower:  { name:"Башня", jp:"タワー", price:3990, h:78, perch:true,
+    desc:"Смотровая площадка на колонне. Ставится на куб или лежанку — коту нужна высота.",
+    needsSupport:true, supportsAbove:true,
+    say:["Выше! Ещё выше! Я должен видеть всё.","С высоты люди выглядят… управляемо.","Моя башня. Моё королевство."] },
+  hammock:{ name:"Гамак", jp:"ハンモック", price:1990, h:80, perch:true,
+    desc:"Подвесной гамак на раме. Крепится над любым закрытым модулем.",
+    needsSupport:true, supportsAbove:false,
+    say:["Качается! Это лучший день в моей жизни.","Гамак — это лежанка для продвинутых.","Буду качаться и осуждать."] },
+  roof:   { name:"Крыша", jp:"やね", price:1490, h:60, perch:false,
+    desc:"Двускатная крыша-чердак. Завершает постройку — ставится только сверху.",
+    needsSupport:true, supportsAbove:false,
+    say:["Теперь это официально дом.","Под крышей уютнее мурчится.","Дождь в квартире маловероятен, но я ценю заботу."] },
+  scratch:{ name:"Когтеточка", jp:"つめとぎ", price:990, h:64, perch:false,
+    desc:"Столбик в джуте. Ставится на пол рядом с домиком — и диван спасён*. (*стойкость, а не магия)",
+    needsSupport:false, supportsAbove:false,
+    say:["Когти сами себя не наточат.","Джут. Классика. Уважаю.","Диван может спать спокойно. Наверное."] }
+};
+const PRESETS = {
+  start: { name:"Старт", desc:"Нора и когтеточка — минимум для счастья.", cells:{1:"base",2:"scratch"} },
+  wide:  { name:"Мост",  desc:"Две норы, тоннель и гамак над крышей.",   cells:{0:"base",1:"tunnel",2:"base",6:"hammock"} },
+  tower: { name:"Башня", desc:"Нора, башня и крыша — вертикальный дворец.", cells:{1:"base",5:"tower",9:"roof",2:"scratch"} }
+};
+const SAY = {
+  empty:["Комната пустая. Я расстроен, но сдержан.","Тут был мой дом. Был."],
+  removed:["Эй! Я там жил!","Ладно. Перестановка так перестановка."],
+  blocked:["Сверху что-то стоит — сначала уберите это.","Так нельзя: наверху ещё модуль."],
+  noSlot:["Сюда уже не поставить — всё занято.","Для этого модуля нужна опора снизу."],
+  discount:["Пять модулей! Вам скидка, мне дворец.","Целый комплекс! Скидка 5% — заслуженно."],
+  bigHouse:["Это уже не домик. Это резиденция.","Соседские коты будут завидовать."],
+  hello:["Я Момо. Строим дом? Строим дом!","Нажмите на карточку внизу — я всё проверю лично."]
+};
+const COLS=4, ROWS=3, MAX=COLS*ROWS, DISCOUNT_FROM=5, DISCOUNT=.05;
+const fmt = n => n.toLocaleString("ru-RU") + " ₽";
+
+/* ================= изометрия ================= */
+const W2=75, H2=37, WALL=80, LINE="#6E523C";
+const ORIGIN = { x:288, y:398 };
+const colXY = c => ({ x:ORIGIN.x + c*W2, y:ORIGIN.y + c*H2 });
+
+function topFace(cx,ty,s=1){ const w=W2*s,h=H2*s;
+  return `M ${cx} ${ty-h} L ${cx+w} ${ty} L ${cx} ${ty+h} L ${cx-w} ${ty} Z`; }
+function leftFace(cx,ty,gy,s=1){ const w=W2*s,h=H2*s;
+  return `M ${cx-w} ${ty} L ${cx} ${ty+h} L ${cx} ${gy+h} L ${cx-w} ${gy} Z`; }
+function rightFace(cx,ty,gy,s=1){ const w=W2*s,h=H2*s;
+  return `M ${cx+w} ${ty} L ${cx} ${ty+h} L ${cx} ${gy+h} L ${cx+w} ${gy} Z`; }
+const G = (inner, cls="") => `<g class="${cls}" stroke="none" stroke-linejoin="round" stroke-linecap="round">${inner}</g>`;
+/* волнистые прожилки на верхней грани */
+const grain = (cx,ty) => `
+  <path d="M ${cx-40} ${ty+2} q 16 -7 34 -2 t 32 6" fill="none" stroke="#B98F55" stroke-width="1.7" opacity=".28"/>
+  <path d="M ${cx-26} ${ty+12} q 14 -5 30 0" fill="none" stroke="#B98F55" stroke-width="1.4" opacity=".2"/>`;
+/* стык верхней грани — мягкая тень-AO */
+const seam = (cx,ty,s=1) => `
+  <path d="M ${cx-W2*s} ${ty} L ${cx} ${ty+H2*s} L ${cx+W2*s} ${ty}" fill="none" stroke="#8F6A3C" stroke-width="2.2" opacity=".28"/>`;
+/* торец фанеры — левая грань со слоями шпона */
+const plyFace = (cx,ty,gy,s=1) => `
+  <path d="${leftFace(cx,ty,gy,s)}" fill="url(#woodL)"/>
+  <path d="${leftFace(cx,ty,gy,s)}" fill="url(#plyP)" opacity=".65"/>`;
+
+/* каждый модуль рисуется от точки (cx, gy) — центр нижнего ромба */
+const DRAW = {
+  base(cx,gy){ const ty=gy-80;
+    return G(`
+      ${plyFace(cx,ty,gy)}
+      <path d="${rightFace(cx,ty,gy)}" fill="url(#woodR)"/>
+      <path d="${topFace(cx,ty)}" fill="url(#woodTop)"/>
+      ${seam(cx,ty)}${grain(cx,ty+8)}
+      <ellipse cx="${cx+35}" cy="${gy-37}" rx="16" ry="20" fill="url(#hole)" transform="rotate(-10 ${cx+35} ${gy-37})"/>
+      <ellipse cx="${cx+35}" cy="${gy-37}" rx="16" ry="20" fill="none" stroke="#C89C64" stroke-width="2.4" opacity=".8" transform="rotate(-10 ${cx+35} ${gy-37})"/>
+      <path d="M ${cx+8} ${gy-58} q 9 -3 18 -1 M ${cx+6} ${gy-24} q 10 4 22 2" fill="none" stroke="#BE9257" stroke-width="1.5" opacity=".4"/>`, "m-body"); },
+  lounge(cx,gy){ const ty=gy-24;
+    return G(`
+      ${plyFace(cx,ty,gy)}
+      <path d="${rightFace(cx,ty,gy)}" fill="url(#woodR)"/>
+      <path d="${topFace(cx,ty)}" fill="url(#woodTop)"/>
+      ${seam(cx,ty)}
+      <ellipse cx="${cx}" cy="${ty-3}" rx="48" ry="23" fill="#E19A8E"/>
+      <ellipse cx="${cx}" cy="${ty-8}" rx="45" ry="21" fill="url(#cushion)"/>
+      <path d="M ${cx-28} ${ty-10} q 28 13 56 0" fill="none" stroke="#D98C7E" stroke-width="1.6" stroke-dasharray="3 6" opacity=".7"/>
+      <ellipse cx="${cx-1}" cy="${ty-9}" rx="7" ry="3.4" fill="#E4A196" opacity=".8"/>
+      <circle cx="${cx-22}" cy="${ty-14}" r="1.3" fill="#C97F72" opacity=".5"/>
+      <circle cx="${cx+18}" cy="${ty-4}" r="1.3" fill="#C97F72" opacity=".5"/>
+      <circle cx="${cx+27}" cy="${ty-13}" r="1.2" fill="#C97F72" opacity=".4"/>`, "m-body"); },
+  tunnel(cx,gy){ const ty=gy-52;
+    return G(`
+      ${plyFace(cx,ty,gy,.92)}
+      <path d="${rightFace(cx,ty,gy,.92)}" fill="url(#woodR)"/>
+      <path d="${topFace(cx,ty,.92)}" fill="url(#woodTop)"/>
+      ${seam(cx,ty,.92)}${grain(cx,ty+6)}
+      <ellipse cx="${cx-33}" cy="${gy-27}" rx="15" ry="18" fill="url(#hole)" transform="rotate(10 ${cx-33} ${gy-27})"/>
+      <ellipse cx="${cx-33}" cy="${gy-27}" rx="15" ry="18" fill="none" stroke="#B8853F" stroke-width="2.2" opacity=".6" transform="rotate(10 ${cx-33} ${gy-27})"/>
+      <ellipse cx="${cx+33}" cy="${gy-27}" rx="15" ry="18" fill="url(#hole)" transform="rotate(-10 ${cx+33} ${gy-27})"/>
+      <ellipse cx="${cx+33}" cy="${gy-27}" rx="15" ry="18" fill="none" stroke="#C89C64" stroke-width="2.2" opacity=".8" transform="rotate(-10 ${cx+33} ${gy-27})"/>`, "m-body"); },
+  tower(cx,gy){ const py=gy-62, ty=py-16;
+    return G(`
+      ${plyFace(cx,gy-62+H2*.32,gy,.32)}
+      <path d="${rightFace(cx,gy-62+H2*.32,gy,.32)}" fill="url(#woodPost)"/>
+      ${plyFace(cx,ty,py,.9)}
+      <path d="${rightFace(cx,ty,py,.9)}" fill="url(#woodR)"/>
+      <path d="${topFace(cx,ty,.9)}" fill="url(#woodTop)"/>
+      ${seam(cx,ty,.9)}
+      <ellipse cx="${cx}" cy="${ty-2}" rx="34" ry="15" fill="url(#cushion)"/>
+      <ellipse cx="${cx}" cy="${ty-2}" rx="34" ry="15" fill="none" stroke="#E1A296" stroke-width="2" opacity=".7"/>
+      <ellipse cx="${cx}" cy="${py+8}" rx="30" ry="9" fill="#8F6A3C" opacity=".18"/>`, "m-body"); },
+  hammock(cx,gy){ const t=gy-76;
+    return G(`
+      <ellipse cx="${cx-W2}" cy="${gy+H2-4}" rx="12" ry="5" fill="#8F6A3C" opacity=".22"/>
+      <ellipse cx="${cx+W2}" cy="${gy+H2-4}" rx="12" ry="5" fill="#8F6A3C" opacity=".22"/>
+      <rect x="${cx-W2-4}" y="${t}" width="9" height="${76+H2-6}" rx="4.5" fill="url(#woodPost)"/>
+      <rect x="${cx+W2-5}" y="${t}" width="9" height="${76+H2-6}" rx="4.5" fill="url(#woodPost)"/>
+      <circle cx="${cx-W2+.5}" cy="${t+3}" r="4.4" fill="#C89A5E"/>
+      <circle cx="${cx+W2-.5}" cy="${t+3}" r="4.4" fill="#C89A5E"/>
+      <path d="M ${cx-W2+2} ${t+10} C ${cx-20} ${t+52}, ${cx+20} ${t+52}, ${cx+W2-2} ${t+10}" fill="#E8A296"/>
+      <path d="M ${cx-W2+2} ${t+4} C ${cx-20} ${t+44}, ${cx+20} ${t+44}, ${cx+W2-2} ${t+4}" fill="url(#cushion)"/>
+      <path d="M ${cx-W2+6} ${t+12} C ${cx-18} ${t+44}, ${cx+18} ${t+44}, ${cx+W2-6} ${t+12}" fill="none" stroke="#D98C7E" stroke-width="1.4" stroke-dasharray="3 7" opacity=".6"/>`, "m-body"); },
+  roof(cx,gy){ const ty=gy;
+    return G(`
+      <path d="M ${cx-W2-10} ${ty} L ${cx} ${ty+H2+8} L ${cx} ${ty+H2+18} L ${cx-W2-10} ${ty+9} Z" fill="#A8542E"/>
+      <path d="M ${cx+W2+10} ${ty} L ${cx} ${ty+H2+8} L ${cx} ${ty+H2+18} L ${cx+W2+10} ${ty+9} Z" fill="#C05F35"/>
+      <path d="M ${cx-W2-10} ${ty} L ${cx} ${ty-52} L ${cx+W2+10} ${ty} L ${cx} ${ty+H2+8} Z" fill="url(#roofG)"/>
+      <path d="M ${cx-58} ${ty-12} Q ${cx} ${ty+18} ${cx+58} ${ty-12}" fill="none" stroke="#C7593A" stroke-width="2.2" opacity=".75"/>
+      <path d="M ${cx-40} ${ty-28} Q ${cx} ${ty-4} ${cx+40} ${ty-28}" fill="none" stroke="#C7593A" stroke-width="2" opacity=".6"/>
+      <path d="M ${cx-20} ${ty-42} Q ${cx} ${ty-30} ${cx+20} ${ty-42}" fill="none" stroke="#C7593A" stroke-width="1.8" opacity=".5"/>
+      <circle cx="${cx}" cy="${ty-53}" r="5" fill="#E9B84C"/>
+      <circle cx="${cx-1.4}" cy="${ty-54.4}" r="1.8" fill="#F7DC9B"/>`, "m-body"); },
+  scratch(cx,gy){ const t=gy-60;
+    return G(`
+      <ellipse cx="${cx}" cy="${gy}" rx="40" ry="17" fill="url(#woodR)"/>
+      <ellipse cx="${cx}" cy="${gy-3.5}" rx="40" ry="15" fill="url(#woodTop)"/>
+      <rect x="${cx-13}" y="${t}" width="26" height="61" rx="10" fill="url(#woodPost)"/>
+      <path d="M ${cx-12.4} ${t+11} q 12.4 3.4 24.8 0 M ${cx-12.4} ${t+20} q 12.4 3.4 24.8 0 M ${cx-12.4} ${t+29} q 12.4 3.4 24.8 0 M ${cx-12.4} ${t+38} q 12.4 3.4 24.8 0 M ${cx-12.4} ${t+47} q 12.4 3.4 24.8 0" fill="none" stroke="#B4884E" stroke-width="1.7" opacity=".5"/>
+      <path d="M ${cx+6} ${t+2} Q ${cx+16} ${t-9} ${cx+21} ${t-5}" fill="none" stroke="#B98F55" stroke-width="2" opacity=".7"/>
+      <circle cx="${cx+21}" cy="${t-4}" r="8" fill="#D65A4A"/>
+      <circle cx="${cx+18.5}" cy="${t-6.5}" r="2.6" fill="#EE8D7B" opacity=".9"/>`, "m-body"); }
+};
+
+/* Момо — манэки-кот Котоши */
+function momoSVG(){ return `
+  <g stroke="none" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="2" cy="2" rx="30" ry="8" fill="#3E637C" opacity=".16"/>
+    <path class="tail" d="M 26 -14 C 44 -12 48 -30 36 -34" fill="none" stroke-width="8" stroke="#EFE0C8"/>
+    <path class="tail" d="M 26 -15 C 42 -13.5 46 -28 36 -32" fill="none" stroke-width="3.6" stroke="#F0A860" opacity=".9"/>
+    <path d="M -22 -57 Q -18 -78 -12 -77 Q -6 -74 -3 -61 Z" fill="#F6EFDF"/>
+    <path d="M 22 -57 Q 18 -78 12 -77 Q 6 -74 3 -61 Z" fill="#EFA95F"/>
+    <path d="M -17.5 -62 Q -15 -72 -12.5 -71 Q -10 -69 -8.5 -63 Z" fill="#F2BCAE"/>
+    <path d="M 17.5 -62 Q 15 -72 12.5 -71 Q 10 -69 8.5 -63 Z" fill="#F2BCAE"/>
+    <path d="M -28 0 C -33 -26 -22 -66 0 -66 C 22 -66 33 -26 28 0 Z" fill="url(#momoB)"/>
+    <path d="M 14 -65 C 21 -62 26 -52 27.5 -40 C 21 -46 15 -48 9 -47 Z" fill="#F0A860" opacity=".9"/>
+    <path d="M -14 -8 q -3 -6 -1 -12 M 6 -6 q 2 -7 6 -10" fill="none" stroke="#D9C6A8" stroke-width="1.4" opacity=".6"/>
+    <g class="m-eyes">
+      <circle cx="-10" cy="-44" r="8" fill="#54402E"/>
+      <circle cx="10" cy="-44" r="8" fill="#54402E"/>
+      <circle cx="-10" cy="-44" r="8" fill="none" stroke="#3E2E20" stroke-width="1.2" opacity=".5"/>
+      <circle cx="10" cy="-44" r="8" fill="none" stroke="#3E2E20" stroke-width="1.2" opacity=".5"/>
+      <circle cx="-7.5" cy="-46.5" r="3.2" fill="#fff"/>
+      <circle cx="12.5" cy="-46.5" r="3.2" fill="#fff"/>
+      <circle cx="-12.5" cy="-40.8" r="1.5" fill="#fff" opacity=".85"/>
+      <circle cx="7.5" cy="-40.8" r="1.5" fill="#fff" opacity=".85"/>
+    </g>
+    <ellipse cx="-19" cy="-35" rx="4.8" ry="3" fill="#F5C0B5" opacity=".9"/>
+    <ellipse cx="19" cy="-35" rx="4.8" ry="3" fill="#F5C0B5" opacity=".9"/>
+    <path d="M -2.6 -35.8 Q 0 -37 2.6 -35.8 Q 1.6 -32.6 0 -32.6 Q -1.6 -32.6 -2.6 -35.8 Z" fill="#E8837A"/>
+    <path d="M 0 -32.6 v 2.4 M 0 -30.2 q -3 3.4 -6.4 1 M 0 -30.2 q 3 3.4 6.4 1" fill="none" stroke="#8A6E52" stroke-width="1.7"/>
+    <path d="M -24 -22 C -12 -14 12 -14 24 -22 L 23 -17.4 C 12 -10 -12 -10 -23 -17.4 Z" fill="#D65A4A"/>
+    <circle cx="0" cy="-13.5" r="4.8" fill="#EFC257"/>
+    <circle cx="-1.4" cy="-15" r="1.6" fill="#F9E3A8"/>
+    <ellipse cx="-11" cy="-2" rx="8" ry="5" fill="#F6EFDF"/>
+    <ellipse cx="11" cy="-2" rx="8" ry="5" fill="#F6EFDF"/>
+    <path d="M -11 -4.6 v 3.4 M -7.6 -4.6 v 3.4 M 7.6 -4.6 v 3.4 M 11 -4.6 v 3.4" fill="none" stroke="#D9C6A8" stroke-width="1.4" opacity=".8"/>
+  </g>`;
+}
+
+/* фон: забор, кусты, тропинка, цветы */
+function bgDeco(){
+  let s="";
+  /* мягкое пятно света на лужайке */
+  s+=`<ellipse cx="400" cy="320" rx="420" ry="120" fill="url(#lawnGlow)"/>`;
+  /* забор — без обводок, тон в тон */
+  s+=`<rect x="-400" y="176" width="1600" height="8" rx="4" fill="#C9A06B"/>
+      <rect x="-400" y="194" width="1600" height="8" rx="4" fill="#C9A06B"/>`;
+  for(let x=-380;x<1180;x+=64){
+    s+=`<rect x="${x}" y="166" width="13" height="48" rx="6" fill="#BA8E5C"/>
+        <rect x="${x}" y="166" width="5" height="48" rx="2.5" fill="#CBA271" opacity=".8"/>`;
+  }
+  s+=`<rect x="-400" y="182" width="1600" height="2.4" fill="#A87C48" opacity=".5"/>
+      <rect x="-400" y="200" width="1600" height="2.4" fill="#A87C48" opacity=".5"/>`;
+  const bush=(x,y,r,f,f2)=>`
+    <ellipse cx="${x}" cy="${y+r*.75}" rx="${r*1.7}" ry="${r*.4}" fill="#3E637C" opacity=".12" filter="url(#soft)"/>
+    <circle cx="${x-r*.6}" cy="${y+r*.25}" r="${r*.7}" fill="${f}"/>
+    <circle cx="${x+r*.6}" cy="${y+r*.25}" r="${r*.72}" fill="${f}"/>
+    <circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>
+    <circle cx="${x-r*.3}" cy="${y-r*.35}" r="${r*.5}" fill="${f2}" opacity=".55"/>`;
+  s+=bush(60,218,28,"#79AC4E","#93C468")+bush(736,214,32,"#71A548","#8CBE60")
+    +bush(664,230,20,"#84B657","#9CCB70")+bush(148,230,18,"#84B657","#9CCB70");
+  s+=`<ellipse cx="400" cy="330" rx="330" ry="78" fill="#BCDE92" opacity=".5"/>`;
+  const stone=(x,y,rx)=>`
+    <ellipse cx="${x}" cy="${y+3}" rx="${rx}" ry="${rx*.4}" fill="#3E637C" opacity=".14"/>
+    <ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${rx*.42}" fill="#E7DABC"/>
+    <ellipse cx="${x-rx*.2}" cy="${y-rx*.08}" rx="${rx*.6}" ry="${rx*.22}" fill="#F2E9D2" opacity=".8"/>`;
+  s+=stone(196,392,22)+stone(152,360,18)+stone(122,330,15);
+  const flw=(x,y,c)=>`<g><circle cx="${x-6}" cy="${y-3}" r="3.4" fill="${c}"/><circle cx="${x+6}" cy="${y-3}" r="3.4" fill="${c}"/><circle cx="${x}" cy="${y-7}" r="3.4" fill="${c}"/><circle cx="${x}" cy="${y+1}" r="3.4" fill="${c}"/><circle cx="${x}" cy="${y-3}" r="2.6" fill="#F0C75E"/></g>`;
+  s+=flw(92,290,"#E8968C")+flw(700,318,"#F3C7C1")+flw(636,412,"#E8968C")+flw(104,418,"#F3C7C1")+flw(560,242,"#F3C7C1");
+  return s;
+}
+
+/* ================= состояние ================= */
+let grid = new Array(MAX).fill(null);
+let shownPrice = 0, hadDiscount = false, bubbleTimer = null;
+
+const $ = s => document.querySelector(s);
+const idx = (c,r)=> r*COLS+c;
+const count = ()=> grid.filter(Boolean).length;
+function totals(){
+  const sub = grid.reduce((s,t)=> s+(t?MODULES[t].price:0), 0);
+  const disc = count()>=DISCOUNT_FROM ? Math.round(sub*DISCOUNT) : 0;
+  return { sub, disc, total: sub-disc };
+}
+function canPlace(type,c,r){
+  if(grid[idx(c,r)]) return false;
+  const m=MODULES[type];
+  if(r===0) return !m.needsSupport;
+  const below=grid[idx(c,r-1)];
+  return !!below && MODULES[below].supportsAbove;
+}
+function findSlot(type){
+  let best=null, bestScore=1e9;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(!canPlace(type,c,r)) continue;
+    const nearOcc = [ [c-1,r],[c+1,r],[c,r-1] ].some(([cc,rr])=> cc>=0&&cc<COLS&&rr>=0&&grid[idx(cc,rr)]);
+    const score = r*100 + (nearOcc?0:40) + Math.abs(c-1.4)*10;
+    if(score<bestScore){ bestScore=score; best={c,r}; }
+  }
+  return best;
+}
+/* экранная позиция модуля: колонки набирают высоту по факту */
+function stackY(c,r){
+  const {y} = colXY(c);
+  let off=0;
+  for(let rr=0;rr<r;rr++){ const t=grid[idx(c,rr)]; off += t? MODULES[t].h : WALL; }
+  return y-off;
+}
+
+/* ================= отрисовка ================= */
+function renderHouse(popCell){
+  const g=$("#house");
+  let s="";
+  for(let c=0;c<COLS;c++){
+    for(let r=0;r<ROWS;r++){
+      const t=grid[idx(c,r)];
+      if(!t) continue;
+      const {x}=colXY(c), gy=stackY(c,r);
+      const pop = popCell===idx(c,r) ? " pop":"";
+      const shadow = r===0 ? `<ellipse cx="${x}" cy="${gy+H2-4}" rx="86" ry="26" fill="#3E637C" opacity=".15" filter="url(#soft)"/>` : "";
+      s+=`<g class="module${pop}" data-cell="${idx(c,r)}" tabindex="0" role="button" aria-label="Убрать: ${MODULES[t].name}">${shadow}${DRAW[t](x,gy)}</g>`;
+    }
+  }
+  g.innerHTML=s;
+  g.querySelectorAll(".module").forEach(el=>{
+    el.addEventListener("click", ()=> removeAt(+el.dataset.cell));
+    el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); removeAt(+el.dataset.cell);} });
+  });
+}
+function momoTo(cell){
+  const mg=$("#momo-g");
+  let x=636, y=470, scale=1;                       /* лужайка по умолчанию */
+  if(cell!=null && grid[cell]){
+    const c=cell%COLS, r=(cell-c)/COLS, t=grid[cell], m=MODULES[t];
+    const {x:cx}=colXY(c); const gy=stackY(c,r);
+    if(m.perch){ x=cx; y=gy-m.h+(t==="hammock"?52:(t==="lounge"?12:6)); scale=.82; }
+    else { x=cx+30; y=gy+H2+6; scale=.85; }
+  } else if(count()>0){
+    /* сидит рядом с домом */
+    x=ORIGIN.x-130; y=ORIGIN.y+50;
+  }
+  mg.style.transform=`translate(${x}px, ${y}px) scale(${scale})`;
+  const inner=$("#momo-inner");
+  inner.classList.remove("hop"); void inner.getBoundingClientRect(); inner.classList.add("hop");
+}
+function say(lines){
+  const b=$("#bubble");
+  b.textContent = Array.isArray(lines)? lines[Math.floor(Math.random()*lines.length)] : lines;
+  b.classList.add("show");
+  clearTimeout(bubbleTimer);
+  bubbleTimer=setTimeout(()=> b.classList.remove("show"), 3400);
+}
+let priceRaf=0;
+function tickPrice(){
+  const { total } = totals();
+  const from=shownPrice, to=total, t0=performance.now();
+  cancelAnimationFrame(priceRaf);
+  const step=now=>{
+    const k=Math.max(0, Math.min(1,(now-t0)/380));
+    shownPrice=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));
+    $("#hud-price").textContent=fmt(shownPrice);
+    if(k<1) priceRaf=requestAnimationFrame(step);
+  };
+  priceRaf=requestAnimationFrame(step);
+  $("#hud-count").textContent=`${count()}/${MAX}`;
+}
+
+/* карточка-миниатюра модуля */
+const thumbSVG = t => `<svg viewBox="-92 -160 184 216" aria-hidden="true">${DRAW[t](0,20)}</svg>`;
+const coin = `<svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="#F7C948" stroke="#D9A521" stroke-width="2"/><text x="13" y="17.6" text-anchor="middle" font-size="12" font-weight="900" fill="#8A6510" font-family="inherit">₽</text></svg>`;
+
+function renderCards(){
+  const pane=$("#tab-modules");
+  pane.innerHTML = Object.entries(MODULES).map(([t,m])=>{
+    const ok=!!findSlot(t);
+    return `<div class="card${ok?"":" disabled"}" data-type="${t}">
+      <div class="thumb">${thumbSVG(t)}</div>
+      <div class="info"><h3>${m.name}<span>${m.jp}</span></h3><p>${m.desc}</p></div>
+      <div class="buy">
+        <span class="price-chip">${coin}${fmt(m.price)}</span>
+        <button class="add-btn" aria-label="Добавить: ${m.name} за ${fmt(m.price)}">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join("");
+  pane.querySelectorAll(".card").forEach(card=>{
+    card.querySelector(".add-btn").addEventListener("click", ()=> addModule(card.dataset.type, card));
+  });
+}
+function renderPresets(){
+  $("#tab-presets").innerHTML = Object.entries(PRESETS).map(([k,p])=>{
+    const price=Object.values(p.cells).reduce((s,t)=>s+MODULES[t].price,0);
+    const mini = miniScene(p.cells);
+    return `<div class="preset-card">
+      <div class="mini">${mini}</div>
+      <div class="info" style="flex:1;min-width:0">
+        <h3>«${p.name}»</h3><p>${p.desc}</p>
+        <span class="price-chip" style="margin-top:4px">${coin}${fmt(price)}</span>
+      </div>
+      <button class="build-btn" data-preset="${k}">Собрать</button>
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".build-btn").forEach(b=>
+    b.addEventListener("click", ()=> buildPreset(b.dataset.preset)));
+}
+function miniScene(cells){
+  const tmp=new Array(MAX).fill(null);
+  Object.entries(cells).forEach(([i,t])=> tmp[+i]=t);
+  const save=grid; grid=tmp;
+  let s="";
+  for(let c=0;c<COLS;c++) for(let r=0;r<ROWS;r++){
+    const t=grid[idx(c,r)]; if(!t) continue;
+    s+=DRAW[t](colXY(c).x, stackY(c,r));
+  }
+  grid=save;
+  return `<svg viewBox="150 100 440 420" aria-hidden="true">${s}</svg>`;
+}
+function renderOrder(){
+  const pane=$("#tab-order");
+  const { sub, disc, total } = totals();
+  if(!count()){
+    pane.innerHTML=`<div class="o-empty">Пока пусто. Добавьте модули —<br>здесь соберётся заказ.</div>`;
+    return;
+  }
+  const byType={};
+  grid.forEach(t=>{ if(t) byType[t]=(byType[t]||0)+1; });
+  const rows=Object.entries(byType).map(([t,n])=>`
+    <div class="o-row">
+      <span class="o-ic"><svg viewBox="-92 -160 184 216">${DRAW[t](0,20)}</svg></span>
+      <span class="o-name">${MODULES[t].name}${n>1?`<em>× ${n}</em>`:""}</span>
+      <span class="o-price">${fmt(MODULES[t].price*n)}</span>
+    </div>`).join("");
+  pane.innerHTML=`
+    <div id="order-list">
+      ${rows}
+      ${disc?`<div class="o-row disc"><span class="o-name">Скидка за ${count()} модулей (−5%)</span><span class="o-price">−${fmt(disc)}</span></div>`:""}
+      <div class="o-row total"><span class="o-name">Итого</span><span class="o-price">${fmt(total)}</span></div>
+    </div>
+    <button id="order-cta">Оформить заказ · ${fmt(total)}</button>
+    <p class="o-note">Все модули — берёзовая фанера, готовы к производству.<br>Заявку принимает Момо и передаёт мастерской.</p>`;
+  $("#order-cta").addEventListener("click", ()=>{
+    $("#ov-sum").textContent=`${count()} ${plural(count())} · ${fmt(total)}`;
+    $("#overlay").classList.add("show");
+  });
+}
+const plural = n => n===1?"модуль":(n<5?"модуля":"модулей");
+
+/* ================= действия ================= */
+function addModule(type, cardEl){
+  const slot=findSlot(type);
+  if(!slot){
+    if(cardEl){ cardEl.classList.remove("shake"); void cardEl.offsetWidth; cardEl.classList.add("shake"); }
+    say(SAY.noSlot); return;
+  }
+  const wasDisc = count()>=DISCOUNT_FROM;
+  grid[idx(slot.c,slot.r)]=type;
+  renderHouse(idx(slot.c,slot.r));
+  momoTo(idx(slot.c,slot.r));
+  const n=count();
+  if(!wasDisc && n>=DISCOUNT_FROM) say(SAY.discount);
+  else if(n>=8 && Math.random()<.4) say(SAY.bigHouse);
+  else say(MODULES[type].say);
+  refresh();
+}
+function removeAt(cell){
+  const c=cell%COLS, r=(cell-c)/COLS;
+  if(r+1<ROWS && grid[idx(c,r+1)]){ say(SAY.blocked); return; }
+  grid[cell]=null;
+  renderHouse();
+  momoTo(null);
+  say(count()? SAY.removed : SAY.empty);
+  refresh();
+}
+function buildPreset(key){
+  grid=new Array(MAX).fill(null);
+  const entries=Object.entries(PRESETS[key].cells)
+    .map(([i,t])=>[+i,t]).sort((a,b)=> (a[0]/COLS|0)-(b[0]/COLS|0));
+  entries.forEach(([i,t],n)=>{
+    setTimeout(()=>{
+      grid[i]=t;
+      renderHouse(i);
+      if(n===entries.length-1){ momoTo(i); say(MODULES[t].say); }
+      refresh();
+    }, n*260);
+  });
+  switchTab("modules");
+}
+function refresh(){ tickPrice(); renderCards(); renderOrder(); }
+
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===name));
+  ["modules","presets","order"].forEach(t=> $("#tab-"+t).classList.toggle("hidden", t!==name));
+}
+
+/* ================= init ================= */
+$("#bg-deco").innerHTML=bgDeco();
+$("#momo-inner").innerHTML=momoSVG();
+$("#ov-momo").innerHTML=momoSVG();
+document.querySelectorAll(".tab").forEach(b=> b.addEventListener("click", ()=> switchTab(b.dataset.tab)));
+$("#btn-reset").addEventListener("click", ()=>{
+  if(!count()) { say(SAY.empty); return; }
+  grid=new Array(MAX).fill(null);
+  renderHouse(); momoTo(null); say(SAY.empty); refresh();
+});
+$("#ov-close").addEventListener("click", ()=> $("#overlay").classList.remove("show"));
+$("#overlay").addEventListener("click", e=>{ if(e.target.id==="overlay") $("#overlay").classList.remove("show"); });
+
+renderHouse(); renderCards(); renderPresets(); renderOrder(); tickPrice();
+momoTo(null);
+setTimeout(()=> say(SAY.hello), 700);
+/* стартовая сборка «Старт» — сцена не должна быть пустой при первом взгляде */
+setTimeout(()=> buildPreset("start"), 1600);
+</script>
+
+</body>
+</html>
