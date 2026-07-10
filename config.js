@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://resources-software-clusters-med.trycloudflare.com";
+window.KOTOSHI_API = "https://controlling-influenced-candle-collectables.trycloudflare.com";
