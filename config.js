@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://system-photographer-editorial-flash.trycloudflare.com";
+window.KOTOSHI_API = "https://smaller-decade-adaptation-maria.trycloudflare.com";
