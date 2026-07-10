@@ -27,7 +27,7 @@ function setOnline(v){
   online = v;
   status.innerHTML = v
     ? '<span class="dot"></span>на связи'
-    : '<span class="dot"></span>спит (сервер офлайн)';
+    : '<span class="dot"></span>дремлет';
   status.classList.toggle("off", !v);
 }
 
@@ -140,7 +140,7 @@ async function ask(textOverride){
   history.push({ role: "user", content: text });
 
   if (!KD.API){
-    add("sys", "Момо недоступен: backend не настроен (нет адреса API).");
+    add("sys", "Момо сейчас дремлет. Загляните чуть позже — он ответит, как проснётся.");
     return;
   }
   busy = true; send.disabled = true;
@@ -189,12 +189,12 @@ async function ask(textOverride){
       if (cells) offerBuild(botEl, cells);
       // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
       if (full.includes("[[ESCALATE]]")){
-        add("sys", "Момо позвал человека — владелец магазина получил уведомление в Telegram.");
+        add("sys", "Момо позвал человека — владелец магазина уже получил сообщение и скоро подключится.");
       }
     }
     setOnline(true);
   }catch(e){
-    botEl.textContent = "Не получилось связаться с Момо. Проверьте, запущен ли сервер (server/run.sh).";
+    botEl.textContent = "Момо не дозвался — попробуйте ещё раз через минутку. 🐾";
     setOnline(false);
   }
   busy = false; send.disabled = false;
