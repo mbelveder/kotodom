@@ -401,15 +401,16 @@ const server = http.createServer(async (req, res) => {
       if (!clean.length) return json(res, 400, { error: "no messages" });
 
       const viaHermes = UPSTREAM === "hermes";
-      const upstream = await fetch((viaHermes ? HERMES_URL : POLZA) + "/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json",
-                   "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) },
-        body: JSON.stringify({
-          model: viaHermes ? HERMES_MODEL : MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
-          messages: [ { role: "system", content: systemPrompt(String(config).slice(0, 400)) }, ...clean ]
-        })
+      /* GLM думает (reasoning) в счёт max_tokens: при 1800 длинное размышление
+         съедало весь бюджет, и видимый ответ не начинался («Момо промолчал») */
+      const chatBody = stream => JSON.stringify({
+        model: viaHermes ? HERMES_MODEL : MODEL, stream, max_tokens: 4000, temperature: 0.6,
+        messages: [ { role: "system", content: systemPrompt(String(config).slice(0, 400)) }, ...clean ]
       });
+      const chatHeaders = { "Content-Type": "application/json",
+                            "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) };
+      const chatURL = (viaHermes ? HERMES_URL : POLZA) + "/chat/completions";
+      const upstream = await fetch(chatURL, { method: "POST", headers: chatHeaders, body: chatBody(true) });
       if (!upstream.ok){
         const t = await upstream.text();
         log(`polza ${upstream.status}: ${t.slice(0, 300)}`);
@@ -438,6 +439,23 @@ const server = http.createServer(async (req, res) => {
             if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub}`);
           }catch(_){}
         }
+      }
+      /* размышления всё же съели бюджет — одна повторная попытка без стрима,
+         ответ отдаём клиенту синтетическим SSE-чанком */
+      if (!full.trim()){
+        log("chat: пустой ответ после стрима — повторная попытка");
+        try{
+          const r2 = await fetch(chatURL, { method: "POST", headers: chatHeaders, body: chatBody(false),
+                                            signal: AbortSignal.timeout(90_000) });
+          if (r2.ok){
+            const j2 = await r2.json();
+            const txt = (j2.choices && j2.choices[0] && j2.choices[0].message && j2.choices[0].message.content) || "";
+            if (txt){
+              full = txt;
+              res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: txt } }] })}\n\n`);
+            }
+          } else log(`chat retry ${r2.status}`);
+        }catch(e){ log("chat retry error: " + e.message); }
       }
       res.end();
       if (full.includes("[[ATTACK]]")){
