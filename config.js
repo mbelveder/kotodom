@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://using-usa-investments-analytical.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
