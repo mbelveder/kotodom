@@ -132,32 +132,18 @@ button{font-family:inherit}
   overflow:hidden;
   position:relative;
 }
-/* подложка = цвет торца пола: нижняя кромка холста читается как ребро пола;
-   --scene-wall = цвет стены из Zdog-палитры: полоса над холстом «продолжает» стену */
-:root{ --scene-edge:#C9AC80; --scene-wall:#EFE4CE }
-@media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244; --scene-wall:#33303F } }
-:root[data-theme="light"]{ --scene-edge:#C9AC80; --scene-wall:#EFE4CE }
-:root[data-theme="dark"]{ --scene-edge:#3B3244; --scene-wall:#33303F }
-/* чат слева, сцена справа.
-   Высоту ряда задаёт ТОЛЬКО сцена: сайдбар позиционирован абсолютно и
-   скроллится внутри — длинные ответы Момо не растягивают конфигуратор */
-.studio-main{position:relative;min-height:548px}
-.chat-side{position:absolute;top:0;bottom:0;left:0;width:300px}
+/* подложка = цвет торца пола: нижняя кромка холста читается как ребро пола */
+:root{ --scene-edge:#C9AC80 }
+@media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244 } }
+:root[data-theme="light"]{ --scene-edge:#C9AC80 }
+:root[data-theme="dark"]{ --scene-edge:#3B3244 }
+/* сцена во всю ширину; чат спрятан в аватар Момо и открывается панелью
+   поверх левого края сцены — высоту ряда всегда задаёт только сцена */
+.studio-main{position:relative}
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
   background:var(--scene-edge);
   min-width:0;
-  margin-left:300px;
-  min-height:548px;
-  display:flex;flex-direction:column;
-}
-/* запас высоты сверху — «стена», снизу — «пол»: комната не выглядит обрезанной */
-.scene-wrap::before{content:"";flex:1 1 0;background:var(--scene-wall)}
-.scene-wrap::after{content:"";flex:1.15 1 0;background:var(--scene-edge)}
-@media (max-width:900px){
-  .studio-main{display:flex;flex-direction:column;min-height:0}
-  .chat-side{position:static;width:auto;order:2;border-right:none;border-top:1px solid var(--line);max-height:440px}
-  .scene-wrap{margin-left:0;min-height:0}
 }
 /* !important: Zdog проставляет inline width/height под devicePixelRatio —
    без него канвас застревает на 980px и справа остаётся пустая полоса */
@@ -179,19 +165,52 @@ button{font-family:inherit}
 .price-tag .sum{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;line-height:1.2}
 .price-tag .disc{font-size:12.5px;font-weight:700;color:var(--ok);min-height:18px}
 
-/* реплика Момо */
+/* аватар Момо: и «лицо» сцены, и кнопка чата */
+.momo-fab{
+  position:absolute;left:14px;bottom:14px;z-index:6;
+  width:64px;height:64px;border-radius:50%;
+  padding:0;border:2px solid var(--ink);
+  background:var(--panel);cursor:pointer;
+  box-shadow:3px 3px 0 var(--aka);
+  transition:transform .18s ease, opacity .18s ease;
+}
+.momo-fab img{
+  width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;
+  animation:momo-wiggle 7s ease-in-out infinite;
+}
+.momo-fab .fab-lbl{
+  position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);
+  background:var(--aka);color:#FFFBF3;border-radius:99px;
+  padding:1px 9px 2px;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+}
+.momo-fab:hover{transform:scale(1.08)}
+@keyframes momo-wiggle{0%,90%,100%{transform:rotate(0)}93%{transform:rotate(-7deg)}96%{transform:rotate(6deg)}98%{transform:rotate(-3deg)}}
+@media (prefers-reduced-motion: reduce){ .momo-fab img{animation:none} }
+.studio-main.chat-open .momo-fab{opacity:0;pointer-events:none;transform:scale(.6)}
+
+/* реплика Момо — баббл растёт из аватара */
 .momo-say{
-  position:absolute;left:16px;top:16px;max-width:290px;
+  position:absolute;left:14px;bottom:88px;max-width:300px;
   background:var(--panel);border:1.5px solid var(--ink);
   border-radius:16px;border-bottom-left-radius:4px;
   padding:9px 14px;font-size:14.5px;font-weight:700;
   box-shadow:var(--shadow);
-  opacity:0;transform:translateY(-6px);
-  transition:opacity .25s ease, transform .25s ease;
+  opacity:0;transform:translateY(8px) scale(.96);transform-origin:0 100%;
+  transition:opacity .22s ease, transform .22s ease;
   pointer-events:none;
+  z-index:5;
 }
-.momo-say.show{opacity:1;transform:none}
+/* анимация, а не только transition: повторная реплика «выныривает» заново */
+.momo-say.show{opacity:1;transform:none;animation:say-pop .22s ease}
+@keyframes say-pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
 .momo-say .who{color:var(--aka);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;display:block}
+/* чат открыт: аватар «развернулся» в панель, реплики уезжают правее панели */
+.studio-main.chat-open .momo-say{left:352px;bottom:14px}
+@media (max-width:900px){
+  .momo-fab{width:52px;height:52px;left:10px;bottom:10px}
+  .momo-say{max-width:min(300px, 66vw);bottom:72px;left:10px}
+  .studio-main.chat-open .momo-say{left:10px;bottom:72px}
+}
 
 /* подсказка */
 .hint-bar{
@@ -267,8 +286,8 @@ button{font-family:inherit}
 
 /* ============ секции ============ */
 section{padding:56px 0 8px}
-/* конфигуратору — контейнер пошире: сцена ~на 20% крупнее */
-#builder .wrap{max-width:1230px}
+/* конфигуратору — контейнер пошире: без сайдбара сцена занимает всю ширину */
+#builder .wrap{max-width:1080px}
 #builder .sec-sub{margin-bottom:20px}
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
@@ -434,12 +453,26 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .err-note{color:var(--aka);font-size:13.5px;font-weight:700;min-height:18px;margin-top:6px}
 
-/* ============ чат Момо: сайдбар конфигуратора ============ */
-.chat-side{
+/* ============ чат Момо: панель поверх сцены, открывается аватаром ============ */
+.chat-panel{
+  position:absolute;left:12px;top:12px;bottom:12px;width:322px;
   display:flex;flex-direction:column;overflow:hidden;
-  border-right:1px solid var(--line);
   background:var(--panel);
-  min-height:0;
+  border:1.5px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  z-index:7;
+  opacity:0;visibility:hidden;transform:translateX(-112%);
+  transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
+}
+.chat-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+@media (max-width:900px){
+  /* на телефоне панель — «шторка» снизу экрана */
+  .chat-panel{
+    position:fixed;left:10px;right:10px;top:auto;bottom:10px;width:auto;
+    height:min(72vh, 560px);z-index:70;
+    transform:translateY(112%);
+  }
 }
 .chat-head{
   display:flex;align-items:center;gap:10px;
@@ -447,6 +480,13 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   background:color-mix(in srgb, var(--sakura) 25%, var(--panel));
   flex:none;
 }
+.chat-x{
+  margin-left:auto;flex:none;
+  width:30px;height:30px;border-radius:50%;
+  border:1.5px solid var(--line);background:transparent;color:var(--muted);
+  font-size:13px;font-weight:800;cursor:pointer;
+}
+.chat-x:hover{border-color:var(--ink);color:var(--ink)}
 .chat-head .ava{
   width:48px;height:48px;border-radius:50%;background:var(--aka);
   display:grid;place-items:center;flex:none;
@@ -490,23 +530,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 .sug-phys .sug{background:color-mix(in srgb, var(--sakura) 40%, var(--panel))}
 .sug-mind .sug{background:color-mix(in srgb, var(--matcha) 22%, var(--panel))}
 .sug:hover{border-color:var(--aka)}
-.sug.on{border-color:var(--aka);box-shadow:inset 0 0 0 1px var(--aka)}
-.sug.on::before{content:"✓ ";color:var(--aka)}
-.sug-send{
-  width:100%;margin:2px 0 6px;
-  border:none;border-radius:11px;padding:8px 12px;
-  background:var(--matcha);color:#FFFBF3;font-weight:800;font-size:13px;cursor:pointer;
-  display:none;
-}
-.sug-send.show{display:block}
-.sug-toggle{
-  background:transparent;border:1.5px dashed var(--line);border-radius:99px;
-  padding:3px 10px;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer;
-  margin-bottom:6px;
-  display:none;
-}
-.sug-toggle.show{display:inline-block}
-.sug-toggle:hover{border-color:var(--aka);color:var(--aka)}
+/* клик по бабблу кладёт слова в поле сообщения — короткая вспышка подтверждает */
+.sug.added{border-color:var(--aka);box-shadow:inset 0 0 0 1px var(--aka)}
 .msg.bot{background:color-mix(in srgb, var(--paper) 70%, var(--panel));border:1px solid var(--line);border-bottom-left-radius:5px;align-self:flex-start}
 .msg.user{background:var(--aka);color:#FFFBF3;border-bottom-right-radius:5px;align-self:flex-end}
 .msg.sys{align-self:center;font-size:12.5px;color:var(--muted);background:transparent;padding:2px}
