@@ -140,14 +140,14 @@ button{font-family:inherit}
 /* чат слева, сцена справа.
    Высоту ряда задаёт ТОЛЬКО сцена: сайдбар позиционирован абсолютно и
    скроллится внутри — длинные ответы Момо не растягивают конфигуратор */
-.studio-main{position:relative;min-height:520px}
+.studio-main{position:relative;min-height:548px}
 .chat-side{position:absolute;top:0;bottom:0;left:0;width:300px}
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
   background:var(--scene-edge);
   min-width:0;
   margin-left:300px;
-  min-height:520px;
+  min-height:548px;
   display:flex;flex-direction:column;justify-content:center;
 }
 @media (max-width:900px){
