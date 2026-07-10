@@ -14,3 +14,6 @@ assets/logo-momo-full.png
 
 # local backup of original hero renders (kept on disk, not tracked)
 assets/_originals_render/
+
+# внутреннее описание — не публикуем
+README.md

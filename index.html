@@ -20,6 +20,7 @@
     <nav class="head-nav">
       <a href="#builder">Конструктор</a>
       <a href="#gallery" class="hide-m">Готовые</a>
+      <a href="#smart" class="hide-m">Умная игрушка</a>
       <a href="#how" class="hide-m">Как это работает</a>
       <span class="demo-pill">демо-магазин</span>
     </nav>
@@ -28,23 +29,46 @@
 
 <main>
 
-<div class="hero wrap">
-  <div class="eyebrow"><span class="jp">ねこのいえ</span>модульные домики для кошек и котов</div>
-  <h1>Домик, который растёт вместе с вашим питомцем</h1>
-  <p>Начните с одного куба-норы — и добавляйте тоннели, башни и гамаки,
-     когда кот попросит больше. Секции переставляются и докупаются в любой момент.</p>
-</div>
-
-<section id="film" class="film">
-  <div class="wrap">
-    <div class="film-frame">
-      <video id="filmVid" autoplay muted loop playsinline preload="metadata"
-             poster="assets/kotoshi-poster.jpg?v=2" aria-label="Кот обживает свой Котоши">
-        <source src="assets/kotoshi-loop.webm?v=2" type="video/webm">
-        <source src="assets/kotoshi-loop.mp4?v=2" type="video/mp4">
-      </video>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="jp">ねこのいえ</span>модульные домики для кошек и котов</div>
+      <h1>Домик, который растёт вместе с вашим питомцем</h1>
+      <ul class="hero-points">
+        <li>
+          <span class="pt-ico">組</span>
+          <div>
+            <strong>Модульность</strong>
+            <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать.</p>
+          </div>
+        </li>
+        <li>
+          <span class="pt-ico">遊</span>
+          <div>
+            <strong>Умная игрушка</strong>
+            <p>Настройте игровые сценарии и запускайте их через приложение или голосового ассистента.</p>
+          </div>
+        </li>
+        <li>
+          <span class="pt-ico">丈</span>
+          <div>
+            <strong>Прочность и безопасность</strong>
+            <p>Материалы стойкие к когтям, без острых углов — и легко чистятся.</p>
+          </div>
+        </li>
+      </ul>
+      <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
     </div>
-    <p class="film-cap"><span class="jp">ねこの一日</span>С тёплых колен — в свой собственный дом: тоннели, гамак и смотровая башня под крышей-пагодой.</p>
+    <div class="hero-media">
+      <div class="film-frame">
+        <video id="filmVid" autoplay muted loop playsinline preload="metadata"
+               poster="assets/kotoshi-poster.jpg?v=2" aria-label="Кот обживает свой Котоши">
+          <source src="assets/kotoshi-loop.webm?v=2" type="video/webm">
+          <source src="assets/kotoshi-loop.mp4?v=2" type="video/mp4">
+        </video>
+      </div>
+      <p class="film-cap"><span class="jp">ねこの一日</span>С тёплых колен — в свой собственный дом: тоннели, гамак и смотровая башня под крышей-пагодой.</p>
+    </div>
   </div>
 </section>
 
@@ -85,6 +109,33 @@
   </div>
 </section>
 
+<section id="smart">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">あそび</span>умная игрушка</div>
+    <h2>Домик, который играет с котом сам</h2>
+    <p class="sec-sub">Модуль «Умная игрушка» превращает Котоши в игровую площадку:
+       пёрышко и дразнилка работают по сценариям — даже когда вас нет дома.
+       Найдёте его в лотке конструктора выше.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="ico">遊</div>
+        <h3>Игровые сценарии</h3>
+        <p>«Охота перед ужином», «разминка в обед» — готовые сценарии в приложении. Время и длительность настраиваются под характер кота.</p>
+      </div>
+      <div class="step">
+        <div class="ico">声</div>
+        <h3>Запуск голосом</h3>
+        <p>Скажите «поиграй с котом» — и сценарий стартует. Работает через приложение и популярных голосовых ассистентов.</p>
+      </div>
+      <div class="step">
+        <div class="ico">充</div>
+        <h3>Без проводов</h3>
+        <p>Заряда хватает примерно на две недели игр, зарядка — обычным USB-C. Никаких кабелей, до которых дотянутся зубы.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="how">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">しくみ</span>магазин, где работает агент</div>
@@ -114,22 +165,29 @@
 <section id="info">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">おしらせ</span>полезное</div>
-    <h2>Доставка и возврат</h2>
-    <div class="two-col" style="margin-top:18px">
+    <h2>Материалы, доставка и возврат</h2>
+    <div class="info-grid">
       <div class="info-card">
-        <h3>Доставка</h3>
+        <h3>Материалы и уход</h3>
         <ul>
-          <li>По всей России, СДЭК или Почта — 3–7 дней.</li>
-          <li>Модули приезжают плоским пакетом, сборка без инструментов — пазы и шканты.</li>
-          <li>Докупили секцию позже — она встанет в уже собранный домик.</li>
+          <li>Берёзовая фанера, обивка с повышенной стойкостью к когтям.</li>
+          <li>Кромки шлифованные, без острых углов — проверено на очень настойчивых котах.</li>
+          <li>Легко чистить: поверхности протираются влажной тряпкой, обивка не собирает шерсть.</li>
         </ul>
       </div>
       <div class="info-card">
-        <h3>Возврат и материалы</h3>
+        <h3>Эстетика</h3>
         <ul>
+          <li>Мы вдохновляемся японским подходом к минимализму и практичности в интерьерах.</li>
+          <li>Спокойные формы и натуральные тона — домик выглядит как мебель, а не как аксессуар из зоомагазина.</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>Доставка и возврат</h3>
+        <ul>
+          <li>По всей России, СДЭК или Почта — 3–7 дней.</li>
+          <li>Модули приезжают плоским пакетом, сборка без инструментов — пазы и шканты.</li>
           <li>14 дней на возврат, если домик не подошёл (модули без следов когтей).</li>
-          <li>Берёзовая фанера, обивка с повышенной стойкостью к когтям.</li>
-          <li>Кромки шлифованные, без острых углов — проверено на очень настойчивых котах.</li>
         </ul>
       </div>
     </div>

@@ -146,6 +146,18 @@ function makeModule(type, parent, opts){
       translate:{ y: B - 3.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
     new Zdog.Shape({ addTo:a, stroke:9, color:P.sakura, path:[{ y: B - 7 - L - 3 }] }); // помпон
   }
+  else if (type === "play"){
+    // умная игрушка: деревянная шайба, красный купол, антенна с пёрышком
+    new Zdog.Cylinder({ addTo:a, diameter:30, length:9, rotate:{ x:TAU/4 },
+      translate:{ y: B - 4.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
+    new Zdog.Hemisphere({ addTo:a, diameter:24, rotate:{ x:TAU/4 },
+      translate:{ y: B - 9 }, color:P.aka, backface:P.akaDeep, stroke:false });
+    new Zdog.Shape({ addTo:a, stroke:2.5, color:P.juteDark,
+      path:[{ y: B - 19 }, { y: B - 36 }] }); // антенна
+    new Zdog.Shape({ addTo:a, stroke:10, color:P.sakura, path:[{ y: B - 39 }] }); // пёрышко
+    new Zdog.Shape({ addTo:a, stroke:3.5, color:P.woodTop,
+      path:[{ y: B - 12, z: 12 }] }); // «глазок»-индикатор
+  }
   return a;
 }
 
@@ -331,9 +343,9 @@ api.place = function(i, type, instant, opts){
   if (MODULES[type].w > 1) opts.supY2 = supOf(opts.below2);
   const a = makeModule(type, houseA, opts);
   a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
-  /* крыша, тоннель и когтеточка не тянутся — целиком опускаются на опору */
+  /* крыша, тоннель, когтеточка и игрушка не тянутся — целиком опускаются на опору */
   const dy = opts.supY - CELL/2;
-  moduleDy[i] = (type === "roof" || type === "tunnel" || type === "scratch") && dy ? dy : 0;
+  moduleDy[i] = (type === "roof" || type === "tunnel" || type === "scratch" || type === "play") && dy ? dy : 0;
   a.translate.y += moduleDy[i];
   moduleAnchors[i] = a;
   if (!instant && !REDUCED){
@@ -443,7 +455,7 @@ async function tween(dur, step){
 }
 
 /* высота «пола для лап» каждого модуля: смещение от центра ячейки */
-const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, hammock2:8, roof:2, scratch:-27 };
+const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, hammock2:8, roof:2, scratch:-27, play:8 };
 
 /* прыжок кота в точку (x,y) мировых координат */
 async function hopTo(tx, ty, dur){
