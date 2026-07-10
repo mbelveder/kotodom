@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://cursor-will-medical-defined.trycloudflare.com";
+window.KOTOSHI_API = "https://phoenix-ash-medicare-accommodate.trycloudflare.com";
