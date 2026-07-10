@@ -394,7 +394,7 @@ const io = new IntersectionObserver(entries => {
   io.disconnect();
   if (!KD.studioBooted){
     loadPreset("wide");
-    setTimeout(() => say("Это план «Мост» — мой любимый. Перетащите что-нибудь из лотка или соберите свой!", 5200), 1600);
+    setTimeout(() => say("Это план «Мост» — мой любимый. Перетащите что-нибудь с полки или соберите свой!", 5200), 1600);
   }
 }, { threshold: 0.35 });
 io.observe(sceneWrap);
