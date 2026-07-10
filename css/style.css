@@ -140,13 +140,15 @@ button{font-family:inherit}
 /* чат слева, сцена справа.
    Высоту ряда задаёт ТОЛЬКО сцена: сайдбар позиционирован абсолютно и
    скроллится внутри — длинные ответы Момо не растягивают конфигуратор */
-.studio-main{position:relative}
+.studio-main{position:relative;min-height:520px}
 .chat-side{position:absolute;top:0;bottom:0;left:0;width:300px}
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
   background:var(--scene-edge);
   min-width:0;
   margin-left:300px;
+  min-height:520px;
+  display:flex;flex-direction:column;justify-content:center;
 }
 @media (max-width:900px){
   .studio-main{display:flex;flex-direction:column}
@@ -261,6 +263,8 @@ button{font-family:inherit}
 
 /* ============ секции ============ */
 section{padding:56px 0 8px}
+/* конфигуратору — контейнер пошире: сцена ~на 20% крупнее */
+#builder .wrap{max-width:1230px}
 #builder .sec-sub{margin-bottom:20px}
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
