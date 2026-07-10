@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://chart-personality-graham-lanka.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
