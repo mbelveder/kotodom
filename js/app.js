@@ -15,15 +15,19 @@ const GALLERY = [
     ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." }
 ];
 const grid = $("#galleryGrid");
+const presetPrice = key => Object.values(KD.PRESETS[key].cells)
+  .reduce((s, t) => s + KD.MODULES[t].price, 0);
 GALLERY.forEach(g => {
   const el = document.createElement("div");
   el.className = "g-card";
   el.innerHTML = `
-    <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-         onerror="this.style.display='none'">
+    <div class="g-media">
+      <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
+           onerror="this.style.display='none'">
+      <div class="g-hover">${g.ds}</div>
+    </div>
     <div class="g-body">
-      <div class="g-nm">${g.nm}</div>
-      <div class="g-ds">${g.ds}</div>
+      <div class="g-nm">${g.nm}<span class="g-pr">${fmt(presetPrice(g.preset))}</span></div>
       <div class="g-ft">
         <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
       </div>
@@ -34,6 +38,19 @@ GALLERY.forEach(g => {
     document.getElementById("studio").scrollIntoView({ behavior: "smooth", block: "center" });
   });
 });
+/* плейсхолдер каталога готовых сборок */
+const more = document.createElement("div");
+more.className = "g-card g-more";
+more.innerHTML = `
+  <div class="g-media">
+    <div class="g-mock">🏯</div>
+    <div class="g-hover">«Пагода», «Лабиринт», «Двухэтажка для двоих» и другие сборки от Момо и покупателей.</div>
+  </div>
+  <div class="g-body">
+    <div class="g-nm">Каталог готовых сборок</div>
+    <span class="soon">скоро</span>
+  </div>`;
+grid.appendChild(more);
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
@@ -57,13 +74,16 @@ back.addEventListener("click", e => { if (e.target === back) close(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
 
 /* ---------- оформление ---------- */
-$("#btnOrder").addEventListener("click", () => {
-  const lines = KD.configurator.orderLines();
-  if (!lines.length) return;
-  const t = KD.configurator.totals();
+function linesTotals(lines){
+  const sum = lines.reduce((s, l) => s + l.sum, 0);
+  const count = lines.reduce((s, l) => s + l.n, 0);
+  const disc = count >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
+  return { count, sum, disc, total: sum - disc };
+}
+function checkoutStep(lines, t, subtitle){
   open(`
     <h3>Ваш Котоши</h3>
-    <p class="m-sub">Проверьте состав и оставьте контакты — Момо примет заказ.</p>
+    <p class="m-sub">${subtitle || "Проверьте состав и оставьте контакты — Момо примет заказ."}</p>
     <ul class="order-lines">
       ${lines.map(l => `<li><span>${l.name} × ${l.n}</span><span class="n">${fmt(l.sum)}</span></li>`).join("")}
       ${t.disc ? `<li><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n">−${fmt(t.disc)}</span></li>` : ""}
@@ -93,6 +113,53 @@ $("#btnOrder").addEventListener("click", () => {
         comment: $("#fCm").value.trim()
       }
     });
+  });
+}
+
+/* заказ того, что собрано в сцене */
+$("#btnOrder").addEventListener("click", () => {
+  const lines = KD.configurator.orderLines();
+  if (!lines.length) return;
+  checkoutStep(lines, KD.configurator.totals());
+});
+
+/* заказ списком: модули по счёту, без сборки в сцене */
+$("#btnBulk").addEventListener("click", () => {
+  const qty = {};
+  const rows = Object.entries(KD.MODULES).map(([t, m]) => `
+    <li><span>${m.name}</span><span class="n">${fmt(m.price)}</span>
+      <span class="qty"><button type="button" data-t="${t}" data-d="-1" aria-label="меньше">−</button><b
+        id="q_${t}">0</b><button type="button" data-t="${t}" data-d="1" aria-label="больше">+</button></span></li>`).join("");
+  open(`
+    <h3>Заказать списком</h3>
+    <p class="m-sub">Наберите модули по счёту — например, 5 тоннелей и 2 куба. Собирать в сцене не обязательно.</p>
+    <ul class="order-lines bulk-lines">${rows}</ul>
+    <ul class="order-lines">
+      <li id="bulkDisc" style="display:none"><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n" id="bulkDiscN"></span></li>
+      <li class="total"><span>Итого</span><span class="n" id="bulkTotal">0 ₽</span></li>
+    </ul>
+    <button class="btn btn-aka" id="bulkGo" style="width:100%" disabled>Продолжить</button>
+  `);
+  const goBtn = $("#bulkGo");
+  const bulkLines = () => Object.entries(qty).filter(([, n]) => n > 0)
+    .map(([t, n]) => ({ type: t, name: KD.MODULES[t].name, n, price: KD.MODULES[t].price, sum: KD.MODULES[t].price * n }));
+  const redraw = () => {
+    const t = linesTotals(bulkLines());
+    $("#bulkTotal").textContent = fmt(t.total);
+    $("#bulkDisc").style.display = t.disc ? "" : "none";
+    if (t.disc) $("#bulkDiscN").textContent = "−" + fmt(t.disc);
+    goBtn.disabled = !t.count;
+    goBtn.textContent = t.count ? `Продолжить · ${fmt(t.total)}` : "Продолжить";
+  };
+  body.querySelectorAll(".qty button").forEach(b => b.addEventListener("click", () => {
+    const t = b.dataset.t;
+    qty[t] = Math.min(20, Math.max(0, (qty[t] || 0) + (+b.dataset.d)));
+    $("#q_" + t).textContent = qty[t];
+    redraw();
+  }));
+  goBtn.addEventListener("click", () => {
+    const lines = bulkLines();
+    if (lines.length) checkoutStep(lines, linesTotals(lines), "Модули списком — Момо примет заказ, соберёте сами как захотите.");
   });
 });
 

@@ -1,9 +1,10 @@
-/* Котоши — чат с Момо (SSE через backend) */
+/* Котоши — чат с Момо: сайдбар конфигуратора (SSE через backend) */
 "use strict";
 (function(){
 const $ = s => document.querySelector(s);
-const fab = $("#chatFab"), panel = $("#chatPanel"), msgs = $("#chatMsgs"),
-      input = $("#chatInput"), send = $("#chatSend"), status = $("#chatStatus");
+const msgs = $("#chatMsgs"), input = $("#chatInput"), send = $("#chatSend"),
+      status = $("#chatStatus"), sugg = $("#chatSugg"),
+      sugPhys = $("#sugPhys"), sugMind = $("#sugMind");
 
 /* адрес API: ?api=… > config.js (свежий из репозитория) > localStorage.
    config.js важнее localStorage: иначе устаревший сохранённый адрес
@@ -13,7 +14,7 @@ if (qs){ localStorage.setItem("kd_api", qs.replace(/\/+$/, "")); }
 KD.API = (qs && qs.replace(/\/+$/, "")) || window.KOTOSHI_API || localStorage.getItem("kd_api") || "";
 
 const history = [];   // {role, content}
-let busy = false, online = false, greeted = false;
+let busy = false, online = false;
 
 async function health(){
   if (!KD.API){ setOnline(false); return; }
@@ -39,22 +40,101 @@ function add(role, text){
   return el;
 }
 
-fab.addEventListener("click", () => {
-  panel.classList.toggle("open");
-  if (panel.classList.contains("open")){
-    input.focus();
-    if (!greeted){
-      greeted = true;
-      add("bot", "Мяу! Я Момо — консультант этого магазина. Спрашивайте про модули, цены, доставку, вашу сборку в конфигураторе — или про умную игрушку с игровыми сценариями. Отвечаю честно: я ИИ, но в домиках разбираюсь.");
-      health();
-    }
-  }
+/* ---------- бабблы-подсказки: физика (сакура) + характер (матча) ---------- */
+const SUG_PHYS = [
+  "котёнок", "крупный кот (6 кг и больше)", "пожилой, бережём суставы", "у нас два кота"
+];
+const SUG_MIND = [
+  "пугливый — любит прятаться", "энергичный — носится по дому",
+  "наблюдатель — любит высоту", "точит когти о мебель", "скучает, пока никого нет"
+];
+const picked = new Set();
+function chipRow(host, items, cls){
+  host.classList.add(cls);
+  items.forEach(txt => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "sug";
+    b.textContent = txt;
+    b.addEventListener("click", () => {
+      b.classList.toggle("on");
+      b.classList.contains("on") ? picked.add(txt) : picked.delete(txt);
+      sendBtn.classList.toggle("show", picked.size > 0);
+    });
+    host.appendChild(b);
+  });
+}
+chipRow(sugPhys, SUG_PHYS, "sug-phys");
+chipRow(sugMind, SUG_MIND, "sug-mind");
+
+const sendBtn = document.createElement("button");
+sendBtn.type = "button";
+sendBtn.className = "sug-send";
+sendBtn.textContent = "Подобрать домик 🐾";
+sugg.appendChild(sendBtn);
+sendBtn.addEventListener("click", () => {
+  const extra = input.value.trim();
+  if (!picked.size && !extra) return;
+  const parts = [...picked];
+  const desc = "Мой кот: " + parts.join("; ") + (extra ? ". " + extra : "") +
+    ". Подбери, пожалуйста, подходящую конфигурацию.";
+  input.value = "";
+  collapseSugg();
+  ask(desc);
 });
 
-async function ask(){
-  const text = input.value.trim();
+/* после первой отправки подсказки сворачиваются в кнопку */
+const toggleBtn = document.createElement("button");
+toggleBtn.type = "button";
+toggleBtn.className = "sug-toggle";
+toggleBtn.textContent = "🐾 подсказки о питомце";
+sugg.parentNode.insertBefore(toggleBtn, sugg.nextSibling);
+function collapseSugg(){
+  picked.clear();
+  sugg.querySelectorAll(".sug.on").forEach(b => b.classList.remove("on"));
+  sendBtn.classList.remove("show");
+  sugg.classList.add("hidden");
+  toggleBtn.classList.add("show");
+}
+toggleBtn.addEventListener("click", () => {
+  sugg.classList.remove("hidden");
+  toggleBtn.classList.remove("show");
+});
+
+/* ---------- предложение Момо: маркер [[BUILD:индекс:тип,…]] → кнопка ---------- */
+const BUILD_RE = /\[\[BUILD:([^\]]*)\]\]/;
+function parseBuild(full){
+  const m = full.match(BUILD_RE);
+  if (!m) return null;
+  const cells = {};
+  m[1].split(",").forEach(pair => {
+    const [i, t] = pair.split(":").map(s => s.trim());
+    if (/^\d+$/.test(i) && KD.MODULES[t]) cells[i] = t;
+  });
+  return Object.keys(cells).length ? cells : null;
+}
+function offerBuild(botEl, cells){
+  const b = document.createElement("button");
+  b.className = "msg-build";
+  b.textContent = "🛠 Собрать в конфигураторе";
+  b.addEventListener("click", () => {
+    if (!KD.applyConfig || !KD.applyConfig(cells)) return;
+    b.disabled = true;
+    b.textContent = "Собрано — смотрите сцену";
+    document.getElementById("sceneWrap").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  botEl.appendChild(b);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+/* маркеры убираем из текста; хвост вида «[[…» прячем на время стрима */
+const stripMarkers = s => s.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").replace(BUILD_RE, "");
+const stripPartial = s => stripMarkers(s).replace(/\[\[[^\]]*$/, "");
+
+async function ask(textOverride){
+  const text = (textOverride || input.value).trim();
   if (!text || busy) return;
-  input.value = "";
+  if (!textOverride) input.value = "";
   add("user", text);
   history.push({ role: "user", content: text });
 
@@ -94,7 +174,7 @@ async function ask(){
           const d = j.choices && j.choices[0] && j.choices[0].delta;
           if (d && d.content){
             full += d.content;
-            botEl.textContent = full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trimStart();
+            botEl.textContent = stripPartial(full).trimStart();
             msgs.scrollTop = msgs.scrollHeight;
           }
         }catch(_){}
@@ -102,7 +182,10 @@ async function ask(){
     }
     if (!full){ botEl.textContent = "…Момо задумался и промолчал. Попробуйте ещё раз."; }
     else {
-      history.push({ role: "assistant", content: full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trim() });
+      botEl.textContent = stripMarkers(full).trim();
+      history.push({ role: "assistant", content: stripMarkers(full).trim() });
+      const cells = parseBuild(full);
+      if (cells) offerBuild(botEl, cells);
       // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
       if (full.includes("[[ESCALATE]]")){
         add("sys", "Момо позвал человека — владелец магазина получил уведомление в Telegram.");
@@ -114,10 +197,12 @@ async function ask(){
     setOnline(false);
   }
   busy = false; send.disabled = false;
-  input.focus();
 }
 
-send.addEventListener("click", ask);
+send.addEventListener("click", () => ask());
 input.addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
+
+/* сайдбар виден сразу — здороваемся и проверяем сервер при загрузке */
+add("bot", "Мяу! Я Момо — консультант этого магазина. Расскажите о питомце — бабблами ниже или своими словами — и я подберу домик. Ну или спрашивайте про модули, цены и доставку.");
 health();
 })();

@@ -95,20 +95,21 @@ button{font-family:inherit}
 }
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
 
-/* ============ hero ============ */
-.hero{padding:38px 0 8px}
+/* ============ hero: компактный заголовок ============ */
+.hero2{padding:26px 0 4px;text-align:center}
+.hero2 .eyebrow-jp{
+  font-size:14px;font-weight:800;letter-spacing:.5em;color:var(--aka);
+}
+.hero2 h1{font-size:clamp(26px,3.6vw,38px);margin:4px 0 0}
+
+/* блок «растёт с котом»: буллеты + видео */
 .hero-grid{
   display:grid;grid-template-columns:1.05fr .95fr;gap:38px;align-items:center;
+  margin-top:22px;
 }
 @media (max-width:860px){
   .hero-grid{grid-template-columns:1fr;gap:24px}
 }
-.hero .eyebrow{
-  font-size:13px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--muted);
-}
-.hero .eyebrow .jp{color:var(--aka);letter-spacing:.4em;margin-right:.4em}
-.hero h1{font-size:clamp(28px,4vw,40px);margin:8px 0 20px}
 .hero-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
 .hero-points li{display:flex;gap:13px;align-items:flex-start}
 .pt-ico{
@@ -136,9 +137,18 @@ button{font-family:inherit}
 @media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244 } }
 :root[data-theme="light"]{ --scene-edge:#C9AC80 }
 :root[data-theme="dark"]{ --scene-edge:#3B3244 }
+/* чат слева, сцена справа */
+.studio-main{display:grid;grid-template-columns:300px 1fr}
+@media (max-width:900px){
+  .studio-main{grid-template-columns:1fr}
+  .chat-side{order:2;border-right:none;border-top:1px solid var(--line);max-height:440px}
+}
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
   background:var(--scene-edge);
+  min-width:0;
+  /* сцена ниже сайдбара — холст по центру, без пустой полосы снизу */
+  display:flex;flex-direction:column;justify-content:center;
 }
 /* !important: Zdog проставляет inline width/height под devicePixelRatio —
    без него канвас застревает на 980px и справа остаётся пустая полоса */
@@ -180,21 +190,21 @@ button{font-family:inherit}
   padding:2px 16px 10px;
 }
 
-/* лоток модулей (Sims build mode) */
+/* полка модулей: все 9 видны сразу, без прокрутки */
 .tray{
-  display:flex;gap:10px;overflow-x:auto;
-  padding:14px 16px 18px;
+  display:grid;grid-template-columns:repeat(9,1fr);gap:8px;
+  padding:12px 14px 14px;
   border-top:1px solid var(--line);
   background:color-mix(in srgb, var(--paper) 55%, var(--panel));
 }
-.tray::-webkit-scrollbar{height:6px}
-.tray::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+@media (max-width:900px){ .tray{grid-template-columns:repeat(5,1fr)} }
+@media (max-width:560px){ .tray{grid-template-columns:repeat(3,1fr)} }
 .chip{
-  flex:none;width:118px;
+  min-width:0;
   background:var(--panel);
   border:1.5px solid var(--line);
-  border-radius:16px;
-  padding:10px 10px 9px;
+  border-radius:14px;
+  padding:7px 4px 6px;
   text-align:center;
   cursor:grab;
   transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
@@ -202,10 +212,10 @@ button{font-family:inherit}
 }
 .chip:hover{transform:translateY(-3px);border-color:var(--aka);box-shadow:var(--shadow)}
 .chip:active{cursor:grabbing}
-.chip .ico{width:76px;height:64px;display:block;margin:0 auto 4px;-webkit-user-drag:none;user-select:none}
-.chip .nm{font-weight:800;font-size:13.5px;line-height:1.25}
-.chip .nm .nm-jp{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-top:1px}
-.chip .pr{font-size:13px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.chip .ico{width:58px;height:48px;display:block;margin:0 auto 3px;-webkit-user-drag:none;user-select:none;object-fit:contain}
+.chip .nm{font-weight:800;font-size:11.5px;line-height:1.2}
+.chip .nm .nm-jp{display:none}
+.chip .pr{font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .chip.disabled{opacity:.45;cursor:not-allowed}
 .chip.disabled:hover{transform:none;border-color:var(--line);box-shadow:none}
 /* в тёмной теме фишки лотка остаются «бумажными»:
@@ -241,16 +251,14 @@ button{font-family:inherit}
 .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .btn-ghost:hover{border-color:var(--ink)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.presets{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
-.presets .lbl{font-size:13px;color:var(--muted);font-weight:700;align-self:center}
-.preset{
-  border:1.5px solid var(--line);background:transparent;color:var(--ink);
-  border-radius:99px;padding:7px 14px;font-size:13.5px;font-weight:800;cursor:pointer;
+.order-hint{
+  flex:1 1 240px;min-width:200px;
+  font-size:12.5px;line-height:1.45;color:var(--muted);font-weight:600;
 }
-.preset:hover{border-color:var(--aka);color:var(--aka)}
 
 /* ============ секции ============ */
 section{padding:56px 0 8px}
+#builder .sec-sub{margin-bottom:20px}
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
   display:flex;align-items:center;gap:10px;
@@ -261,21 +269,51 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 .sec-sub{color:var(--muted);max-width:640px;margin:0 0 24px}
 
 /* галерея */
-#gallery{padding-top:52px}
-.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media (max-width:760px){.gallery{grid-template-columns:1fr}}
+#gallery{padding-top:20px}
+.gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media (max-width:960px){.gallery{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.gallery{grid-template-columns:1fr}}
 .g-card{
   background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;box-shadow:var(--shadow);
   display:flex;flex-direction:column;
 }
-.g-card img{width:100%;height:auto;display:block;aspect-ratio:4/3;object-fit:cover}
-.g-card .g-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
-.g-card .g-nm{font-weight:800;font-size:16px}
-.g-card .g-ds{font-size:14px;color:var(--muted);flex:1}
-.g-card .g-ft{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.g-card .g-pr{font-weight:800;font-variant-numeric:tabular-nums}
-.g-card .btn{padding:8px 14px;font-size:13.5px}
+.g-media{position:relative;overflow:hidden}
+.g-media img{width:100%;height:auto;display:block;aspect-ratio:4/3;object-fit:cover}
+/* описание поверх фото: лёгкое «жидкое стекло» снизу, верх фото остаётся чистым */
+.g-hover{
+  position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:12px;font-size:13.5px;line-height:1.45;font-weight:700;
+  color:var(--ink);
+  background:linear-gradient(to top,
+    color-mix(in srgb, var(--panel) 72%, transparent) 40%,
+    color-mix(in srgb, var(--panel) 28%, transparent) 72%, transparent);
+  backdrop-filter:blur(5px) saturate(1.1);
+  -webkit-backdrop-filter:blur(5px) saturate(1.1);
+  mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
+  -webkit-mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
+  opacity:0;transition:opacity .28s ease;
+}
+.g-card:hover .g-hover,.g-card:focus-within .g-hover{opacity:1}
+.g-card .g-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.g-card .g-nm{font-weight:800;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.g-card .g-pr{font-weight:800;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.g-card .g-ft{margin-top:auto}
+.g-card .btn{padding:8px 12px;font-size:13px;width:100%}
+/* карточка-плейсхолдер каталога готовых сборок */
+.g-card.g-more{border-style:dashed;box-shadow:none;background:transparent}
+.g-card.g-more .g-mock{
+  aspect-ratio:4/3;display:grid;place-items:center;
+  font-size:44px;color:var(--muted);
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in srgb, var(--line) 40%, transparent) 0 10px, transparent 10px 20px);
+}
+.g-card.g-more .soon{
+  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--aka);border:1.5px dashed var(--aka);border-radius:99px;
+  padding:2px 9px;align-self:flex-start;
+}
 
 /* как это работает */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -308,7 +346,7 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 /* ============ футер ============ */
 footer{
   margin-top:64px;border-top:1px solid var(--line);
-  padding:26px 0 110px;
+  padding:26px 0 40px;
   font-size:13.5px;color:var(--muted);
 }
 footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
@@ -351,6 +389,16 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .order-lines li.total{font-weight:800;font-size:16px;border-bottom:none}
 .order-lines .n{font-variant-numeric:tabular-nums}
+/* строки «заказать списком»: имя · цена · счётчик */
+.bulk-lines li{align-items:center}
+.bulk-lines li span:first-child{flex:1}
+.bulk-lines .qty{display:inline-flex;align-items:center;gap:8px}
+.bulk-lines .qty b{min-width:18px;text-align:center;font-variant-numeric:tabular-nums}
+.bulk-lines .qty button{
+  width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);
+  background:transparent;color:var(--ink);font-size:15px;line-height:1;cursor:pointer;
+}
+.bulk-lines .qty button:hover{border-color:var(--aka);color:var(--aka)}
 .f-row{margin-bottom:12px}
 .f-row label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
 .f-row input,.f-row textarea{
@@ -375,33 +423,18 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .err-note{color:var(--aka);font-size:13.5px;font-weight:700;min-height:18px;margin-top:6px}
 
-/* ============ чат Смотрителя ============ */
-#chatFab{
-  position:fixed;right:18px;bottom:18px;z-index:250;
-  width:72px;height:72px;border-radius:50%;
-  background:var(--aka);border:none;cursor:pointer;
-  box-shadow:0 8px 24px color-mix(in srgb, var(--aka) 45%, transparent);
-  display:grid;place-items:center;
-  transition:transform .15s ease;
+/* ============ чат Момо: сайдбар конфигуратора ============ */
+.chat-side{
+  display:flex;flex-direction:column;overflow:hidden;
+  border-right:1px solid var(--line);
+  background:var(--panel);
+  min-height:0;
 }
-#chatFab:hover{transform:scale(1.07)}
-#chatFab img{
-  width:100%;height:100%;border-radius:50%;object-fit:contain;
-  background:transparent;box-sizing:border-box;
-}
-.chat-panel{
-  position:fixed;right:18px;bottom:92px;z-index:250;
-  width:min(380px, calc(100vw - 36px));
-  height:min(540px, calc(100vh - 130px));
-  background:var(--panel);border:1px solid var(--line);border-radius:22px;
-  box-shadow:0 18px 50px rgba(0,0,0,.25);
-  display:none;flex-direction:column;overflow:hidden;
-}
-.chat-panel.open{display:flex}
 .chat-head{
   display:flex;align-items:center;gap:10px;
-  padding:12px 14px;border-bottom:1px solid var(--line);
+  padding:7px 12px;border-bottom:1px solid var(--line);
   background:color-mix(in srgb, var(--sakura) 25%, var(--panel));
+  flex:none;
 }
 .chat-head .ava{
   width:48px;height:48px;border-radius:50%;background:var(--aka);
@@ -416,11 +449,52 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 .chat-head .s{font-size:12px;color:var(--muted);font-weight:700}
 .chat-head .s .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:4px}
 .chat-head .s.off .dot{background:var(--muted)}
-.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.chat-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:9px;min-height:84px}
 .msg{
-  max-width:85%;padding:9px 13px;border-radius:16px;
-  font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;
+  max-width:92%;padding:8px 11px;border-radius:14px;
+  font-size:13.5px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;
 }
+.msg .msg-build{
+  display:block;margin-top:8px;width:100%;
+  border:none;border-radius:11px;padding:8px 12px;
+  background:var(--aka);color:#FFFBF3;font-weight:800;font-size:13px;cursor:pointer;
+}
+.msg .msg-build:hover{background:var(--aka-deep)}
+.msg .msg-build:disabled{opacity:.5;cursor:default}
+
+/* бабблы-подсказки: физика — сакура, характер — матча */
+.chat-sugg{
+  flex:none;padding:7px 12px 2px;border-top:1px solid var(--line);
+}
+.chat-sugg.hidden{display:none}
+.sug-lbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.sug-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px}
+.sug{
+  border-radius:99px;padding:3px 9px;font-size:11.5px;font-weight:700;
+  cursor:pointer;line-height:1.35;
+  border:1.5px solid transparent;color:var(--ink);
+  transition:border-color .12s ease, background .12s ease;
+}
+.sug-phys .sug{background:color-mix(in srgb, var(--sakura) 40%, var(--panel))}
+.sug-mind .sug{background:color-mix(in srgb, var(--matcha) 22%, var(--panel))}
+.sug:hover{border-color:var(--aka)}
+.sug.on{border-color:var(--aka);box-shadow:inset 0 0 0 1px var(--aka)}
+.sug.on::before{content:"✓ ";color:var(--aka)}
+.sug-send{
+  width:100%;margin:2px 0 6px;
+  border:none;border-radius:11px;padding:8px 12px;
+  background:var(--matcha);color:#FFFBF3;font-weight:800;font-size:13px;cursor:pointer;
+  display:none;
+}
+.sug-send.show{display:block}
+.sug-toggle{
+  background:transparent;border:1.5px dashed var(--line);border-radius:99px;
+  padding:3px 10px;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer;
+  margin-bottom:6px;
+  display:none;
+}
+.sug-toggle.show{display:inline-block}
+.sug-toggle:hover{border-color:var(--aka);color:var(--aka)}
 .msg.bot{background:color-mix(in srgb, var(--paper) 70%, var(--panel));border:1px solid var(--line);border-bottom-left-radius:5px;align-self:flex-start}
 .msg.user{background:var(--aka);color:#FFFBF3;border-bottom-right-radius:5px;align-self:flex-end}
 .msg.sys{align-self:center;font-size:12.5px;color:var(--muted);background:transparent;padding:2px}
@@ -430,17 +504,17 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 .typing i:nth-child(3){animation-delay:.3s}
 @keyframes tp{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
 .chat-in{
-  display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);
+  display:flex;gap:7px;padding:8px 12px 10px;flex:none;
 }
 .chat-in input{
-  flex:1;border:1.5px solid var(--line);border-radius:14px;
+  flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;
   background:var(--paper);color:var(--ink);
-  padding:10px 13px;font-size:14.5px;font-family:inherit;
+  padding:9px 11px;font-size:13.5px;font-family:inherit;
 }
 .chat-in input:focus{outline:2px solid var(--aka);outline-offset:1px;border-color:transparent}
 .chat-in button{
-  width:44px;height:44px;border-radius:14px;border:none;background:var(--aka);
-  color:#FFFBF3;font-size:17px;cursor:pointer;flex:none;
+  width:40px;height:40px;border-radius:12px;border:none;background:var(--aka);
+  color:#FFFBF3;font-size:16px;cursor:pointer;flex:none;
 }
 .chat-in button:disabled{opacity:.5}
 
