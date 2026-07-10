@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://pci-divx-emily-electron.trycloudflare.com";
+window.KOTOSHI_API = "https://upgrade-craft-father-african.trycloudflare.com";
