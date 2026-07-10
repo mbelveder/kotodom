@@ -351,6 +351,12 @@ function log(s){
   fs.appendFile(path.join(__dirname, "orders.log"), line + "\n", () => {});
 }
 
+/* страховка: одиночный необработанный throw/reject в фоновой задаче (telegram,
+   kanban, hermes) не должен ронять процесс — Node ≥15 иначе завершает его.
+   run.sh перезапустит, но это ~15 секунд простоя и оборванные чаты */
+process.on("uncaughtException", e => log("UNCAUGHT " + ((e && e.stack) || e)));
+process.on("unhandledRejection", e => log("UNHANDLED " + ((e && e.stack) || e)));
+
 /* ---------- rate limit (простой) ---------- */
 const hits = new Map();
 function limited(ip, key, max, winMs){
@@ -443,6 +449,9 @@ const server = http.createServer(async (req, res) => {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache", "Connection": "keep-alive"
       });
+      /* клиент закрыл вкладку/обновил страницу — не дотягиваем остаток ответа
+         из апстрима впустую (после нормального end() этот abort — no-op) */
+      res.on("close", () => { clearTimeout(chatWatchdog); chatCtrl.abort(); });
       const reader = upstream.body.getReader();
       const dec = new TextDecoder();
       let full = "", buf = "", stalled = false;
@@ -478,7 +487,7 @@ const server = http.createServer(async (req, res) => {
       /* размышления съели бюджет (стрим кончился без контента) — одна повторная
          попытка без стрима, ответ отдаём клиенту синтетическим SSE-чанком.
          При обрыве соединения (stalled) не повторяем — сеть лежит */
-      if (!full.trim() && !stalled){
+      if (!full.trim() && !stalled && !res.destroyed){
         log("chat: пустой ответ после стрима — повторная попытка");
         /* пока ждём повторный ответ, шлём SSE-комментарии: иначе клиентский
            сторожевой таймаут (25s тишины) оборвёт соединение раньше времени */

@@ -9,6 +9,8 @@ const mainOf = i => { while (grid[i] === EXT) i--; return i; }; // маркер 
 const grid = new Array(N).fill(null);   // cellIndex -> type|null
 let undoStack = [];
 let animating = false;
+let buildGen = 0;      // поколение отложенной сборки (applyCells)
+let quietUntil = 0;    // до этого момента идёт сборка — служебные реплики молчат
 
 const $ = s => document.querySelector(s);
 const tray = $("#tray");
@@ -116,7 +118,10 @@ function refresh(){
   btnOrder.disabled = empty || animating;
   btnUndo.disabled = !undoStack.length || animating;
   btnClear.disabled = empty || animating;
-  if (t.disc && !hadDiscount){ say(pick(SAY.discount)); hadDiscount = true; }
+  if (t.disc && !hadDiscount){
+    if (Date.now() >= quietUntil) say(pick(SAY.discount)); // в сборке не мигаем
+    hadDiscount = true;
+  }
   if (!t.disc) hadDiscount = false;
 }
 
@@ -338,6 +343,7 @@ canvas.addEventListener("pointerup", e => {
 /* ---------- кнопки ---------- */
 btnUndo.addEventListener("click", () => {
   if (!undoStack.length || animating) return;
+  buildGen++; // отменяем «хвост» отложенной сборки
   const prev = undoStack.pop();
   const bel = i => (i >= COLS ? prev[i - COLS] : null);
   for (let i = 0; i < N; i++){
@@ -352,35 +358,46 @@ btnUndo.addEventListener("click", () => {
   }
   refresh();
 });
-btnClear.addEventListener("click", () => { if (!animating){ snapshot(); clearAll(); } });
+btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); clearAll(); } });
 
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return;
-  applyCells(p.cells);
+  applyCells(p.cells, `План «${p.name}» в сцене. Двигайте модули, как нравится!`);
 }
 KD.loadPreset = loadPreset;
 
 /* сборка произвольной конфигурации (пресеты, предложения Момо) с проверкой правил:
-   ставим снизу вверх, невалидные ячейки молча пропускаем */
-function applyCells(cells){
+   ставим снизу вверх, невалидные ячейки молча пропускаем.
+   Вся сборка тихая, одна реплика в конце (doneSay) — иначе реплики модулей
+   и скидки мигали одна за другой. buildGen отменяет «хвост» отложенных
+   постановок, если пользователь успел очистить сцену, отменить ход или
+   запустить другую сборку — раньше два быстрых клика по планам смешивали их */
+function applyCells(cells, doneSay){
   if (animating) return false;
   KD.studioBooted = true;
+  const gen = ++buildGen;
   snapshot();
   clearAll(true);
   const entries = Object.entries(cells)
     .map(([i, t]) => [+i, t])
     .filter(([i, t]) => Number.isInteger(i) && i >= 0 && i < N && MODULES[t])
     .sort((a, b) => a[0] - b[0]);
+  quietUntil = Date.now() + entries.length * 160 + 400;
   entries.forEach(([i, t], step) => {
     setTimeout(() => {
-      if (!validCells(t).includes(i)) return; // нет опоры/занято — пропускаем
-      place(i, t, { silent: step < entries.length - 1 });
+      if (gen !== buildGen) return;               // сборку перебили
+      if (!validCells(t).includes(i)) return;     // нет опоры/занято — пропускаем
+      place(i, t, { silent: true });
+      if (step === entries.length - 1){
+        popSound();
+        if (doneSay) say(doneSay, 4800);
+      }
     }, step * 160);
   });
   return entries.length > 0;
 }
-KD.applyConfig = applyCells;
+KD.applyConfig = cells => applyCells(cells, "Собрал! Двигайте модули, если хочется по-другому.");
 
 /* ---------- API для заказа и чата ---------- */
 KD.configurator = {
@@ -412,7 +429,7 @@ const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    loadPreset("wide");
+    applyCells(PRESETS.wide.cells); // тихо, без doneSay: единственная реплика — ниже
     setTimeout(() => say("Это план «Мост» — мой любимый. Тяните модули с полки или соберите свой. А понадобится совет — я тут, в уголке.", 6000), 1600);
   }
 }, { threshold: 0.35 });
