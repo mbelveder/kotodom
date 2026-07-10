@@ -66,8 +66,10 @@ function makeModule(type, parent, opts){
   const B = CELL / 2;    // низ ячейки
   const H = CELL - 2;    // высота корпуса
   const SB = (opts && opts.supY) || B;   // фактическая опора: верх модуля снизу (или пол)
+  /* видимый бок темнее фронта — иначе куб и лежанка читаются плоскими:
+     при повороте сцены (rotate.y > 0) зритель видит фронт и правую грань */
   const woodBox = extra => box(a, Object.assign({
-    topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood,
+    topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood2,
     frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
     woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
