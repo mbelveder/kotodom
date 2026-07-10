@@ -33,6 +33,9 @@ const POLZA     = "https://api.polza.ai/api/v1";
 /* Hermes Agent (операционный контур): обработка заказов и эскалаций */
 const HERMES_URL = process.env.HERMES_URL || "http://127.0.0.1:8642/v1";
 const HERMES_KEY = process.env.HERMES_KEY || "";
+/* имя модели для gateway: "kotodom-ops" — model_route на z-ai/glm-5.2 в ~/.hermes/config.yaml,
+   чтобы операционный контур не переезжал вместе с model.default (там теперь DeepSeek) */
+const HERMES_MODEL = process.env.HERMES_MODEL || "hermes-agent";
 const HERMES_OPS = process.env.HERMES_OPS === "1";
 /* заказ обычно укладывается в ~210s (5 турнов GLM-5.2 + браузер), но бывает медленнее
    (задержки Polza, лимит расходов) — таймаут с запасом, иначе клиент обрывает fetch
@@ -301,7 +304,7 @@ async function hermesOps(prompt, tag){
     const r = await fetch(HERMES_URL + "/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + HERMES_KEY },
-      body: JSON.stringify({ model: "hermes-agent", messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model: HERMES_MODEL, messages: [{ role: "user", content: prompt }] }),
       signal: AbortSignal.timeout(HERMES_OPS_TIMEOUT_MS)
     });
     if (!r.ok){
@@ -392,7 +395,7 @@ const server = http.createServer(async (req, res) => {
         headers: { "Content-Type": "application/json",
                    "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) },
         body: JSON.stringify({
-          model: viaHermes ? "hermes-agent" : MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
+          model: viaHermes ? HERMES_MODEL : MODEL, stream: true, max_tokens: 1800, temperature: 0.6,
           messages: [ { role: "system", content: systemPrompt(String(config).slice(0, 400)) }, ...clean ]
         })
       });
