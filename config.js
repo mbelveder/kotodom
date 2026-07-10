@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://designated-mysql-automatically-occupations.trycloudflare.com";
+window.KOTOSHI_API = "https://comparison-sink-plots-hawaiian.trycloudflare.com";
