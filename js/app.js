@@ -7,11 +7,11 @@ const fmt = KD.fmt;
 
 /* ---------- галерея ---------- */
 const GALLERY = [
-  { img: "assets/render_start.jpg", preset: "start", nm: "«Старт»",
+  { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
-  { img: "assets/render_wide.jpg", preset: "wide", nm: "«Мост»",
+  { img: "assets/render_wide.jpg", preset: "wide", nm: "«Проныра»",
     ds: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек, засад и послеобеденного сна." },
-  { img: "assets/render_tower.jpg", preset: "tower", nm: "«Башня»",
+  { img: "assets/render_tower.jpg", preset: "tower", nm: "«Вальяжный»",
     ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." }
 ];
 const grid = $("#galleryGrid");
@@ -43,7 +43,7 @@ const more = document.createElement("div");
 more.className = "g-card g-more";
 more.innerHTML = `
   <div class="g-media">
-    <div class="g-mock">🏯</div>
+    <div class="g-mock"></div>
     <div class="g-hover">«Пагода», «Лабиринт», «Двухэтажка для двоих» и другие сборки от Момо и покупателей.</div>
   </div>
   <div class="g-body">

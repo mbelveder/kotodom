@@ -41,6 +41,7 @@ function openChat(){
   panel.classList.add("open");
   studioMain.classList.add("chat-open");
   fab.setAttribute("aria-expanded", "true");
+  if (KD.hideSay) KD.hideSay(); // независимая реплика рядом с открытым чатом путает
   msgs.scrollTop = msgs.scrollHeight;
   if (matchMedia("(min-width: 901px)").matches) input.focus();
 }
