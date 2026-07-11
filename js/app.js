@@ -30,11 +30,9 @@ PRESET_CARDS.forEach(g => {
       <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
     </div>`;
   presetList.appendChild(el);
-  el.querySelector("button").addEventListener("click", () => {
-    KD.loadPreset(g.preset);
-    /* панель остаётся открытой: планы удобно примерять один за другим */
-    document.getElementById("studio").scrollIntoView({ behavior: "smooth", block: "center" });
-  });
+  /* без прокрутки и закрытия панели: посетитель уже у конструктора,
+     а планы удобно примерять один за другим */
+  el.querySelector("button").addEventListener("click", () => KD.loadPreset(g.preset));
 });
 function presetsOpen(on){
   presetPanel.classList.toggle("open", on);

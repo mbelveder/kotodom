@@ -130,7 +130,7 @@ button{font-family:inherit}
 .hero-points p{margin:2px 0 0;font-size:14.5px;line-height:1.5;color:var(--muted)}
 .hero-cta{display:inline-block;margin-top:24px;text-decoration:none}
 
-/* ============ студия (конфигуратор) ============ */
+/* ============ студия (конструктор) ============ */
 .studio{
   margin:26px auto 0;
   background:var(--panel);
@@ -305,7 +305,7 @@ button{font-family:inherit}
 
 /* ============ секции ============ */
 section{padding:56px 0 8px}
-/* конфигуратору — контейнер пошире: без сайдбара сцена занимает всю ширину */
+/* конструктору — контейнер пошире: без сайдбара сцена занимает всю ширину */
 #builder .wrap{max-width:1080px}
 #builder .sec-sub{margin-bottom:20px}
 .sec-eyebrow{

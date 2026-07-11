@@ -1,4 +1,4 @@
-/* Котоши — конфигуратор: drag-and-drop, правила, цены, заселение */
+/* Котоши — конструктор: drag-and-drop, правила, цены, заселение */
 "use strict";
 (function(){
 const { COLS, ROWS, CELL, MODULES, PRESETS, SAY, EXT, fmt } = KD;
@@ -428,7 +428,7 @@ KD.configurator = {
   },
   summary(){
     const lines = this.orderLines();
-    if (!lines.length) return "конфигуратор пока пуст";
+    if (!lines.length) return "конструктор пока пуст";
     const t = totals();
     return lines.map(l => `${l.name}×${l.n}`).join(", ") + ` — итого ${fmt(t.total)}` + (t.disc ? " (со скидкой 5%)" : "");
   }
