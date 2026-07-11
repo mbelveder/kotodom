@@ -71,6 +71,8 @@ function openChat(){
   studioMain.classList.add("chat-open");
   fab.setAttribute("aria-expanded", "true");
   if (KD.hideSay) KD.hideSay(); // независимая реплика рядом с открытым чатом путает
+  /* на телефоне обе панели — шторки снизу: две сразу не помещаются */
+  if (KD.closePresets && matchMedia("(max-width: 900px)").matches) KD.closePresets();
   msgs.scrollTop = msgs.scrollHeight;
   if (matchMedia("(min-width: 901px)").matches) input.focus();
 }
@@ -85,6 +87,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape" && panel.classList.contains("open")) closeChat();
 });
 KD.openChat = openChat;
+KD.closeChat = closeChat;
 
 function add(role, text){
   const el = document.createElement("div");

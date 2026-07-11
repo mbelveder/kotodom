@@ -103,17 +103,17 @@ button{font-family:inherit}
 }
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
 
-/* ============ hero: компактный заголовок ============ */
+/* ============ hero: заголовок + буллеты и видео ============ */
 .hero2{padding:26px 0 4px;text-align:center}
 .hero2 .eyebrow-jp{
   font-size:14px;font-weight:800;letter-spacing:.5em;color:var(--aka);
 }
 .hero2 h1{font-size:clamp(26px,3.6vw,38px);margin:4px 0 0}
 
-/* блок «растёт с котом»: буллеты + видео */
+/* буллеты + видео под заголовком; текст снова выравнивается влево */
 .hero-grid{
   display:grid;grid-template-columns:1.05fr .95fr;gap:38px;align-items:center;
-  margin-top:22px;
+  margin-top:28px;text-align:left;
 }
 @media (max-width:860px){
   .hero-grid{grid-template-columns:1fr;gap:24px}
@@ -145,8 +145,9 @@ button{font-family:inherit}
 @media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244 } }
 :root[data-theme="light"]{ --scene-edge:#C9AC80 }
 :root[data-theme="dark"]{ --scene-edge:#3B3244 }
-/* сцена во всю ширину; чат спрятан в аватар Момо и открывается панелью
-   поверх левого края сцены — высоту ряда всегда задаёт только сцена */
+/* сцена во всю ширину; чат (слева, из аватара Момо) и готовые сборки (справа,
+   из вертикальной вкладки) открываются панелями поверх сцены —
+   высоту ряда всегда задаёт только сцена */
 .studio-main{position:relative}
 .scene-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
@@ -316,51 +317,64 @@ section{padding:56px 0 8px}
 section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 .sec-sub{color:var(--muted);max-width:640px;margin:0 0 24px}
 
-/* галерея */
-#gallery{padding-top:20px}
-.gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-@media (max-width:960px){.gallery{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:560px){.gallery{grid-template-columns:1fr}}
-.g-card{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  overflow:hidden;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;
+/* ============ готовые сборки: выдвижная панель справа от сцены ============ */
+/* зеркалит чат Момо: чат выезжает слева, сборки — справа; высоту задаёт сцена */
+.preset-tab{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:6;
+  writing-mode:vertical-rl;
+  padding:14px 7px;border:1.5px solid var(--ink);border-right:none;
+  border-radius:14px 0 0 14px;
+  background:var(--panel);color:var(--ink);cursor:pointer;
+  font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  box-shadow:-3px 3px 0 var(--aka);
+  transition:padding .15s ease, color .15s ease, opacity .18s ease;
 }
-.g-media{position:relative;overflow:hidden}
-.g-media img{width:100%;height:auto;display:block;aspect-ratio:4/3;object-fit:cover}
-/* описание поверх фото: лёгкое «жидкое стекло» снизу, верх фото остаётся чистым */
-.g-hover{
-  position:absolute;inset:0;display:flex;align-items:flex-end;
-  padding:12px;font-size:13.5px;line-height:1.45;font-weight:700;
-  color:var(--ink);
-  background:linear-gradient(to top,
-    color-mix(in srgb, var(--panel) 72%, transparent) 40%,
-    color-mix(in srgb, var(--panel) 28%, transparent) 72%, transparent);
-  backdrop-filter:blur(5px) saturate(1.1);
-  -webkit-backdrop-filter:blur(5px) saturate(1.1);
-  mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
-  -webkit-mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
-  opacity:0;transition:opacity .28s ease;
+.preset-tab:hover{padding-right:12px;color:var(--aka)}
+.studio-main.presets-open .preset-tab{opacity:0;pointer-events:none}
+.preset-panel{
+  position:absolute;right:12px;top:12px;bottom:12px;width:322px;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--panel);
+  border:1.5px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  z-index:7;
+  opacity:0;visibility:hidden;transform:translateX(112%);
+  transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
-.g-card:hover .g-hover,.g-card:focus-within .g-hover{opacity:1}
-.g-card .g-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
-.g-card .g-nm{font-weight:800;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.g-card .g-pr{font-weight:800;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.g-card .g-ft{margin-top:auto}
-.g-card .btn{padding:8px 12px;font-size:13px;width:100%}
-/* карточка-плейсхолдер каталога готовых сборок */
-.g-card.g-more{border-style:dashed;box-shadow:none;background:transparent}
-.g-card.g-more .g-mock{
-  aspect-ratio:4/3;
-  background:
-    repeating-linear-gradient(45deg,
-      color-mix(in srgb, var(--line) 40%, transparent) 0 10px, transparent 10px 20px);
+.preset-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+@media (max-width:900px){
+  /* на телефоне панель — «шторка» снизу экрана, как чат */
+  .preset-panel{
+    position:fixed;left:10px;right:10px;top:auto;bottom:10px;width:auto;
+    height:min(72vh, 560px);z-index:70;
+    transform:translateY(112%);
+  }
 }
-.g-card.g-more .soon{
-  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--muted);border:1px solid var(--line);border-radius:99px;
-  padding:2px 9px;align-self:flex-start;
+.preset-head{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-bottom:1px solid var(--line);
+  background:color-mix(in srgb, var(--sakura) 25%, var(--panel));
+  flex:none;
 }
+.preset-head .t{font-weight:800;font-size:15px;line-height:1.2}
+.preset-head .sub{font-size:11px;color:var(--muted);font-weight:600;line-height:1.3;margin-top:1px}
+.preset-head .chat-x{margin-left:auto}
+.preset-list{
+  flex:1 1 0;overflow-y:auto;
+  padding:12px;display:flex;flex-direction:column;gap:12px;
+}
+.preset-card{
+  background:color-mix(in srgb, var(--paper) 55%, var(--panel));
+  border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;flex:none;
+}
+.preset-card img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover}
+.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.preset-card .pc-ds{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted);font-weight:600}
+.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%;margin-top:2px}
 
 /* как это работает */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
