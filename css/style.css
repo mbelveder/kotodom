@@ -254,6 +254,16 @@ button{font-family:inherit}
 .chip .pr{font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .chip.disabled{opacity:.45;cursor:not-allowed}
 .chip.disabled:hover{transform:none;border-color:var(--line);box-shadow:none}
+/* умная игрушка мягко светится, пока посетитель не навёл курсор
+   и не открыл её описание — идею модуля сами пока не считывают */
+.chip.glow{border-color:var(--aka);animation:chip-glow 2.2s ease-in-out infinite}
+@keyframes chip-glow{
+  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--aka) 0%, transparent)}
+  50%{box-shadow:0 0 16px 3px color-mix(in srgb, var(--aka) 55%, transparent)}
+}
+@media (prefers-reduced-motion: reduce){
+  .chip.glow{animation:none;box-shadow:0 0 12px 2px color-mix(in srgb, var(--aka) 45%, transparent)}
+}
 /* в тёмной теме фишки лотка остаются «бумажными»:
    иконки нарисованы тёмным контуром и на тёмной панели пропадают */
 @media (prefers-color-scheme: dark){
@@ -526,7 +536,24 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   padding:7px 12px 2px;border-top:1px solid var(--line);
 }
 .chat-sugg.hidden{display:none}
-.sug-lbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.sug-lbl{
+  font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.sug-hide{
+  border:none;background:none;padding:0;cursor:pointer;
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-decoration:underline dotted;
+}
+.sug-hide:hover{color:var(--aka)}
+/* свёрнутые подсказки возвращаются маленькой кнопкой над полем ввода */
+.sug-toggle{
+  display:none;align-self:flex-start;margin:6px 12px 0;
+  background:transparent;border:1.5px dashed var(--line);border-radius:99px;
+  padding:3px 10px;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer;
+}
+.sug-toggle.show{display:inline-block}
+.sug-toggle:hover{border-color:var(--aka);color:var(--aka)}
 .sug-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px}
 .sug{
   border-radius:99px;padding:3px 9px;font-size:11.5px;font-weight:700;

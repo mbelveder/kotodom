@@ -3,7 +3,7 @@
 (function(){
 const $ = s => document.querySelector(s);
 const msgs = $("#chatMsgs"), input = $("#chatInput"), send = $("#chatSend"),
-      status = $("#chatStatus"),
+      status = $("#chatStatus"), sugg = $("#chatSugg"), sugHide = $("#sugHide"),
       sugPhys = $("#sugPhys"), sugMind = $("#sugMind"),
       panel = $("#chatPanel"), fab = $("#momoFab"),
       closeBtn = $("#chatX"), studioMain = $("#studioMain");
@@ -121,6 +121,21 @@ function chipRow(host, items, cls){
 }
 chipRow(sugPhys, SUG_PHYS, "sug-phys");
 chipRow(sugMind, SUG_MIND, "sug-mind");
+
+/* «скрыть» сворачивает подсказки; вернуть — маленькой кнопкой над полем ввода */
+const sugToggle = document.createElement("button");
+sugToggle.type = "button";
+sugToggle.className = "sug-toggle";
+sugToggle.textContent = "🐾 подсказки";
+sugg.parentNode.insertBefore(sugToggle, sugg.nextSibling);
+sugHide.addEventListener("click", () => {
+  sugg.classList.add("hidden");
+  sugToggle.classList.add("show");
+});
+sugToggle.addEventListener("click", () => {
+  sugg.classList.remove("hidden");
+  sugToggle.classList.remove("show");
+});
 
 /* ---------- предложение Момо: маркер [[BUILD:индекс:тип,…]] → кнопка ---------- */
 const BUILD_RE = /\[\[BUILD:([^\]]*)\]\]/;
