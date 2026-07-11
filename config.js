@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://kurt-hunting-xml-herbal.trycloudflare.com";
+window.KOTOSHI_API = "https://heading-promoting-universities-cope.trycloudflare.com";
