@@ -58,6 +58,8 @@ function say(text, dur){
   sayTimer = setTimeout(() => momoSay.classList.remove("show"), dur || 3000);
 }
 KD.say = say;
+/* открытый чат прячет независимую реплику — вместе они путают */
+KD.hideSay = () => { clearTimeout(sayTimer); momoSay.classList.remove("show"); };
 
 /* ---------- правила ---------- */
 function supBelow(i){
@@ -360,10 +362,18 @@ btnUndo.addEventListener("click", () => {
 });
 btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); clearAll(); } });
 
+/* первая реплика — про состав сборки (без имени плана: оно вторично) плюс
+   один раз про умную игрушку: её идею посетители сами пока не считывают */
+let toyPitched = false;
+function withToyPitch(text){
+  if (toyPitched) return text;
+  toyPitched = true;
+  return text + " И взгляните на умную игрушку на полке — она играет с котом сама, пока вас нет дома.";
+}
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return;
-  applyCells(p.cells, `План «${p.name}» в сцене. Двигайте модули, как нравится!`);
+  applyCells(p.cells, withToyPitch(p.say));
 }
 KD.loadPreset = loadPreset;
 
@@ -391,7 +401,7 @@ function applyCells(cells, doneSay){
       place(i, t, { silent: true });
       if (step === entries.length - 1){
         popSound();
-        if (doneSay) say(doneSay, 4800);
+        if (doneSay) say(doneSay, Math.max(4800, doneSay.length * 55)); // длинной реплике — больше времени
       }
     }, step * 160);
   });
@@ -423,14 +433,13 @@ KD.scene.init();
 buildTray();
 refresh();
 
-/* конструктор оживает, когда доезжаешь до него: грузим «Мост» с анимацией сборки
+/* конструктор оживает, когда доезжаешь до него: грузим «Проныру» с анимацией сборки
    (если пользователь уже выбрал план в галерее — оставляем его выбор) */
 const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    applyCells(PRESETS.wide.cells); // тихо, без doneSay: единственная реплика — ниже
-    setTimeout(() => say("Это план «Мост» — мой любимый. Тяните модули с полки или соберите свой. А понадобится совет — я тут, в уголке.", 6000), 1600);
+    loadPreset("wide"); // первая реплика (состав + умная игрушка) — в doneSay пресета
   }
 }, { threshold: 0.35 });
 io.observe(sceneWrap);

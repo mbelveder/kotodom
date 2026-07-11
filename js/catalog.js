@@ -67,11 +67,15 @@ KD.MODULES = {
   }
 };
 
-/* Готовые планы: cellIndex -> тип (index = row*COLS + col) */
+/* Готовые планы: cellIndex -> тип (index = row*COLS + col).
+   Имена — по характеру кота; в репликах Момо имя не звучит (say — про состав) */
 KD.PRESETS = {
-  start: { name: "Старт", cells: { 1: "base", 2: "scratch" } },
-  wide:  { name: "Мост",  cells: { 1: "base", 2: "tunnel", 3: "base", 8: "hammock" } },
-  tower: { name: "Башня", cells: { 1: "base", 6: "tower", 11: "roof", 2: "scratch" } }
+  start: { name: "Новичок", cells: { 1: "base", 2: "scratch" },
+    say: "Куб-нора и когтеточка — самое то для первого знакомства." },
+  wide:  { name: "Проныра", cells: { 1: "base", 2: "tunnel", 3: "base", 8: "hammock" },
+    say: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек и засад." },
+  tower: { name: "Вальяжный", cells: { 1: "base", 6: "tower", 11: "roof", 2: "scratch" },
+    say: "Куб, смотровая площадка и крыша — наблюдать за домом сверху." }
 };
 
 KD.DISCOUNT_FROM = 5;   // модулей

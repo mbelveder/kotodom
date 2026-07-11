@@ -85,6 +85,13 @@ button{font-family:inherit}
 .hanko img{width:100%;height:100%;object-fit:contain}
 .brand{font-size:22px;letter-spacing:.01em}
 .brand small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+/* фуригана над второй «о»: ねこ («кот») */
+.brand .jo{position:relative;display:inline-block}
+.brand .jo i{
+  position:absolute;left:50%;top:-9px;transform:translateX(-50%);
+  font-style:normal;font-weight:800;font-size:9px;line-height:1;
+  color:var(--aka);letter-spacing:.02em;white-space:nowrap;pointer-events:none;
+}
 .head-nav{margin-left:auto;display:flex;gap:18px;align-items:center}
 .head-nav a{color:var(--ink);text-decoration:none;font-weight:700;font-size:15px}
 .head-nav a:hover{color:var(--aka)}
@@ -333,15 +340,14 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 /* карточка-плейсхолдер каталога готовых сборок */
 .g-card.g-more{border-style:dashed;box-shadow:none;background:transparent}
 .g-card.g-more .g-mock{
-  aspect-ratio:4/3;display:grid;place-items:center;
-  font-size:44px;color:var(--muted);
+  aspect-ratio:4/3;
   background:
     repeating-linear-gradient(45deg,
       color-mix(in srgb, var(--line) 40%, transparent) 0 10px, transparent 10px 20px);
 }
 .g-card.g-more .soon{
-  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--aka);border:1.5px dashed var(--aka);border-radius:99px;
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--line);border-radius:99px;
   padding:2px 9px;align-self:flex-start;
 }
 
