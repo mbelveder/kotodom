@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://among-ranger-mas-sun.trycloudflare.com";
+window.KOTOSHI_API = "https://relation-pillow-experience-icon.trycloudflare.com";
