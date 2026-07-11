@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://margaret-enlargement-gratuit-deluxe.trycloudflare.com";
+window.KOTOSHI_API = "https://among-ranger-mas-sun.trycloudflare.com";
