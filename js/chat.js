@@ -21,12 +21,36 @@ let busy = false, online = false;
    бесконечно без единой ошибки; без этого таймаута индикатор "печатает…" не гаснет никогда */
 const CHAT_STALL_MS = 25_000;
 
-async function health(){
-  if (!KD.API){ setOnline(false); return; }
+/* адрес из config.js мог устареть в кэше браузера или Pages (быстрый туннель
+   периодически меняется): при сбое тянем свежий config.js с самого сайта
+   (same-origin, мимо кэша) и, если адрес сменился, переключаемся на него.
+   Иначе на «чужом» компьютере Момо молчит, пока кэш не протухнет */
+async function refreshApi(){
+  try{
+    const r = await fetch(`config.js?fresh=${Date.now()}`,
+      { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    const m = (await r.text()).match(/KOTOSHI_API\s*=\s*"([^"]+)"/);
+    const fresh = m && m[1].replace(/\/+$/, "");
+    if (fresh && fresh !== KD.API){
+      KD.API = fresh;
+      localStorage.setItem("kd_api", fresh);
+      return true;
+    }
+  }catch(_){}
+  return false;
+}
+
+async function ping(){
   try{
     const r = await fetch(KD.API + "/api/health", { signal: AbortSignal.timeout(6000) });
-    setOnline(r.ok);
-  }catch(_){ setOnline(false); }
+    return r.ok;
+  }catch(_){ return false; }
+}
+async function health(){
+  if (!KD.API){ setOnline(false); return; }
+  let ok = await ping();
+  if (!ok && await refreshApi()) ok = await ping();
+  setOnline(ok);
 }
 function setOnline(v){
   online = v;
@@ -143,68 +167,73 @@ async function ask(textOverride){
   }
   busy = true; send.disabled = true;
   const botEl = add("bot", "");
-  botEl.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
 
-  const ctrl = new AbortController();
-  let watchdog;
-  const armWatchdog = () => { clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(), CHAT_STALL_MS); };
-
-  try{
-    armWatchdog();
-    const r = await fetch(KD.API + "/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: history.slice(-12),
-        config: KD.configurator ? KD.configurator.summary() : ""
-      }),
-      signal: ctrl.signal
-    });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const reader = r.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "", full = "";
-    for(;;){
+  /* две попытки: если первая не дошла до ответа, обновляем адрес из свежего
+     config.js — на компьютере с устаревшим кэшем это чинит чат прозрачно */
+  for (let attempt = 0; attempt < 2; attempt++){
+    botEl.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+    const ctrl = new AbortController();
+    let watchdog;
+    const armWatchdog = () => { clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(), CHAT_STALL_MS); };
+    try{
       armWatchdog();
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split("\n");
-      buf = lines.pop();
-      for (const ln of lines){
-        if (!ln.startsWith("data: ")) continue;
-        const data = ln.slice(6).trim();
-        if (data === "[DONE]") continue;
-        try{
-          const j = JSON.parse(data);
-          const d = j.choices && j.choices[0] && j.choices[0].delta;
-          if (d && d.content){
-            full += d.content;
-            botEl.textContent = stripPartial(full).trimStart();
-            msgs.scrollTop = msgs.scrollHeight;
-          }
-        }catch(_){}
+      const r = await fetch(KD.API + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history.slice(-12),
+          config: KD.configurator ? KD.configurator.summary() : ""
+        }),
+        signal: ctrl.signal
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", full = "";
+      for(;;){
+        armWatchdog();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop();
+        for (const ln of lines){
+          if (!ln.startsWith("data: ")) continue;
+          const data = ln.slice(6).trim();
+          if (data === "[DONE]") continue;
+          try{
+            const j = JSON.parse(data);
+            const d = j.choices && j.choices[0] && j.choices[0].delta;
+            if (d && d.content){
+              full += d.content;
+              botEl.textContent = stripPartial(full).trimStart();
+              msgs.scrollTop = msgs.scrollHeight;
+            }
+          }catch(_){}
+        }
       }
-    }
-    clearTimeout(watchdog);
-    if (!full){ botEl.textContent = "…Момо задумался и промолчал. Попробуйте ещё раз."; }
-    else {
-      botEl.textContent = stripMarkers(full).trim();
-      history.push({ role: "assistant", content: stripMarkers(full).trim() });
-      const cells = parseBuild(full);
-      if (cells) offerBuild(botEl, cells);
-      // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
-      if (full.includes("[[ESCALATE]]")){
-        add("sys", "Момо позвал человека — владелец магазина уже получил сообщение и скоро подключится.");
+      clearTimeout(watchdog);
+      if (!full){ botEl.textContent = "…Момо задумался и промолчал. Попробуйте ещё раз."; }
+      else {
+        botEl.textContent = stripMarkers(full).trim();
+        history.push({ role: "assistant", content: stripMarkers(full).trim() });
+        const cells = parseBuild(full);
+        if (cells) offerBuild(botEl, cells);
+        // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
+        if (full.includes("[[ESCALATE]]")){
+          add("sys", "Момо позвал человека — владелец магазина уже получил сообщение и скоро подключится.");
+        }
       }
+      setOnline(true);
+    }catch(e){
+      clearTimeout(watchdog);
+      if (attempt === 0 && await refreshApi()) continue; // адрес обновился — сразу повтор
+      botEl.textContent = e.name === "AbortError"
+        ? "Момо долго не отвечает — попробуйте чуть позже. 🐾"
+        : "Момо не дозвался — попробуйте ещё раз через минутку. 🐾";
+      setOnline(false);
     }
-    setOnline(true);
-  }catch(e){
-    clearTimeout(watchdog);
-    botEl.textContent = e.name === "AbortError"
-      ? "Момо долго не отвечает — попробуйте чуть позже. 🐾"
-      : "Момо не дозвался — попробуйте ещё раз через минутку. 🐾";
-    setOnline(false);
+    break;
   }
   busy = false; send.disabled = false;
 }
