@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://ira-training-eligibility-belle.trycloudflare.com";
+window.KOTOSHI_API = "https://margaret-enlargement-gratuit-deluxe.trycloudflare.com";
