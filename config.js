@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://scan-magnificent-reporter-such.trycloudflare.com";
+window.KOTOSHI_API = "https://ira-training-eligibility-belle.trycloudflare.com";
