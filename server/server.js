@@ -368,6 +368,30 @@ function limited(ip, key, max, winMs){
   return arr.length > max;
 }
 
+/* ---------- служебные маркеры ответа Момо (общее для stream и no-stream) ---------- */
+function handleMarkers(full, clean, ip){
+  if (full.includes("[[ATTACK]]")){
+    const lastUser = clean.filter(m => m.role === "user").pop();
+    tgSecurity(`🛡️ <b>Котоши: ПОПЫТКА АТАКИ на чат</b>\n\nСообщение: «${esc((lastUser ? lastUser.content : "?").slice(0, 600))}»\n\nОтвет Момо: «${esc(full.replace(/\[\[(ATTACK|ESCALATE)\]\]/g, "").trim().slice(0, 400))}»\n\nIP-класс: ${esc(ip.replace(/^.*:/, "").slice(0, 20))}`);
+    log("ATTACK detected → Telegram (security bot)");
+  }
+  if (full.includes("[[ESCALATE]]")){
+    const lastUser = clean.filter(m => m.role === "user").pop();
+    const userText = lastUser ? lastUser.content : "?";
+    const botText = full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trim().slice(0, 500);
+    tg(`🚨 <b>Котоши: нужен человек</b>\n\nКлиент: «${esc(userText)}»\n\nМомо: «${esc(botText)}»`);
+    log("ESCALATE → Telegram");
+    // Hermes-агент готовит рекомендацию по регламенту (skill kotoshi-operations)
+    if (HERMES_OPS && HERMES_KEY) tg(`👾 Hermes: начинаю разбор эскалации...`);
+    hermesOps(`[KOTOSHI ESCALATION] Открой skill kotoshi-operations (skill_view) и действуй строго по разделу «Эскалация».\nКлиент: «${userText}»\nОтвет Момо: «${botText}»`, "escalation")
+      .then(({ ok, text, reason, timedOut }) => {
+        if (text) tg(`👾 <b>Hermes: разбор эскалации</b>\n\n${mdBoldToHtml(esc(text.slice(0, 3000)))}`);
+        else if (timedOut) tg(`⏳ <b>Hermes: разбор эскалации занимает дольше обычного</b>\nОтвет не получен за ${Math.round(HERMES_OPS_TIMEOUT_MS / 1000)}s, но агент мог доделать задачу самостоятельно — проверь последние уведомления.`);
+        else if (!ok && HERMES_OPS && HERMES_KEY) tg(`⚠️ <b>Hermes не смог разобрать эскалацию</b>\n${esc((reason || "см. orders.log").slice(0, 300))}`);
+      });
+  }
+}
+
 /* ---------- HTTP ---------- */
 const ALLOWED = /^https:\/\/[a-z0-9-]+\.github\.io$|^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
@@ -405,7 +429,7 @@ const server = http.createServer(async (req, res) => {
 
     if (url === "/api/chat" && req.method === "POST"){
       if (limited(ip, "chat", 30, 10 * 60_000)) return json(res, 429, { error: "Слишком часто. Подождите немного." });
-      const { messages = [], config = "" } = await body(req);
+      const { messages = [], config = "", stream: wantStream = true } = await body(req);
       if (!POLZA_KEY) return json(res, 503, { error: "POLZA_API_KEY not set" });
       const clean = messages
         .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -423,6 +447,28 @@ const server = http.createServer(async (req, res) => {
       const chatHeaders = { "Content-Type": "application/json",
                             "Authorization": "Bearer " + (viaHermes ? HERMES_KEY : POLZA_KEY) };
       const chatURL = (viaHermes ? HERMES_URL : POLZA) + "/chat/completions";
+      /* stream:false — запасной путь для сетей, где антивирус или прокси
+         буферизуют SSE целиком: клиент не видит ни байта до конца генерации,
+         обрывает по сторожу и просит обычный JSON-ответ одним куском */
+      if (wantStream === false){
+        try{
+          const r = await fetch(chatURL, { method: "POST", headers: chatHeaders,
+                                           body: chatBody(false), signal: AbortSignal.timeout(90_000) });
+          if (!r.ok){
+            log(`polza(no-stream) ${r.status}: ${(await r.text().catch(() => "")).slice(0, 200)}`);
+            return json(res, 502, { error: "upstream " + r.status });
+          }
+          const j = await r.json();
+          const full = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "";
+          if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub} (no-stream)`);
+          json(res, 200, { text: full });
+          handleMarkers(full, clean, ip);
+        }catch(e){
+          log("chat no-stream error: " + e.message);
+          try{ json(res, 504, { error: "upstream timeout" }); }catch(_){}
+        }
+        return;
+      }
       const chatCtrl = new AbortController();
       let chatWatchdog;
       const armWatchdog = () => {
@@ -507,26 +553,7 @@ const server = http.createServer(async (req, res) => {
         clearInterval(ping);
       }
       res.end();
-      if (full.includes("[[ATTACK]]")){
-        const lastUser = clean.filter(m => m.role === "user").pop();
-        tgSecurity(`🛡️ <b>Котоши: ПОПЫТКА АТАКИ на чат</b>\n\nСообщение: «${esc((lastUser ? lastUser.content : "?").slice(0, 600))}»\n\nОтвет Момо: «${esc(full.replace(/\[\[(ATTACK|ESCALATE)\]\]/g, "").trim().slice(0, 400))}»\n\nIP-класс: ${esc(ip.replace(/^.*:/, "").slice(0, 20))}`);
-        log("ATTACK detected → Telegram (security bot)");
-      }
-      if (full.includes("[[ESCALATE]]")){
-        const lastUser = clean.filter(m => m.role === "user").pop();
-        const userText = lastUser ? lastUser.content : "?";
-        const botText = full.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").trim().slice(0, 500);
-        tg(`🚨 <b>Котоши: нужен человек</b>\n\nКлиент: «${esc(userText)}»\n\nМомо: «${esc(botText)}»`);
-        log("ESCALATE → Telegram");
-        // Hermes-агент готовит рекомендацию по регламенту (skill kotoshi-operations)
-        if (HERMES_OPS && HERMES_KEY) tg(`👾 Hermes: начинаю разбор эскалации...`);
-        hermesOps(`[KOTOSHI ESCALATION] Открой skill kotoshi-operations (skill_view) и действуй строго по разделу «Эскалация».\nКлиент: «${userText}»\nОтвет Момо: «${botText}»`, "escalation")
-          .then(({ ok, text, reason, timedOut }) => {
-            if (text) tg(`👾 <b>Hermes: разбор эскалации</b>\n\n${mdBoldToHtml(esc(text.slice(0, 3000)))}`);
-            else if (timedOut) tg(`⏳ <b>Hermes: разбор эскалации занимает дольше обычного</b>\nОтвет не получен за ${Math.round(HERMES_OPS_TIMEOUT_MS / 1000)}s, но агент мог доделать задачу самостоятельно — проверь последние уведомления.`);
-            else if (!ok && HERMES_OPS && HERMES_KEY) tg(`⚠️ <b>Hermes не смог разобрать эскалацию</b>\n${esc((reason || "см. orders.log").slice(0, 300))}`);
-          });
-      }
+      handleMarkers(full, clean, ip);
       return;
     }
 
