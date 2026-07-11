@@ -1,12 +1,12 @@
-/* Котоши — галерея, оформление заказа (демо-оплата), Telegram-уведомление */
+/* Котоши — готовые сборки, оформление заказа (демо-оплата), Telegram-уведомление */
 "use strict";
 (function(){
 const $ = s => document.querySelector(s);
 const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
-/* ---------- галерея ---------- */
-const GALLERY = [
+/* ---------- готовые сборки: выдвижная панель у конструктора ---------- */
+const PRESET_CARDS = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
   { img: "assets/render_wide.jpg", preset: "wide", nm: "«Проныра»",
@@ -14,43 +14,44 @@ const GALLERY = [
   { img: "assets/render_tower.jpg", preset: "tower", nm: "«Вальяжный»",
     ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." }
 ];
-const grid = $("#galleryGrid");
+const presetPanel = $("#presetPanel"), presetTab = $("#presetTab"),
+      presetList = $("#presetList"), studioMain = $("#studioMain");
 const presetPrice = key => Object.values(KD.PRESETS[key].cells)
   .reduce((s, t) => s + KD.MODULES[t].price, 0);
-GALLERY.forEach(g => {
+PRESET_CARDS.forEach(g => {
   const el = document.createElement("div");
-  el.className = "g-card";
+  el.className = "preset-card";
   el.innerHTML = `
-    <div class="g-media">
-      <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-           onerror="this.style.display='none'">
-      <div class="g-hover">${g.ds}</div>
-    </div>
-    <div class="g-body">
-      <div class="g-nm">${g.nm}<span class="g-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <div class="g-ft">
-        <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
-      </div>
+    <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
+         onerror="this.style.display='none'">
+    <div class="pc-body">
+      <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
+      <p class="pc-ds">${g.ds}</p>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
     </div>`;
-  grid.appendChild(el);
+  presetList.appendChild(el);
   el.querySelector("button").addEventListener("click", () => {
     KD.loadPreset(g.preset);
+    /* панель остаётся открытой: планы удобно примерять один за другим */
     document.getElementById("studio").scrollIntoView({ behavior: "smooth", block: "center" });
   });
 });
-/* плейсхолдер каталога готовых сборок */
-const more = document.createElement("div");
-more.className = "g-card g-more";
-more.innerHTML = `
-  <div class="g-media">
-    <div class="g-mock"></div>
-    <div class="g-hover">«Пагода», «Лабиринт», «Двухэтажка для двоих» и другие сборки от Момо и покупателей.</div>
-  </div>
-  <div class="g-body">
-    <div class="g-nm">Каталог готовых сборок</div>
-    <span class="soon">скоро</span>
-  </div>`;
-grid.appendChild(more);
+function presetsOpen(on){
+  presetPanel.classList.toggle("open", on);
+  studioMain.classList.toggle("presets-open", on);
+  presetTab.setAttribute("aria-expanded", on ? "true" : "false");
+  /* на телефоне обе панели — шторки снизу: две сразу не помещаются */
+  if (on && KD.closeChat && matchMedia("(max-width: 900px)").matches) KD.closeChat();
+}
+KD.closePresets = () => presetsOpen(false);
+presetTab.addEventListener("click", () => presetsOpen(true));
+$("#presetX").addEventListener("click", () => presetsOpen(false));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && presetPanel.classList.contains("open")) presetsOpen(false);
+});
+/* «Готовые» в шапке ведёт к конструктору и сразу разворачивает панель */
+const navPresets = $("#navPresets");
+if (navPresets) navPresets.addEventListener("click", () => presetsOpen(true));
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
