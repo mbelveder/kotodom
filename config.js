@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://ultimate-deaf-bonds-treaty.trycloudflare.com";
+window.KOTOSHI_API = "https://steven-stating-libs-nevertheless.trycloudflare.com";
