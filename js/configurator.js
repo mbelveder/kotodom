@@ -196,6 +196,12 @@ function buildTray(){
     el.title = m.desc;
     tray.appendChild(el);
     el.addEventListener("pointerdown", e => startDrag(e, key, el));
+    /* умная игрушка светится, пока её не рассмотрят: наведение открывает
+       описание (title) и гасит свечение */
+    if (key === "play"){
+      el.classList.add("glow");
+      el.addEventListener("pointerenter", () => el.classList.remove("glow"), { once: true });
+    }
   });
 }
 
