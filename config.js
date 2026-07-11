@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://agriculture-gdp-resistant-imagine.trycloudflare.com";
+window.KOTOSHI_API = "https://stat-mayor-lottery-tongue.trycloudflare.com";
