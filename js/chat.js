@@ -20,6 +20,10 @@ let busy = false, online = false;
 /* если сервер вообще недоступен (спит, туннель мёртв) — fetch() к нему может висеть
    бесконечно без единой ошибки; без этого таймаута индикатор "печатает…" не гаснет никогда */
 const CHAT_STALL_MS = 25_000;
+/* первый байт стрима на здоровой сети приходит за секунды; 10 секунд полной
+   тишины после заголовков — признак сети, где SSE буферизуется целиком */
+const FIRST_BYTE_MS = 10_000;
+let sseBroken = false; // сеть «съедает» стрим — до конца визита ходим без него
 
 /* адрес из config.js мог устареть в кэше браузера или Pages (быстрый туннель
    периодически меняется): при сбое тянем свежий config.js с самого сайта
@@ -200,12 +204,12 @@ async function ask(textOverride){
   };
 
   let done = false;
-  /* попытка 1: обычный стрим (SSE) */
+  /* попытка 1: обычный стрим (SSE) — если сеть его не «съедает» */
   const ctrl = new AbortController();
-  let watchdog;
-  const armWatchdog = () => { clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(), CHAT_STALL_MS); };
-  try{
-    armWatchdog();
+  let watchdog, gotHeaders = false, sawBytes = false;
+  const armWatchdog = ms => { clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(), ms); };
+  if (!sseBroken) try{
+    armWatchdog(CHAT_STALL_MS);
     const r = await fetch(KD.API + "/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -213,13 +217,16 @@ async function ask(textOverride){
       signal: ctrl.signal
     });
     if (!r.ok) throw new Error("HTTP " + r.status);
+    gotHeaders = true;
     const reader = r.body.getReader();
     const dec = new TextDecoder();
     let buf = "", full = "";
     for(;;){
-      armWatchdog();
+      /* до первого байта ждём недолго: тишина после заголовков — буферизация */
+      armWatchdog(sawBytes ? CHAT_STALL_MS : FIRST_BYTE_MS);
       const { done: eof, value } = await reader.read();
       if (eof) break;
+      sawBytes = true;
       buf += dec.decode(value, { stream: true });
       const lines = buf.split("\n");
       buf = lines.pop();
@@ -252,6 +259,7 @@ async function ask(textOverride){
      в этой сети буферизует SSE целиком, и клиент не видит ни байта до конца
      генерации — просим обычный JSON одним куском, его такие сети отдают */
   if (!done){
+    if (gotHeaders && !sawBytes) sseBroken = true; // заголовки дошли, тело — нет
     await refreshApi();
     botEl.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
     try{
