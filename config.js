@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://supporting-rom-fabric-sustainability.trycloudflare.com";
+window.KOTOSHI_API = "https://consideration-forums-chem-boolean.trycloudflare.com";
