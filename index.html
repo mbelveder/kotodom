@@ -6,18 +6,28 @@
 <title>Котоши — умные модульные домики для кошек и котов</title>
 <meta name="description" content="Соберите домик для кота из модулей — как конструктор. Начните с одного куба и расширяйте, когда кот захочет больше.">
 <link rel="icon" type="image/png" href="assets/logo-momo.png?v=2">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&family=Comfortaa:wght@700&family=Nunito:wght@400;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
+<!-- Шрифты теперь свои (self-hosted, subset из Google Fonts, OFL) — нет обращений
+     к fonts.googleapis.com/gstatic, нет мигания текста (FOUT). См. css/fonts.css -->
+<link rel="preload" href="fonts/nunito-400-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/nunito-700-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/mplusrounded1c-800-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
+<link rel="stylesheet" href="css/fonts.css?v=18">
 <link rel="stylesheet" href="css/style.css?v=18">
+<script defer src="config.js?v=18"></script>
+<script defer src="js/zdog.dist.min.js?v=18"></script>
+<script defer src="js/catalog.js?v=18"></script>
+<script defer src="js/scene.js?v=18"></script>
+<script defer src="js/configurator.js?v=18"></script>
+<script defer src="js/chat.js?v=18"></script>
+<script defer src="js/app.js?v=18"></script>
 </head>
 <body>
 
 <header class="site-head">
   <div class="wrap">
-    <a class="hanko" href="#" aria-label="Котоши — на главную"><img src="assets/logo-momo.png?v=2" alt=""></a>
+    <a class="hanko" href="#" aria-label="Котоши — на главную"><img src="assets/logo-momo.png?v=2" alt="" width="256" height="256" decoding="async"></a>
     <!-- штрих над второй «о»: ノ — один взмах кисти, читается как знак ударения -->
     <div class="brand disp">Кот<span class="jo">о<i>ノ</i></span>ши<small>домики для кошек</small></div>
     <nav class="head-nav">
@@ -90,7 +100,7 @@
         <canvas id="scene" width="980" height="540"></canvas>
         <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
         <button class="momo-fab" id="momoFab" aria-label="Открыть чат с Момо" aria-expanded="false">
-          <img src="assets/logo-momo-chat.png?v=2" alt="">
+          <img src="assets/logo-momo-chat.png?v=2" alt="" width="256" height="256" decoding="async">
           <span class="fab-lbl">чат</span>
         </button>
         <div class="price-tag">
@@ -114,7 +124,7 @@
       <aside class="chat-panel" id="chatPanel" aria-label="Чат с Момо">
         <div class="chat-head">
           <div class="ava">
-            <img src="assets/logo-momo-chat.png?v=2" alt="">
+            <img src="assets/logo-momo-chat.png?v=2" alt="" width="256" height="256" loading="lazy" decoding="async">
           </div>
           <div>
             <div class="t">Момо</div>
@@ -255,12 +265,7 @@
   </div>
 </div>
 
-<script src="config.js?v=18"></script>
-<script src="js/zdog.dist.min.js?v=18"></script>
-<script src="js/catalog.js?v=18"></script>
-<script src="js/scene.js?v=18"></script>
-<script src="js/configurator.js?v=18"></script>
-<script src="js/chat.js?v=18"></script>
-<script src="js/app.js?v=18"></script>
+<!-- скрипты подключены в <head> с defer: грузятся параллельно с разметкой,
+     выполняются по порядку после её разбора -->
 </body>
 </html>
