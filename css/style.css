@@ -103,17 +103,15 @@ button{font-family:inherit}
 }
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
 
-/* ============ hero: заголовок + буллеты и видео ============ */
-.hero2{padding:26px 0 4px;text-align:center}
-.hero2 .eyebrow-jp{
-  font-size:14px;font-weight:800;letter-spacing:.5em;color:var(--aka);
+/* ============ hero: заголовок слева (как в ранней версии), ролик справа ============ */
+.hero2{padding:34px 0 8px}
+.eyebrow-jp{
+  font-size:13px;font-weight:800;letter-spacing:.4em;color:var(--aka);
 }
-.hero2 h1{font-size:clamp(26px,3.6vw,38px);margin:4px 0 0}
+.hero-copy h1{font-size:clamp(26px,3.6vw,38px);margin:6px 0 22px}
 
-/* буллеты + видео под заголовком; текст снова выравнивается влево */
 .hero-grid{
   display:grid;grid-template-columns:1.05fr .95fr;gap:38px;align-items:center;
-  margin-top:28px;text-align:left;
 }
 @media (max-width:860px){
   .hero-grid{grid-template-columns:1fr;gap:24px}
@@ -129,6 +127,47 @@ button{font-family:inherit}
 .hero-points strong{display:block;font-size:19px;font-weight:800;line-height:1.35}
 .hero-points p{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--muted)}
 .hero-cta{display:inline-block;margin-top:24px;text-decoration:none}
+
+/* ============ готовые сборки: витрина под hero (фото/мокап + видео уже отыграли своё выше) ============ */
+.showcase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+@media (max-width:900px){.showcase-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.showcase-grid{grid-template-columns:1fr}}
+.sc-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;
+}
+.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper)}
+.sc-media img{width:100%;height:100%;display:block;object-fit:cover}
+/* три сборки ещё без фотосъёмки — вместо неё мокап с иероглифом темы, честно без притворства */
+/* иероглиф держим в верхней трети: нижняя часть карточки уходит под подпись-стекло */
+.sc-mock{width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;padding-top:16%;
+  background:linear-gradient(155deg,
+    color-mix(in srgb, var(--sakura) 55%, var(--panel)),
+    color-mix(in srgb, var(--wood) 40%, var(--panel)));
+}
+.sc-mock span{
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:58px;
+  color:color-mix(in srgb, var(--aka) 42%, var(--panel));
+}
+/* подпись поверх фото — то же «жидкое стекло», что было у прежней галереи (см. историю) */
+.sc-cap{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;
+  padding:12px;color:var(--ink);
+  background:linear-gradient(to top,
+    color-mix(in srgb, var(--panel) 82%, transparent) 42%,
+    color-mix(in srgb, var(--panel) 34%, transparent) 74%, transparent);
+  backdrop-filter:blur(5px) saturate(1.1);
+  -webkit-backdrop-filter:blur(5px) saturate(1.1);
+  /* стекло — только под подписью снизу; верх фото остаётся чистым */
+  mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
+  -webkit-mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
+}
+.sc-cap strong{font-size:15.5px;font-weight:800}
+.sc-cap span{font-size:12.5px;line-height:1.4;font-weight:600;color:var(--muted)}
+.sc-ft{padding:10px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sc-pr{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.sc-ft .btn{padding:8px 16px;font-size:13.5px}
 
 /* ============ студия (конструктор) ============ */
 .studio{
@@ -314,11 +353,14 @@ button{font-family:inherit}
   .build-guide{transition:none}
 }
 
-/* подсказка */
+/* подсказка: стрелка от сцены указывает на полку модулей ниже */
 .hint-bar{
-  text-align:center;font-size:14px;color:var(--muted);font-weight:600;
-  padding:2px 16px 10px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  text-align:left;font-size:14px;color:var(--muted);font-weight:600;
+  padding:2px 16px 12px;
 }
+.hint-arrow{flex:none;color:var(--aka)}
+@media (max-width:560px){ .hint-arrow{display:none} }
 
 /* полка модулей: все 9 видны сразу, без прокрутки */
 .tray{
@@ -397,7 +439,8 @@ button{font-family:inherit}
 }
 
 /* ============ секции ============ */
-section{padding:56px 0 8px}
+/* компенсация под «липкую» шапку: якорные ссылки не прячут заголовок секции под ней */
+section{padding:56px 0 8px;scroll-margin-top:88px}
 /* конструктору — контейнер пошире: без сайдбара сцена занимает всю ширину */
 #builder .wrap{max-width:1080px}
 #builder .sec-sub{margin-bottom:20px}
@@ -462,7 +505,9 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   border:1px solid var(--line);border-radius:16px;
   overflow:hidden;flex:none;
 }
-.preset-card .pc-media{position:relative;overflow:hidden}
+/* aspect-ratio на самом media: три сборки без фото (см. SHOWCASE) кладут сюда
+   .sc-mock вместо img, а он высоты не задаёт — контейнер иначе схлопнется */
+.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9}
 .preset-card img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover}
 /* описание поверх фото: «жидкое стекло» проявляется на ховере/фокусе —
    так карточка ниже, и в узкой панели помещается больше сборок */
@@ -487,6 +532,12 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 .preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%}
+/* карточка выбрана кликом «Собрать» в витрине над hero — коротко подсвечиваем, куда попал план */
+.preset-card.hl{animation:pc-hl 1.7s ease}
+@keyframes pc-hl{
+  0%,100%{box-shadow:none}
+  15%{box-shadow:0 0 0 3px color-mix(in srgb, var(--aka) 55%, transparent)}
+}
 
 /* как это работает */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
