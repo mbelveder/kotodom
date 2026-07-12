@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://males-seeds-relatives-shakespeare.trycloudflare.com";
+window.KOTOSHI_API = "https://sites-advisory-indexed-vacancies.trycloudflare.com";
