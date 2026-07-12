@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://membership-ethics-save-fastest.trycloudflare.com";
+window.KOTOSHI_API = "https://use-routing-peninsula-proceeds.trycloudflare.com";
