@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://use-routing-peninsula-proceeds.trycloudflare.com";
+window.KOTOSHI_API = "https://factory-issued-rate-citizens.trycloudflare.com";
