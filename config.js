@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://nodes-establish-customize-workshops.trycloudflare.com";
+window.KOTOSHI_API = "https://tigers-steady-acquisition-injuries.trycloudflare.com";
