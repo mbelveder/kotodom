@@ -193,7 +193,7 @@ async function ask(textOverride){
   botEl.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
   const payload = extra => JSON.stringify(Object.assign({
     messages: history.slice(-12),
-    config: KD.configurator ? KD.configurator.summary() : ""
+    config: KD.configurator ? KD.configurator.cellsSummary() : ""
   }, extra));
   const finish = full => {
     botEl.textContent = stripMarkers(full).trim();

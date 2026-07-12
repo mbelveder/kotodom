@@ -400,14 +400,18 @@ function applyCells(cells, doneSay){
     .filter(([i, t]) => Number.isInteger(i) && i >= 0 && i < N && MODULES[t])
     .sort((a, b) => a[0] - b[0]);
   quietUntil = Date.now() + entries.length * 160 + 400;
+  const skipped = []; // модули, для которых Момо предложил невалидную ячейку — отчитываемся, а не молчим
   entries.forEach(([i, t], step) => {
     setTimeout(() => {
       if (gen !== buildGen) return;               // сборку перебили
-      if (!validCells(t).includes(i)) return;     // нет опоры/занято — пропускаем
-      place(i, t, { silent: true });
+      const ok = validCells(t).includes(i);        // нет опоры/занято — пропускаем, но запоминаем
+      if (ok) place(i, t, { silent: true }); else skipped.push(t);
       if (step === entries.length - 1){
         popSound();
-        if (doneSay) say(doneSay, Math.max(4800, doneSay.length * 55)); // длинной реплике — больше времени
+        if (skipped.length){
+          const names = [...new Set(skipped)].map(x => (MODULES[x] && MODULES[x].name) || x).join(", ");
+          say(`Не поместилось: ${names} — не хватило опоры или места. Передвиньте модули вручную, чтобы освободить место.`, 6500);
+        } else if (doneSay) say(doneSay, Math.max(4800, doneSay.length * 55)); // длинной реплике — больше времени
       }
     }, step * 160);
   });
@@ -419,6 +423,13 @@ KD.applyConfig = cells => applyCells(cells, "Собрал! Двигайте мо
 KD.configurator = {
   getGrid: () => grid.slice(),
   totals,
+  /* индекс:тип текущих ячеек — тот же формат, что в маркере [[BUILD:…]] Момо,
+     чтобы модель получала РЕАЛЬНЫЕ позиции вместо угадывания по названию×count */
+  cellsSummary(){
+    const parts = [];
+    for (let i = 0; i < N; i++) if (grid[i] && grid[i] !== EXT) parts.push(`${i}:${grid[i]}`);
+    return parts.join(",");
+  },
   orderLines(){
     const cnt = {};
     grid.filter(t => MODULES[t]).forEach(t => cnt[t] = (cnt[t] || 0) + 1);

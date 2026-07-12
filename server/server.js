@@ -96,7 +96,7 @@ function systemPrompt(configSummary){
 
 ДОСТАВКА И ВОЗВРАТ: по всей России (СДЭК/Почта, 3–7 дней), плоская упаковка. Возврат 14 дней, модули без следов когтей. Гарантия 1 год на фурнитуру.
 
-СЕЙЧАС В КОНФИГУРАТОРЕ КЛИЕНТА: ${configSummary || "пусто"}.
+ТЕКУЩАЯ РАСКЛАДКА КЛИЕНТА (формат как у маркера BUILD — индекс:тип через запятую, это ТОЧНЫЕ реальные позиции): ${configSummary || "пусто"}. При сборке маркера бери эти индексы как есть — не переставляй и не выдумывай их заново, добавляй только новые ячейки.
 
 ПРАВИЛА:
 - Отвечай очень коротко: 2–4 предложения, до 70 слов. По-русски, дружелюбно, можно одно уместное 🐾/😺 на сообщение. Никаких длинных списков.
@@ -460,7 +460,7 @@ const server = http.createServer(async (req, res) => {
           }
           const j = await r.json();
           const full = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "";
-          if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub} (no-stream)`);
+          if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub} model=${viaHermes ? HERMES_MODEL : MODEL} (no-stream)`);
           json(res, 200, { text: full });
           handleMarkers(full, clean, ip);
         }catch(e){
@@ -516,7 +516,7 @@ const server = http.createServer(async (req, res) => {
               const j = JSON.parse(ln.slice(6));
               const d = j.choices && j.choices[0] && j.choices[0].delta;
               if (d && d.content) full += d.content;
-              if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub}`);
+              if (j.usage && j.usage.cost_rub) log(`chat cost ₽${j.usage.cost_rub} model=${viaHermes ? HERMES_MODEL : MODEL}`);
             }catch(_){}
           }
         }
