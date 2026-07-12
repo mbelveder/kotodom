@@ -5,25 +5,34 @@ const $ = s => document.querySelector(s);
 const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
-/* ---------- готовые сборки: выдвижная панель у конструктора ---------- */
-const PRESET_CARDS = [
+/* ---------- готовые сборки: витрина над hero + выдвижная панель у конструктора ---------- */
+/* три сфотографированы, три — сложнее, ещё без съёмки (см. .sc-mock в css) */
+const SHOWCASE = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
   { img: "assets/render_wide.jpg", preset: "wide", nm: "«Проныра»",
     ds: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек, засад и послеобеденного сна." },
   { img: "assets/render_tower.jpg", preset: "tower", nm: "«Вальяжный»",
-    ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." }
+    ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." },
+  { img: "assets/brand-anchor.jpg", preset: "manor", nm: "«Резиденция»",
+    ds: "Два куба, тоннель, гамак, смотровая башня с крышей — и когтеточка с игрушкой на сдачу. Целая резиденция для кота с большими планами." },
+  { kanji: "塔", preset: "watch", nm: "«Дозорный»",
+    ds: "Фундамент и двойная смотровая башня с гамаком у подножья — для кота, который любит видеть всё, а спать не отходя от поста." },
+  { kanji: "走", preset: "zoomies", nm: "«Непоседа»",
+    ds: "Три куба с тоннелями в ряд, широкий гамак и башня с крышей — маршрут для кота, которому вечно неймётся." }
 ];
 const presetPanel = $("#presetPanel"), presetTab = $("#presetTab"),
-      presetList = $("#presetList"), studioMain = $("#studioMain");
+      presetList = $("#presetList"), studioMain = $("#studioMain"),
+      showcaseGrid = $("#showcaseGrid"), builderSec = $("#builder");
 const presetPrice = key => Object.values(KD.PRESETS[key].cells)
   .reduce((s, t) => s + KD.MODULES[t].price, 0);
-PRESET_CARDS.forEach(g => {
+SHOWCASE.forEach(g => {
   const el = document.createElement("div");
   el.className = "preset-card";
+  el.dataset.key = g.preset;
   el.innerHTML = `
-    <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-         onerror="this.style.display='none'">
+    ${g.img ? `<img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
+         onerror="this.style.display='none'">` : ""}
     <div class="pc-body">
       <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
       <p class="pc-ds">${g.ds}</p>
@@ -47,9 +56,48 @@ $("#presetX").addEventListener("click", () => presetsOpen(false));
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && presetPanel.classList.contains("open")) presetsOpen(false);
 });
-/* «Готовые» в шапке ведёт к конструктору и сразу разворачивает панель */
-const navPresets = $("#navPresets");
-if (navPresets) navPresets.addEventListener("click", () => presetsOpen(true));
+
+/* ---------- витрина «готовые сборки» над hero: фото/мокап + подпись «жидким стеклом» ---------- */
+function highlightPreset(key){
+  const card = presetList.querySelector(`.preset-card[data-key="${key}"]`);
+  if (!card) return;
+  card.classList.remove("hl");
+  void card.offsetWidth; // перезапуск анимации, если подсветили тот же план дважды подряд
+  card.classList.add("hl");
+  /* скроллим только сам список (его собственный overflow-y), а не card.scrollIntoView:
+     панель — absolute внутри ещё едущей секции конструктора, и scrollIntoView
+     на вложенном элементе задевает и document-скролл, гоняя всю страницу */
+  presetList.scrollTo({ top: card.offsetTop - 8, behavior: "smooth" });
+}
+/* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор —
+   в отличие от кнопок сборки внутри самого конструктора, тут прокрутка уместна */
+function buildFromShowcase(key){
+  builderSec.scrollIntoView({ behavior: "smooth", block: "start" });
+  presetsOpen(true);
+  KD.loadPreset(key);
+  /* подсветку — после transition панели (.28s): раньше scrollIntoView читает
+     ещё не осевшие координаты (панель на пути из translateX(112%)) и уводит
+     всю страницу непредсказуемо далеко */
+  setTimeout(() => highlightPreset(key), 320);
+}
+SHOWCASE.forEach(g => {
+  const el = document.createElement("div");
+  el.className = "sc-card";
+  const media = g.img
+    ? `<img src="${g.img}" alt="Сборка ${g.nm} в интерьере" loading="lazy">`
+    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
+  el.innerHTML = `
+    <div class="sc-media">
+      ${media}
+      <div class="sc-cap"><strong>${g.nm}</strong><span>${g.ds}</span></div>
+    </div>
+    <div class="sc-ft">
+      <span class="sc-pr">${fmt(presetPrice(g.preset))}</span>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
+    </div>`;
+  showcaseGrid.appendChild(el);
+  el.querySelector("button").addEventListener("click", () => buildFromShowcase(g.preset));
+});
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
