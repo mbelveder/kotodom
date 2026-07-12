@@ -285,6 +285,23 @@ button{font-family:inherit}
 .bg-ok:hover{background:var(--aka-deep);transform:translateX(-50%) translateY(-2px)}
 .bg-ok:active{transform:translateX(-50%) scale(.97)}
 
+/* маленькая кнопка «с чего начать» — возвращает приветственные подсказки */
+.guide-reopen{
+  display:inline-flex;align-items:center;gap:7px;
+  margin:-14px 0 22px;                    /* подтягиваем под sec-sub */
+  border:1.5px solid var(--line);border-radius:99px;
+  background:var(--panel);color:var(--muted);cursor:pointer;
+  padding:5px 13px 5px 7px;
+  font-weight:800;font-size:12.5px;letter-spacing:.01em;
+  transition:border-color .15s ease, color .15s ease;
+}
+.guide-reopen:hover{border-color:var(--aka);color:var(--aka)}
+.guide-reopen .gr-q{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:19px;height:19px;border-radius:50%;flex:none;
+  background:var(--aka);color:#FFFBF3;font-size:12px;line-height:1;
+}
+
 @media (max-width:900px){
   .bg-txt{font-size:13px;padding:6px 10px}
   .bg-tip--presets{top:30%;right:5%}
