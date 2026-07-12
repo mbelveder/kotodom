@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://sites-advisory-indexed-vacancies.trycloudflare.com";
+window.KOTOSHI_API = "https://internal-oops-charming-bandwidth.trycloudflare.com";
