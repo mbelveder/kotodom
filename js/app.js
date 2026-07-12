@@ -84,8 +84,11 @@ const closeIntro = () => {
 
 if (buildGuide){
   const SEEN = "kd_guideSeen";
+  /* ВРЕМЕННО: показываем гид при каждой перезагрузке, пока обкатываем.
+     Убрать эту строку — вернётся показ один раз на браузер (по localStorage). */
+  const ALWAYS_SHOW = true;
   let seen = false;
-  try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
+  try { seen = !ALWAYS_SHOW && localStorage.getItem(SEEN) === "1"; } catch (e) {}
   if (!seen){
     introClosed = false;          // интро на экране — реплика Момо подождёт
     buildGuide.hidden = false;
