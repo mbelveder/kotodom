@@ -221,6 +221,82 @@ button{font-family:inherit}
   .studio-main.chat-open .momo-say{left:10px;bottom:72px}
 }
 
+/* ============ приветственный гид конструктора ============ */
+/* слой поверх сцены: три подсказки со стрелками к реальным элементам
+   (готовые сборки → вкладка справа, сборка → сцена, чат → аватар слева).
+   Растворяется по «ОК, к делу»; показывается один раз, см. js/app.js */
+.build-guide{
+  position:absolute;inset:0;z-index:20;
+  opacity:1;transition:opacity .5s ease;
+}
+.build-guide[hidden]{display:none}
+.build-guide.hiding{opacity:0;pointer-events:none}
+.bg-scrim{
+  position:absolute;inset:0;
+  background:radial-gradient(120% 100% at 50% 40%,
+             color-mix(in srgb, var(--ink) 34%, transparent),
+             color-mix(in srgb, var(--ink) 60%, transparent));
+  -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);
+}
+.bg-tip{
+  position:absolute;z-index:2;display:flex;align-items:center;gap:2px;
+  pointer-events:none;
+}
+.bg-txt{
+  font-family:"M PLUS Rounded 1c",sans-serif;
+  font-weight:800;font-size:16px;line-height:1.18;text-align:center;
+  color:var(--ink);background:var(--panel);
+  border:1.5px solid var(--ink);border-radius:14px;
+  padding:8px 14px;box-shadow:3px 3px 0 var(--aka);
+}
+.bg-arw{flex:none;overflow:visible}
+.bg-arw path{fill:none;stroke:var(--aka);stroke-width:2.6;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* подсветка подсказки: клик по «Готовые сборки» в шапке, когда гид ещё открыт —
+   вспыхивает нужный ярлык вместо открытия панели за затемнением (см. app.js) */
+.bg-tip.lit .bg-txt{animation:bg-pulse 1s ease 2}
+@keyframes bg-pulse{
+  0%,100%{box-shadow:3px 3px 0 var(--aka);transform:none}
+  50%{box-shadow:0 0 0 5px color-mix(in srgb, var(--aka) 45%, transparent),3px 3px 0 var(--aka);
+      transform:scale(1.07)}
+}
+@media (prefers-reduced-motion: reduce){
+  .bg-tip.lit .bg-txt{animation:none;
+    box-shadow:0 0 0 5px color-mix(in srgb, var(--aka) 45%, transparent),3px 3px 0 var(--aka)}
+}
+
+/* 1. готовые сборки — подсказка левее, стрелка тянется вправо к вкладке */
+.bg-tip--presets{top:36%;right:8%;flex-direction:row}
+/* 2. собрать самому — по центру сверху, стрелка вниз в сцену */
+.bg-tip--self{top:11%;left:50%;transform:translateX(-50%);flex-direction:column;gap:0}
+/* 3. чат — снизу слева, стрелка вниз-влево к аватару Момо */
+.bg-tip--chat{left:11%;bottom:19%;flex-direction:column;gap:0}
+
+.bg-ok{
+  position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:3;
+  border:none;border-radius:14px;cursor:pointer;
+  background:var(--aka);color:#FFFBF3;
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:16px;
+  padding:12px 26px;
+  box-shadow:0 6px 18px color-mix(in srgb, var(--aka) 45%, transparent);
+  transition:transform .12s ease, background .12s ease;
+}
+.bg-ok:hover{background:var(--aka-deep);transform:translateX(-50%) translateY(-2px)}
+.bg-ok:active{transform:translateX(-50%) scale(.97)}
+
+@media (max-width:900px){
+  .bg-txt{font-size:13px;padding:6px 10px}
+  .bg-tip--presets{top:30%;right:5%}
+  .bg-tip--self{top:8%}
+  .bg-tip--chat{left:6%;bottom:22%}
+  .bg-arw{width:64px;height:auto}
+  .bg-ok{font-size:14px;padding:10px 20px;bottom:6%}
+}
+@media (prefers-reduced-motion: reduce){
+  .build-guide{transition:none}
+}
+
 /* подсказка */
 .hint-bar{
   text-align:center;font-size:14px;color:var(--muted);font-weight:600;

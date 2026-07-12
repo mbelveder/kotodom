@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=18">
-<link rel="stylesheet" href="css/style.css?v=18">
-<script defer src="config.js?v=18"></script>
-<script defer src="js/zdog.dist.min.js?v=18"></script>
-<script defer src="js/catalog.js?v=18"></script>
-<script defer src="js/scene.js?v=18"></script>
-<script defer src="js/configurator.js?v=18"></script>
-<script defer src="js/chat.js?v=18"></script>
-<script defer src="js/app.js?v=18"></script>
+<link rel="stylesheet" href="css/fonts.css?v=19">
+<link rel="stylesheet" href="css/style.css?v=19">
+<script defer src="config.js?v=19"></script>
+<script defer src="js/zdog.dist.min.js?v=19"></script>
+<script defer src="js/catalog.js?v=19"></script>
+<script defer src="js/scene.js?v=19"></script>
+<script defer src="js/configurator.js?v=19"></script>
+<script defer src="js/chat.js?v=19"></script>
+<script defer src="js/app.js?v=19"></script>
 </head>
 <body>
 
@@ -37,7 +37,6 @@
       <a href="#builder">Конструктор</a>
       <a href="#builder" class="hide-m" id="navPresets">Готовые сборки</a>
       <a href="#smart" class="hide-m">Умная игрушка</a>
-      <a href="#how" class="hide-m">Как это работает</a>
       <a href="#info" class="hide-m">Доставка</a>
       <span class="demo-pill">демо-магазин</span>
     </nav>
@@ -113,6 +112,41 @@
         </div>
         <button class="preset-tab" id="presetTab" aria-controls="presetPanel"
                 aria-expanded="false">готовые сборки</button>
+
+        <!-- приветственный слой конструктора: гид с тремя подсказками и стрелками,
+             растворяется по «ОК, к делу» (или клику по фону); показ один раз, см. app.js -->
+        <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в конструкторе" hidden>
+          <div class="bg-scrim"></div>
+
+          <!-- 1. готовые сборки — стрелка вправо, к вкладке -->
+          <div class="bg-tip bg-tip--presets">
+            <span class="bg-txt">Используйте<br>готовые сборки</span>
+            <svg class="bg-arw" viewBox="0 0 90 46" width="90" height="46" aria-hidden="true">
+              <path d="M6 34 C40 40 66 32 80 18" fill="none"/>
+              <path class="bg-head" d="M80 18 l-13 1 M80 18 l-4 12" fill="none"/>
+            </svg>
+          </div>
+
+          <!-- 2. собрать самому — стрелка вниз, к сцене -->
+          <div class="bg-tip bg-tip--self">
+            <span class="bg-txt">Соберите домик<br>самостоятельно</span>
+            <svg class="bg-arw" viewBox="0 0 46 74" width="46" height="74" aria-hidden="true">
+              <path d="M23 6 C15 30 30 44 24 66" fill="none"/>
+              <path class="bg-head" d="M24 66 l-11 -6 M24 66 l11 -7" fill="none"/>
+            </svg>
+          </div>
+
+          <!-- 3. чат с Момо — стрелка вниз-влево, к аватару -->
+          <div class="bg-tip bg-tip--chat">
+            <span class="bg-txt">Посоветуйтесь<br>в чате</span>
+            <svg class="bg-arw" viewBox="0 0 84 60" width="84" height="60" aria-hidden="true">
+              <path d="M76 10 C44 14 24 26 12 48" fill="none"/>
+              <path class="bg-head" d="M12 48 l14 -3 M12 48 l3 -13" fill="none"/>
+            </svg>
+          </div>
+
+          <button class="bg-ok" id="buildGuideOk" type="button">ОК, к делу</button>
+        </div>
       </div>
       <aside class="preset-panel" id="presetPanel" aria-label="Готовые сборки">
         <div class="preset-head">

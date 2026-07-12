@@ -47,9 +47,58 @@ $("#presetX").addEventListener("click", () => presetsOpen(false));
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && presetPanel.classList.contains("open")) presetsOpen(false);
 });
-/* «Готовые» в шапке ведёт к конструктору и сразу разворачивает панель */
+/* «Готовые» в шапке ведёт к конструктору и сразу разворачивает панель.
+   Но пока открыт приветственный гид, панель ушла бы за затемнение — вместо этого
+   подсвечиваем нужную подсказку, чтобы взгляд нашёл вкладку сам */
 const navPresets = $("#navPresets");
-if (navPresets) navPresets.addEventListener("click", () => presetsOpen(true));
+if (navPresets) navPresets.addEventListener("click", () => {
+  const guide = $("#buildGuide");
+  const guideUp = guide && !guide.hidden && !guide.classList.contains("hiding");
+  if (guideUp){
+    const tip = guide.querySelector(".bg-tip--presets");
+    if (tip){
+      tip.classList.remove("lit");   // рестарт вспышки при повторном клике
+      void tip.offsetWidth;
+      tip.classList.add("lit");
+    }
+    return;
+  }
+  presetsOpen(true);
+});
+
+/* ---------- приветственный гид конструктора ---------- */
+/* растворяющийся слой поверх сцены: подсказывает три пути (готовые сборки,
+   сборка самому, чат с Момо). Показываем один раз — дальше не мозолит глаза */
+const buildGuide = $("#buildGuide");
+if (buildGuide){
+  const SEEN = "kd_guideSeen";
+  let dismissed = false;
+  const dismiss = () => {
+    if (dismissed) return;
+    dismissed = true;
+    try { localStorage.setItem(SEEN, "1"); } catch (e) {}
+    buildGuide.classList.add("hiding");
+    /* done() идемпотентен: убираем слой из DOM после исчезновения.
+       transitionend может не прийти (фоновая вкладка тормозит анимации,
+       reduced-motion) — поэтому дублируем таймером, слой не «залипнет» */
+    let cleared = false;
+    const done = () => { if (cleared) return; cleared = true; buildGuide.hidden = true; };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
+    else {
+      buildGuide.addEventListener("transitionend", done, { once: true });
+      setTimeout(done, 650);
+    }
+  };
+  let seen = false;
+  try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
+  if (!seen){
+    buildGuide.hidden = false;
+    $("#buildGuideOk").addEventListener("click", dismiss);
+    /* клик мимо подсказок (по затемнённому фону) тоже закрывает */
+    buildGuide.querySelector(".bg-scrim").addEventListener("click", dismiss);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
+  }
+}
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
