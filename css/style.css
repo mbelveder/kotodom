@@ -313,12 +313,15 @@ button{font-family:inherit}
     box-shadow:0 0 0 5px color-mix(in srgb, var(--aka) 45%, transparent),3px 3px 0 var(--aka)}
 }
 
-/* 1. готовые сборки — подсказка левее, стрелка тянется вправо к вкладке */
-.bg-tip--presets{top:36%;right:8%;flex-direction:row}
-/* 2. собрать самому — по центру сверху, стрелка вниз в сцену */
-.bg-tip--self{top:11%;left:50%;transform:translateX(-50%);flex-direction:column;gap:0}
-/* 3. чат — снизу слева, стрелка вниз-влево к аватару Момо */
-.bg-tip--chat{left:11%;bottom:19%;flex-direction:column;gap:0}
+/* 1. готовые сборки — подсказка у самой вкладки, стрелка короткая */
+.bg-tip--presets{top:44%;right:3%;flex-direction:row}
+/* 2. собрать самому — подсказка у нижнего края сцены, левее центра (там садится
+   кнопка «ОК, к делу»), длинная стрелка уходит ниже scene-wrap к полке модулей
+   (.tray) — ни один родитель не обрезает overflow вплоть до .studio, так что
+   «хвост» стрелки виден поверх неё */
+.bg-tip--self{bottom:-9%;left:26%;transform:translateX(-50%);flex-direction:column;gap:0}
+/* 3. чат — у самого аватара Момо в углу, стрелка короткая */
+.bg-tip--chat{left:3%;bottom:9%;flex-direction:column;gap:0}
 
 .bg-ok{
   position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:3;
@@ -335,7 +338,7 @@ button{font-family:inherit}
 /* маленькая кнопка «с чего начать» — возвращает приветственные подсказки */
 .guide-reopen{
   display:inline-flex;align-items:center;gap:7px;
-  margin:-14px 0 22px;                    /* подтягиваем под sec-sub */
+  margin:4px 0 22px;
   border:1.5px solid var(--line);border-radius:99px;
   background:var(--panel);color:var(--muted);cursor:pointer;
   padding:5px 13px 5px 7px;
@@ -351,10 +354,9 @@ button{font-family:inherit}
 
 @media (max-width:900px){
   .bg-txt{font-size:13px;padding:6px 10px}
-  .bg-tip--presets{top:30%;right:5%}
-  .bg-tip--self{top:8%}
-  .bg-tip--chat{left:6%;bottom:22%}
-  .bg-arw{width:64px;height:auto}
+  .bg-tip--presets{top:38%;right:2%}
+  .bg-tip--chat{left:2%;bottom:12%}
+  .bg-tip--presets .bg-arw,.bg-tip--chat .bg-arw{width:44px;height:auto}
   .bg-ok{font-size:14px;padding:10px 20px;bottom:6%}
 }
 @media (prefers-reduced-motion: reduce){
@@ -451,7 +453,19 @@ button{font-family:inherit}
 section{padding:56px 0 8px;scroll-margin-top:88px}
 /* конструктору — контейнер пошире: без сайдбара сцена занимает всю ширину */
 #builder .wrap{max-width:1080px}
-#builder .sec-sub{margin-bottom:20px}
+/* заголовок конструктора сидит прямо на студии; описание — не по умолчанию,
+   а только на ховере/фокусе заголовка (текст один раз прочитали — дальше он не нужен) */
+.builder-head{cursor:help;scroll-margin-top:88px}
+.builder-sub{
+  max-height:0;opacity:0;overflow:hidden;margin:0;
+  transition:max-height .32s ease, opacity .22s ease, margin .32s ease;
+}
+.builder-head:hover ~ .builder-sub,
+.builder-head:focus ~ .builder-sub,
+.builder-sub:hover{
+  max-height:140px;opacity:1;margin:8px 0 20px;
+}
+@media (prefers-reduced-motion: reduce){ .builder-sub{transition:none} }
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
   display:flex;align-items:center;gap:10px;
