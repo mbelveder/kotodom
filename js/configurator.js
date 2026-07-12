@@ -1,4 +1,4 @@
-/* Котоши — конструктор: drag-and-drop, правила, цены, заселение */
+/* Котоши — редактор: drag-and-drop, правила, цены, заселение */
 "use strict";
 (function(){
 const { COLS, ROWS, CELL, MODULES, PRESETS, SAY, EXT, fmt } = KD;
@@ -99,7 +99,7 @@ const NO_SLOT_HINTS = {
   hammock: "Гамак вешается над кубом или лежанкой. Постройте что-нибудь под него.",
   hammock2: "Широкому гамаку нужны две соседние опоры — например, два куба в ряд.",
   scratch: "Когтеточке нужен пол или крыша модуля — всё занято.",
-  play: "Игрушке нужен пол или верх модуля — всё занято.",
+  play: "Чаше-лежанке нужен пол или верх модуля — всё занято.",
 };
 
 /* ---------- цена ---------- */
@@ -196,12 +196,6 @@ function buildTray(){
     el.title = m.desc;
     tray.appendChild(el);
     el.addEventListener("pointerdown", e => startDrag(e, key, el));
-    /* умная игрушка светится, пока её не рассмотрят: наведение открывает
-       описание (title) и гасит свечение */
-    if (key === "play"){
-      el.classList.add("glow");
-      el.addEventListener("pointerenter", () => el.classList.remove("glow"), { once: true });
-    }
   });
 }
 
@@ -368,18 +362,11 @@ btnUndo.addEventListener("click", () => {
 });
 btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); clearAll(); } });
 
-/* первая реплика — про состав сборки (без имени плана: оно вторично) плюс
-   один раз про умную игрушку: её идею посетители сами пока не считывают */
-let toyPitched = false;
-function withToyPitch(text){
-  if (toyPitched) return text;
-  toyPitched = true;
-  return text + " И взгляните на умную игрушку на полке — она играет с котом сама, пока вас нет дома.";
-}
+/* реплика при выборе плана — про состав сборки (без имени плана: оно вторично) */
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return;
-  applyCells(p.cells, withToyPitch(p.say));
+  applyCells(p.cells, p.say);
 }
 KD.loadPreset = loadPreset;
 
@@ -439,7 +426,7 @@ KD.configurator = {
   },
   summary(){
     const lines = this.orderLines();
-    if (!lines.length) return "конструктор пока пуст";
+    if (!lines.length) return "редактор пока пуст";
     const t = totals();
     return lines.map(l => `${l.name}×${l.n}`).join(", ") + ` — итого ${fmt(t.total)}` + (t.disc ? " (со скидкой 5%)" : "");
   }
@@ -450,16 +437,15 @@ KD.scene.init();
 buildTray();
 refresh();
 
-/* конструктор оживает, когда доезжаешь до него: грузим «Проныру» с анимацией сборки
-   (если пользователь уже выбрал план в галерее — оставляем его выбор) */
+/* редактор оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
+   но МОЛЧА — первая реплика Момо ждёт, пока посетитель сам возьмётся за сборку
+   (перетащит модуль, уберёт его или выберет план). Ждём и закрытия гида, чтобы
+   сборка не анимировалась за затемнением (см. KD.onIntroDone в app.js) */
 const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    /* первая реплика (состав + умная игрушка) — в doneSay пресета.
-       Ждём закрытия приветственного гида, чтобы реплика и сборка не ушли
-       за затемнение (см. KD.onIntroDone в app.js) */
-    const boot = () => { if (!KD.studioBooted) loadPreset("wide"); };
+    const boot = () => { if (!KD.studioBooted) applyCells(PRESETS.wide.cells); };
     if (KD.onIntroDone) KD.onIntroDone(boot); else boot();
   }
 }, { threshold: 0.35 });
