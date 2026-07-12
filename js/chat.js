@@ -160,21 +160,21 @@ function parseBuild(full){
 function offerBuild(botEl, cells){
   const b = document.createElement("button");
   b.className = "msg-build";
-  b.textContent = "🛠 Собрать в конфигураторе";
+  b.textContent = "🛠 Собрать в конструкторе";
   b.addEventListener("click", () => {
     if (!KD.applyConfig || !KD.applyConfig(cells)) return;
     b.disabled = true;
     b.textContent = "Собрано — смотрите сцену";
-    /* панель сворачивается: сборку видно во всю сцену, Момо ждёт в аватаре */
-    closeChat();
-    document.getElementById("sceneWrap").scrollIntoView({ behavior: "smooth", block: "center" });
+    /* чат остаётся открытым: сборка видна рядом, разговор продолжается */
   });
   botEl.appendChild(b);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-/* маркеры убираем из текста; хвост вида «[[…» прячем на время стрима */
-const stripMarkers = s => s.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").replace(BUILD_RE, "");
+/* маркеры убираем из текста; хвост вида «[[…» прячем на время стрима.
+   � — апстрим иногда рвёт utf-8 внутри токена и присылает
+   символы-заменители прямо в дельтах; вычищаем, чтобы не показывать «��» */
+const stripMarkers = s => s.replace(/\[\[(ESCALATE|ATTACK)\]\]/g, "").replace(BUILD_RE, "").replace(/�+/g, "");
 const stripPartial = s => stripMarkers(s).replace(/\[\[[^\]]*$/, "");
 
 async function ask(textOverride){
@@ -224,6 +224,20 @@ async function ask(textOverride){
     const reader = r.body.getReader();
     const dec = new TextDecoder();
     let buf = "", full = "";
+    const takeLine = ln => {
+      if (!ln.startsWith("data: ")) return;
+      const data = ln.slice(6).trim();
+      if (data === "[DONE]") return;
+      try{
+        const j = JSON.parse(data);
+        const d = j.choices && j.choices[0] && j.choices[0].delta;
+        if (d && d.content){
+          full += d.content;
+          botEl.textContent = stripPartial(full).trimStart();
+          msgs.scrollTop = msgs.scrollHeight;
+        }
+      }catch(_){}
+    };
     for(;;){
       /* до первого байта ждём недолго: тишина после заголовков — буферизация */
       armWatchdog(sawBytes ? CHAT_STALL_MS : FIRST_BYTE_MS);
@@ -233,21 +247,11 @@ async function ask(textOverride){
       buf += dec.decode(value, { stream: true });
       const lines = buf.split("\n");
       buf = lines.pop();
-      for (const ln of lines){
-        if (!ln.startsWith("data: ")) continue;
-        const data = ln.slice(6).trim();
-        if (data === "[DONE]") continue;
-        try{
-          const j = JSON.parse(data);
-          const d = j.choices && j.choices[0] && j.choices[0].delta;
-          if (d && d.content){
-            full += d.content;
-            botEl.textContent = stripPartial(full).trimStart();
-            msgs.scrollTop = msgs.scrollHeight;
-          }
-        }catch(_){}
-      }
+      lines.forEach(takeLine);
     }
+    /* дожимаем декодер и последнюю строку без завершающего \n */
+    buf += dec.decode();
+    if (buf) takeLine(buf);
     clearTimeout(watchdog);
     if (full) finish(full);
     else botEl.textContent = "…Момо задумался и промолчал. Попробуйте ещё раз.";

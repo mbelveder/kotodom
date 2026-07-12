@@ -14,9 +14,9 @@ const PALETTES = {
     aka:"#C7423A", akaDeep:"#A93129", sakura:"#F3CDC6", cushion:"#EFB9AF",
     jute:"#C89B6C", juteDark:"#AB8050",
     matcha:"#6E8F63", matchaDark:"#57744E", pot:"#B0705A",
-    lamp:"#F7E5B5", lampGlow:"rgba(247,224,172,0.30)", lampRib:"#D9BE8A", stand:"#6B5F52",
+    lamp:"#F7E5B5", lampGlow:"rgba(247,224,172,0.18)", lampRib:"#D9BE8A", stand:"#6B5F52",
     cat:"#FFFDF8", ink:"#2E2A33", ghost:"rgba(199,66,58,0.16)", ghostHot:"rgba(199,66,58,0.42)",
-    windowGlow:"#FBF3DC", shoji:"#C9B48E"
+    windowGlow:"#FBF3DC", shoji:"#C9B48E", note:"#847B69"
   },
   dark: {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
@@ -25,9 +25,9 @@ const PALETTES = {
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
     jute:"#B98F5C", juteDark:"#97713F",
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
-    lamp:"#F3D992", lampGlow:"rgba(243,217,146,0.22)", lampRib:"#C7A860", stand:"#8A7E6E",
+    lamp:"#F3D992", lampGlow:"rgba(243,217,146,0.12)", lampRib:"#C7A860", stand:"#8A7E6E",
     cat:"#FBF7EC", ink:"#221F2B", ghost:"rgba(224,90,78,0.20)", ghostHot:"rgba(224,90,78,0.5)",
-    windowGlow:"#6B604B", shoji:"#6E6478"
+    windowGlow:"#6B604B", shoji:"#6E6478", note:"#A79F8F"
   }
 };
 let P = PALETTES.light;
@@ -56,6 +56,7 @@ let ghostShapes = [];
 let dirty = true;
 let catSettled = false;
 let popAnims = [];         // {anchor, t0, dur}
+let dimLabels = [];        // подписи размеров ковра: {m, e, text, oy}
 
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
@@ -202,6 +203,14 @@ function makeCat(parent){
 }
 
 /* ---------- комната ---------- */
+/* приглушить цвет к тону стены: декор вокруг ковра не должен спорить с домиком */
+function calm(c, t = 0.4){
+  if (c[0] !== "#") return c;
+  const n = parseInt(c.slice(1), 16), w = parseInt(P.wall.slice(1), 16);
+  const ch = (v, s) => (v >> s) & 255;
+  const l = (x, y) => Math.round(x + (y - x) * t);
+  return `rgb(${l(ch(n,16),ch(w,16))},${l(ch(n,8),ch(w,8))},${l(ch(n,0),ch(w,0))})`;
+}
 function makeRoom(parent){
   const room = new Zdog.Anchor({ addTo: parent });
   // пол и стена сильно больше холста: сцена заполнена целиком, ничего не «плавает»
@@ -223,51 +232,67 @@ function makeRoom(parent){
     path:[ { x:-FW/2+4, y:GROUND-3, z:WALLZ+2 }, { x:FW/2-4, y:GROUND-3, z:WALLZ+2 } ] });
   // сёдзи-окно на задней стене
   const win = new Zdog.Anchor({ addTo:room, translate:{ x:40, y:GROUND-216, z:WALLZ+1.5 } });
-  new Zdog.Rect({ addTo:win, width:150, height:120, fill:true, stroke:6, color:P.windowGlow });
-  new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:P.shoji, translate:{ z:0.8 } });
-  new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
-  new Zdog.Shape({ addTo:win, stroke:3, color:P.shoji, closed:false, translate:{ z:1.4 }, path:[ { x:-75, y:0 }, { x:75, y:0 } ] });
+  new Zdog.Rect({ addTo:win, width:150, height:120, fill:true, stroke:6, color:calm(P.windowGlow) });
+  new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:calm(P.shoji), translate:{ z:0.8 } });
+  new Zdog.Shape({ addTo:win, stroke:3, color:calm(P.shoji), closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
+  new Zdog.Shape({ addTo:win, stroke:3, color:calm(P.shoji), closed:false, translate:{ z:1.4 }, path:[ { x:-75, y:0 }, { x:75, y:0 } ] });
   // ветка сакуры ЗА окном: между свечением (z:0) и рамой сёдзи (z:0.8+)
-  new Zdog.Shape({ addTo:win, stroke:2.4, color:P.juteDark, closed:false, translate:{ z:0.3 },
+  new Zdog.Shape({ addTo:win, stroke:2.4, color:calm(P.juteDark), closed:false, translate:{ z:0.3 },
     path:[ { x:-70, y:-34 }, { bezier:[ { x:-30, y:-26 }, { x:0, y:-30 }, { x:40, y:-14 } ] } ] });
   [[-44,-32],[-16,-26],[8,-27],[26,-19],[44,-13]].forEach(([x,y]) =>
-    new Zdog.Shape({ addTo:win, stroke:7, color:P.sakura, translate:{ z:0.5 }, path:[{ x, y }] }));
+    new Zdog.Shape({ addTo:win, stroke:7, color:calm(P.sakura), translate:{ z:0.5 }, path:[{ x, y }] }));
   // свиток на задней стене — приглушённый, чтобы не спорил с домиком
   const scroll = new Zdog.Anchor({ addTo:room, translate:{ x:-350, y:GROUND-218, z:WALLZ+1.5 } });
   new Zdog.Rect({ addTo:scroll, width:46, height:92, fill:true, stroke:3, color:P.wallSide });
-  new Zdog.Shape({ addTo:scroll, stroke:3.5, color:P.akaDeep, path:[{ y:-18 }] });
+  new Zdog.Shape({ addTo:scroll, stroke:3.5, color:calm(P.akaDeep), path:[{ y:-18 }] });
   new Zdog.Shape({ addTo:scroll, stroke:1.8, color:P.floorSide, closed:false,
     path:[ { x:-7, y:0 }, { bezier:[ { x:7, y:5 }, { x:-5, y:13 }, { x:7, y:19 } ] } ] });
   // татами-коврик под домиком — с запасом под большие постройки
-  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+160, height:CELL+140, cornerRadius:18,
+  const RW = COLS*CELL + 160, RD = CELL + 140;
+  new Zdog.RoundedRect({ addTo:room, width:RW, height:RD, cornerRadius:18,
     fill:true, stroke:4, color:P.rug, rotate:{ x:TAU/4 }, translate:{ y:GROUND-1, z:4 } });
   new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+124, height:CELL+106, cornerRadius:14,
     stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:4 } });
+  /* размеры ковра: тонкие выноски у передней и правой кромок; подписи
+     рисует drawDimLabels поверх кадра. Масштаб: куб-нора 40 см = CELL единиц */
+  const dimZ = 4 + RD/2 + 16, dimX = RW/2 + 18;
+  const cm = u => Math.round(u * 40 / CELL / 10) * 10 + " см";
+  const dline = (p1, p2) => new Zdog.Shape({ addTo:room, stroke:1.6, color:P.note,
+    closed:false, path:[p1, p2] });
+  dline({ x:-RW/2, y:GROUND-1, z:dimZ }, { x:RW/2, y:GROUND-1, z:dimZ });
+  [-1,1].forEach(s => dline({ x:s*RW/2, y:GROUND-1, z:dimZ-6 }, { x:s*RW/2, y:GROUND-1, z:dimZ+6 }));
+  dline({ x:dimX, y:GROUND-1, z:4-RD/2 }, { x:dimX, y:GROUND-1, z:4+RD/2 });
+  [-1,1].forEach(s => dline({ x:dimX-6, y:GROUND-1, z:4+s*RD/2 }, { x:dimX+6, y:GROUND-1, z:4+s*RD/2 }));
+  const dAnchor = (x, z) => new Zdog.Anchor({ addTo:room, translate:{ x, y:GROUND-1, z } });
+  dimLabels = [
+    { m:dAnchor(0, dimZ), e:dAnchor(60, dimZ), text:cm(RW), oy:10 },
+    { m:dAnchor(dimX, 4), e:dAnchor(dimX, 64), text:cm(RD), oy:10 }
+  ];
   // растение справа
   const plant = new Zdog.Anchor({ addTo:room, translate:{ x:330, y:GROUND, z:64 } });
   new Zdog.Cylinder({ addTo:plant, diameter:44, length:34, rotate:{ x:TAU/4 },
-    translate:{ y:-17 }, color:P.pot, frontFace:P.pot, backface:P.matchaDark, stroke:false });
+    translate:{ y:-17 }, color:calm(P.pot), frontFace:calm(P.pot), backface:calm(P.matchaDark), stroke:false });
   [[0,-0.1],[-0.45,0.25],[0.5,0.2],[-0.2,0.6],[0.25,-0.55]].forEach(([rz,ry],k) => {
-    new Zdog.Ellipse({ addTo:plant, width:26, height:74, fill:true, stroke:3, color: k%2 ? P.matcha : P.matchaDark,
+    new Zdog.Ellipse({ addTo:plant, width:26, height:74, fill:true, stroke:3, color: calm(k%2 ? P.matcha : P.matchaDark),
       translate:{ y:-95 }, rotate:{ z:rz, y:ry },
     });
   });
-  new Zdog.Shape({ addTo:plant, stroke:4, color:P.matchaDark, closed:false,
+  new Zdog.Shape({ addTo:plant, stroke:4, color:calm(P.matchaDark), closed:false,
     path:[ { y:-34 }, { y:-70 } ] });
   // бумажный торшер слева
   const lamp = new Zdog.Anchor({ addTo:room, translate:{ x:-300, y:GROUND, z:-70 } });
   new Zdog.Cylinder({ addTo:lamp, diameter:36, length:8, rotate:{ x:TAU/4 },
-    translate:{ y:-4 }, color:P.stand, frontFace:P.stand, backface:P.stand, stroke:false });
-  new Zdog.Shape({ addTo:lamp, stroke:3.4, color:P.stand, closed:false, path:[ { y:-6 }, { y:-58 } ] });
-  new Zdog.Shape({ addTo:lamp, stroke:52, color:P.lamp, closed:false,
+    translate:{ y:-4 }, color:calm(P.stand), frontFace:calm(P.stand), backface:calm(P.stand), stroke:false });
+  new Zdog.Shape({ addTo:lamp, stroke:3.4, color:calm(P.stand), closed:false, path:[ { y:-6 }, { y:-58 } ] });
+  new Zdog.Shape({ addTo:lamp, stroke:52, color:calm(P.lamp), closed:false,
     path:[ { y:-72 }, { y:-176 } ] });
   new Zdog.Shape({ addTo:lamp, stroke:64, color:P.lampGlow, path:[{ y:-124 }] });
-  // миска у передней кромки — обжитой угол
-  const bowl = new Zdog.Anchor({ addTo:room, translate:{ x:-235, y:GROUND, z:118 } });
+  // миска у передней кромки — обжитой угол (сдвинута левее выноски размеров)
+  const bowl = new Zdog.Anchor({ addTo:room, translate:{ x:-278, y:GROUND, z:118 } });
   new Zdog.Cylinder({ addTo:bowl, diameter:34, length:12, rotate:{ x:TAU/4 },
-    translate:{ y:-6 }, color:P.aka, frontFace:P.akaDeep, backface:P.aka, stroke:false });
+    translate:{ y:-6 }, color:calm(P.aka), frontFace:calm(P.akaDeep), backface:calm(P.aka), stroke:false });
   new Zdog.Ellipse({ addTo:bowl, diameter:22, rotate:{ x:TAU/4 },
-    translate:{ y:-12.5 }, stroke:4, fill:true, color:P.wood2 });
+    translate:{ y:-12.5 }, stroke:4, fill:true, color:calm(P.wood2) });
   return room;
 }
 
@@ -314,7 +339,7 @@ const api = KD.scene = {};
 
 api.init = function(){
   build();
-  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конфигуратора
+  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конструктора
      (раньше брали _snapshot, который никто не наполнял, — дом исчезал) */
   darkMq.addEventListener("change", () => {
     build();
@@ -500,7 +525,7 @@ api.moveIn = async function(visits, onVisit, onDone){
   // обход модулей
   for (let k = 0; k < visits.length; k++){
     const i = visits[k];
-    const type = onVisit(i, k); // конфигуратор вернёт тип и покажет сердечко
+    const type = onVisit(i, k); // конструктор вернёт тип и покажет сердечко
     const mw = (MODULES[type] && MODULES[type].w) || 1;
     const tx = cellX(colOf(i)) + (mw-1)*CELL/2; // широкий модуль: кот садится в середину
     const ty = cellY(rowOf(i)) + (SIT_Y[type] ?? -29) + (moduleDy[i] || 0) - 13; // лапы на «крышу» модуля
@@ -543,6 +568,34 @@ api.catLeave = function(){
   return leaving;
 };
 
+/* ---------- подписи размеров ковра ----------
+   Zdog не умеет текст: рисуем поверх готового кадра, повторив его
+   трансформацию (центр + pixelRatio×zoom); renderOrigin якорей уже
+   спроецирован, угол наклона берём по двум точкам вдоль выноски */
+function drawDimLabels(){
+  if (!dimLabels.length || !illo) return;
+  const ctx = illo.ctx;
+  ctx.save();
+  ctx.translate(illo.width/2 * illo.pixelRatio, illo.height/2 * illo.pixelRatio);
+  const s = illo.pixelRatio * illo.zoom;
+  ctx.scale(s, s);
+  ctx.font = "700 10.5px Nunito, -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = P.note;
+  dimLabels.forEach(d => {
+    const m = d.m.renderOrigin, e = d.e.renderOrigin;
+    let a = Math.atan2(e.y - m.y, e.x - m.x);
+    if (a > TAU/4) a -= TAU/2; else if (a < -TAU/4) a += TAU/2; // не вверх ногами
+    ctx.save();
+    ctx.translate(m.x, m.y);
+    ctx.rotate(a);
+    ctx.fillText(d.text, d.ox || 0, d.oy || 0);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
 /* ---------- цикл отрисовки ---------- */
 function animate(){
   const now = performance.now();
@@ -560,7 +613,7 @@ function animate(){
     dirty = true;
     return t < 1;
   });
-  if (dirty){ illo.updateRenderGraph(); dirty = false; }
+  if (dirty){ illo.updateRenderGraph(); drawDimLabels(); dirty = false; }
   requestAnimationFrame(animate);
 }
 function easeOutQ(t){ return 1 - (1-t)*(1-t); }
