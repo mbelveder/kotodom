@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://internal-oops-charming-bandwidth.trycloudflare.com";
+window.KOTOSHI_API = "https://subscriptions-worldwide-replies-operations.trycloudflare.com";
