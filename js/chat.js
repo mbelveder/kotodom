@@ -151,23 +151,38 @@ function parseBuild(full){
   const m = full.match(BUILD_RE);
   if (!m) return null;
   const cells = {};
+  let conflict = false;
+  /* модель иногда даёт двум разным модулям один и тот же индекс (например,
+     оставляет старый гамак в ячейке 8 и тут же ставит туда новую башню) —
+     без этой проверки второе значение молча стирает первое в объекте cells,
+     и клиент теряет модуль, даже не зная об этом. Оставляем первое значение
+     (обычно это уже существующий модуль, который клиент не просил убирать)
+     и отдельно сообщаем о конфликте, вместо того чтобы тихо его потерять. */
   m[1].split(",").forEach(pair => {
     const [i, t] = pair.split(":").map(s => s.trim());
-    if (/^\d+$/.test(i) && KD.MODULES[t]) cells[i] = t;
+    if (!(/^\d+$/.test(i) && KD.MODULES[t])) return;
+    if (Object.prototype.hasOwnProperty.call(cells, i)){
+      if (cells[i] !== t) conflict = true;
+      return;
+    }
+    cells[i] = t;
   });
-  return Object.keys(cells).length ? cells : null;
+  return Object.keys(cells).length ? { cells, conflict } : null;
 }
-function offerBuild(botEl, cells){
+function offerBuild(botEl, build){
   const b = document.createElement("button");
   b.className = "msg-build";
   b.textContent = "🛠 Собрать в конструкторе";
   b.addEventListener("click", () => {
-    if (!KD.applyConfig || !KD.applyConfig(cells)) return;
+    if (!KD.applyConfig || !KD.applyConfig(build.cells)) return;
     b.disabled = true;
     b.textContent = "Собрано — смотрите сцену";
     /* чат остаётся открытым: сборка видна рядом, разговор продолжается */
   });
   botEl.appendChild(b);
+  if (build.conflict){
+    add("sys", "Момо перепутал ячейки — предложил два модуля в одно место. Оставили тот, что был раньше; если что-то не так, передвиньте модули вручную.");
+  }
   msgs.scrollTop = msgs.scrollHeight;
 }
 
@@ -198,8 +213,8 @@ async function ask(textOverride){
   const finish = full => {
     botEl.textContent = stripMarkers(full).trim();
     history.push({ role: "assistant", content: stripMarkers(full).trim() });
-    const cells = parseBuild(full);
-    if (cells) offerBuild(botEl, cells);
+    const build = parseBuild(full);
+    if (build) offerBuild(botEl, build);
     // [[ATTACK]] намеренно без видимой пометки — атакующему знать не нужно
     if (full.includes("[[ESCALATE]]")){
       add("sys", "Момо позвал человека — владелец магазина уже получил сообщение и скоро подключится.");
