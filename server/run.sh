@@ -46,7 +46,11 @@ try_push(){
   [ "$PUSH_PENDING" = "1" ] || return 0
   git -C .. add config.js
   git -C .. commit -m "chore: адрес туннеля" >/dev/null 2>&1
-  git -C .. pull --rebase -q >/dev/null 2>&1
+  # --autostash: в родительском репо часто есть незакоммиченная правка другого файла
+  # (обычная работа над кодом) — без autostash она блокирует rebase ("You have
+  # unstaged changes"), локальный main никогда не догоняет origin, и push виснет
+  # в бесконечном "push не удался" каждые 15с.
+  git -C .. pull --rebase --autostash -q >/dev/null 2>&1
   if git -C .. push >/dev/null 2>&1; then
     PUSH_PENDING=0
     echo "$(date +%H:%M:%S) ✅ Запушено — Pages подхватит за ~1 минуту."
