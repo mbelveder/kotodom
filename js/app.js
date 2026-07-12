@@ -5,7 +5,7 @@ const $ = s => document.querySelector(s);
 const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
-/* ---------- готовые сборки: витрина над hero + выдвижная панель у конструктора ---------- */
+/* ---------- готовые сборки: витрина над hero + выдвижная панель у редактора ---------- */
 /* три сфотографированы, три — сложнее, ещё без съёмки (см. .sc-mock в css) */
 const SHOWCASE = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
@@ -15,7 +15,7 @@ const SHOWCASE = [
   { img: "assets/render_tower.jpg", preset: "tower", nm: "«Вальяжный»",
     ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." },
   { img: "assets/render_manor.jpg", preset: "manor", nm: "«Резиденция»",
-    ds: "Два куба, тоннель, гамак, смотровая башня с крышей — и когтеточка с игрушкой на сдачу. Целая резиденция для кота с большими планами." },
+    ds: "Два куба, тоннель, гамак, смотровая башня с крышей — и когтеточка с чашей-лежанкой на сдачу. Целая резиденция для кота с большими планами." },
   { img: "assets/render_watch.jpg", preset: "watch", nm: "«Дозорный»",
     ds: "Фундамент и двойная смотровая башня с гамаком у подножья — для кота, который любит видеть всё, а спать не отходя от поста." },
   { img: "assets/render_zoomies.jpg", preset: "zoomies", nm: "«Непоседа»",
@@ -44,10 +44,10 @@ SHOWCASE.forEach(g => {
     </div>
     <div class="pc-body">
       <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в редакторе</button>
     </div>`;
   presetList.appendChild(el);
-  /* без прокрутки и закрытия панели: посетитель уже у конструктора,
+  /* без прокрутки и закрытия панели: посетитель уже у редактора,
      а планы удобно примерять один за другим */
   el.querySelector("button").addEventListener("click", () => KD.loadPreset(g.preset));
 });
@@ -68,7 +68,7 @@ document.addEventListener("keydown", e => {
    якорная ссылка) — панель у сцены она больше не форсит, поэтому старый
    guide-aware обработчик клика по navPresets здесь не нужен */
 
-/* ---------- приветственный гид конструктора ---------- */
+/* ---------- приветственный гид редактора ---------- */
 /* растворяющийся слой поверх сцены: подсказывает три пути (готовые сборки,
    сборка самому, чат с Момо). Показываем один раз — дальше не мозолит глаза */
 const buildGuide = $("#buildGuide");
@@ -87,21 +87,22 @@ const closeIntro = () => {
 if (buildGuide){
   const SEEN = "kd_guideSeen";
   let dismissed = true;   // гид скрыт по умолчанию, пока его не показали
-  /* клик «Собрать» в витрине над hero показывает гид поверх уже открытого
-     сайдбара (сайдбар при этом виден, но притемнён/расфокусирован затемнением
-     гида) — так посетитель узнаёт, где сайдбар и как выглядит подсвеченная
-     сборка, не возвращаясь в раздел «Готовые сборки». По «ОК»/Esc/клику мимо
-     гид уходит и забирает с собой сайдбар — сцена остаётся свободной для
-     ручной сборки или чата */
-  let closePresetsOnDismiss = false;
+  /* гид открывает сайдбар «готовые сборки» под собой — подсказка «Используйте
+     готовые сборки» показывает реальную панель. По «ОК»/Esc/клику мимо гид
+     уходит и медленно уводит сайдбар, освобождая сцену для ручной сборки/чата */
   const dismiss = () => {
     if (dismissed) return;
     dismissed = true;
     try { localStorage.setItem(SEEN, "1"); } catch (e) {}
     buildGuide.classList.add("hiding");
-    if (closePresetsOnDismiss){
-      closePresetsOnDismiss = false;
+    /* сайдбар «готовые сборки» открыт под гидом — на «ОК» он уезжает медленно,
+       так видно, куда он прячется (см. .preset-panel.slow-hide) */
+    if (presetPanel.classList.contains("open")){
+      presetPanel.classList.add("slow-hide");
       presetsOpen(false);
+      const unslow = () => presetPanel.classList.remove("slow-hide");
+      presetPanel.addEventListener("transitionend", unslow, { once: true });
+      setTimeout(unslow, 1000);
     }
     /* done() идемпотентен: убираем слой из DOM после исчезновения и только
        тогда отпускаем первую реплику Момо. transitionend может не прийти
@@ -125,6 +126,7 @@ if (buildGuide){
     dismissed = false;
     buildGuide.classList.remove("hiding");
     buildGuide.hidden = false;
+    presetsOpen(true);   // показываем сайдбар под гидом — «ОК» его медленно уберёт
     if (firstRun) introClosed = false;   // интро на экране — реплика Момо подождёт
   };
   /* слушатели закрытия вешаем один раз; работают и для первого показа, и для
@@ -140,14 +142,9 @@ if (buildGuide){
   try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
   if (!seen) openGuide(true);
 
-  /* маленькая кнопка «показать подсказки снова» под конструктором */
+  /* маленькая кнопка «с чего начать» в углу сцены — снова показывает подсказки */
   const reopen = $("#guideReopen");
   if (reopen) reopen.addEventListener("click", () => openGuide(false));
-
-  KD.showGuideOverPresets = () => {
-    closePresetsOnDismiss = true;
-    openGuide(false);
-  };
 }
 
 /* ---------- витрина «готовые сборки» над hero: фото/мокап + подпись «жидким стеклом» ---------- */
@@ -158,20 +155,20 @@ function highlightPreset(key){
   void card.offsetWidth; // перезапуск анимации, если подсветили тот же план дважды подряд
   card.classList.add("hl");
   /* скроллим только сам список (его собственный overflow-y), а не card.scrollIntoView:
-     панель — absolute внутри ещё едущей секции конструктора, и scrollIntoView
+     панель — absolute внутри ещё едущей секции редактора, и scrollIntoView
      на вложенном элементе задевает и document-скролл, гоняя всю страницу */
   presetList.scrollTo({ top: card.offsetTop - 8, behavior: "smooth" });
 }
-/* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор —
-   в отличие от кнопок сборки внутри самого конструктора, тут прокрутка уместна.
-   Скроллим до заголовка-разделителя «くみたて конструктор», а не до верха секции —
-   он сидит прямо на студии, и так студия оказывается видна сразу, без отступа под текст */
+/* клик по «Собрать» в витрине: сюда ведёт настоящий переход в редактор —
+   в отличие от кнопок сборки внутри самого редактора, тут прокрутка уместна.
+   Скроллим до заголовка редактора на сцене, а не до верха секции — так студия
+   видна сразу. Приветственный гид тут НЕ показываем: сайдбар просто открывается
+   и остаётся открытым, чтобы примерять планы один за другим */
 function buildFromShowcase(key){
   const head = $("#builderHead");
   (head || builderSec).scrollIntoView({ behavior: "smooth", block: "start" });
   presetsOpen(true);
   KD.loadPreset(key);
-  if (KD.showGuideOverPresets) KD.showGuideOverPresets();
   /* подсветку — после transition панели (.28s): раньше scrollIntoView читает
      ещё не осевшие координаты (панель на пути из translateX(112%)) и уводит
      всю страницу непредсказуемо далеко */

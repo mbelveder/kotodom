@@ -150,16 +150,23 @@ function makeModule(type, parent, opts){
     new Zdog.Shape({ addTo:a, stroke:9, color:P.sakura, path:[{ y: B - 7 - L - 3 }] }); // помпон
   }
   else if (type === "play"){
-    // умная игрушка: деревянная шайба, красный купол, антенна с пёрышком
-    new Zdog.Cylinder({ addTo:a, diameter:30, length:9, rotate:{ x:TAU/4 },
-      translate:{ y: B - 4.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
-    new Zdog.Hemisphere({ addTo:a, diameter:24, rotate:{ x:TAU/4 },
-      translate:{ y: B - 9 }, color:P.aka, backface:P.akaDeep, stroke:false });
-    new Zdog.Shape({ addTo:a, stroke:2.5, color:P.juteDark,
-      path:[{ y: B - 19 }, { y: B - 36 }] }); // антенна
-    new Zdog.Shape({ addTo:a, stroke:10, color:P.sakura, path:[{ y: B - 39 }] }); // пёрышко
-    new Zdog.Shape({ addTo:a, stroke:3.5, color:P.woodTop,
-      path:[{ y: B - 12, z: 12 }] }); // «глазок»-индикатор
+    // чаша-лежанка: широкая приплюснутая полусфера-гнездо на приземистой опоре
+    // основание-«блин» на полу
+    new Zdog.Cylinder({ addTo:a, diameter:36, length:7, rotate:{ x:TAU/4 },
+      translate:{ y: B - 3.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
+    // приземистая колонна-опора
+    new Zdog.Cylinder({ addTo:a, diameter:20, length:16, rotate:{ x:TAU/4 },
+      translate:{ y: B - 15 }, color:P.wood, frontFace:P.wood, backface:P.wood2, stroke:false });
+    // чаша: полусфера куполом вниз, приплюснута по высоте — гнездо шире, чем глубже
+    const bowl = new Zdog.Anchor({ addTo:a, translate:{ y: B - 44 }, scale:{ y:0.72 } });
+    new Zdog.Hemisphere({ addTo:bowl, diameter:58, rotate:{ x:-TAU/4 },
+      color:P.wood2, backface:P.wood, stroke:false });
+    // мягкая подушка в чаше
+    new Zdog.Ellipse({ addTo:bowl, diameter:44, rotate:{ x:TAU/4 },
+      translate:{ y:2 }, stroke:9, fill:true, color:P.cushion });
+    // приподнятый бортик-кромка чаши
+    new Zdog.Ellipse({ addTo:bowl, diameter:58, rotate:{ x:TAU/4 },
+      translate:{ y:-1 }, stroke:4, color:P.woodTop });
   }
   return a;
 }
@@ -339,7 +346,7 @@ const api = KD.scene = {};
 
 api.init = function(){
   build();
-  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конструктора
+  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки редактора
      (раньше брали _snapshot, который никто не наполнял, — дом исчезал) */
   darkMq.addEventListener("change", () => {
     build();
@@ -373,7 +380,7 @@ api.place = function(i, type, instant, opts){
   if (MODULES[type].w > 1) opts.supY2 = supOf(opts.below2);
   const a = makeModule(type, houseA, opts);
   a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
-  /* крыша, тоннель, когтеточка и игрушка не тянутся — целиком опускаются на опору */
+  /* крыша, тоннель, когтеточка и чаша-лежанка не тянутся — целиком опускаются на опору */
   const dy = opts.supY - CELL/2;
   moduleDy[i] = (type === "roof" || type === "tunnel" || type === "scratch" || type === "play") && dy ? dy : 0;
   a.translate.y += moduleDy[i];
@@ -525,7 +532,7 @@ api.moveIn = async function(visits, onVisit, onDone){
   // обход модулей
   for (let k = 0; k < visits.length; k++){
     const i = visits[k];
-    const type = onVisit(i, k); // конструктор вернёт тип и покажет сердечко
+    const type = onVisit(i, k); // редактор вернёт тип и покажет сердечко
     const mw = (MODULES[type] && MODULES[type].w) || 1;
     const tx = cellX(colOf(i)) + (mw-1)*CELL/2; // широкий модуль: кот садится в середину
     const ty = cellY(rowOf(i)) + (SIT_Y[type] ?? -29) + (moduleDy[i] || 0) - 13; // лапы на «крышу» модуля

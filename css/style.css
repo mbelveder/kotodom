@@ -116,7 +116,7 @@ button{font-family:inherit}
 @media (max-width:860px){
   .hero-grid{grid-template-columns:1fr;gap:24px}
 }
-.hero-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
+.hero-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:24px}
 .hero-points li{display:flex;gap:13px;align-items:flex-start}
 .pt-ico{
   flex:none;width:42px;height:42px;border-radius:13px;
@@ -154,7 +154,7 @@ button{font-family:inherit}
    как у карточек сайдбара (см. .pc-hover); имя сборки — не описание, оно ниже, всегда видно */
 .sc-cap{
   position:absolute;inset:0;display:flex;align-items:flex-end;
-  padding:12px;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--ink);
+  padding:12px;font-size:14.5px;line-height:1.45;font-weight:600;color:var(--ink);
   background:linear-gradient(to top,
     color-mix(in srgb, var(--panel) 82%, transparent) 55%,
     color-mix(in srgb, var(--panel) 34%, transparent) 85%, transparent);
@@ -177,7 +177,7 @@ button{font-family:inherit}
 .sc-pr{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
 .sc-ft .btn{width:100%;padding:8px 16px;font-size:13.5px}
 
-/* ============ студия (конструктор) ============ */
+/* ============ студия (редактор) ============ */
 .studio{
   margin:26px auto 0;
   background:var(--panel);
@@ -268,7 +268,7 @@ button{font-family:inherit}
   .studio-main.chat-open .momo-say{left:10px;bottom:72px}
 }
 
-/* ============ приветственный гид конструктора ============ */
+/* ============ приветственный гид редактора ============ */
 /* слой поверх сцены: три подсказки со стрелками к реальным элементам
    (готовые сборки → вкладка справа, сборка → сцена, чат → аватар слева).
    Растворяется по «ОК, к делу»; показывается один раз, см. js/app.js */
@@ -319,7 +319,7 @@ button{font-family:inherit}
    кнопка «ОК, к делу»), длинная стрелка уходит ниже scene-wrap к полке модулей
    (.tray) — ни один родитель не обрезает overflow вплоть до .studio, так что
    «хвост» стрелки виден поверх неё */
-.bg-tip--self{bottom:-9%;left:26%;transform:translateX(-50%);flex-direction:column;gap:0}
+.bg-tip--self{bottom:2%;left:44%;transform:translateX(-50%);flex-direction:column;gap:0}
 /* 3. чат — у самого аватара Момо в углу, стрелка короткая */
 .bg-tip--chat{left:3%;bottom:9%;flex-direction:column;gap:0}
 
@@ -363,14 +363,12 @@ button{font-family:inherit}
   .build-guide{transition:none}
 }
 
-/* подсказка: стрелка от сцены указывает на полку модулей ниже */
+/* подсказка над полкой модулей */
 .hint-bar{
   display:flex;align-items:center;justify-content:center;gap:10px;
-  text-align:left;font-size:14px;color:var(--muted);font-weight:600;
+  text-align:center;font-size:14px;color:var(--muted);font-weight:600;
   padding:2px 16px 12px;
 }
-.hint-arrow{flex:none;color:var(--aka)}
-@media (max-width:560px){ .hint-arrow{display:none} }
 
 /* полка модулей: все 9 видны сразу, без прокрутки */
 .tray{
@@ -451,21 +449,32 @@ button{font-family:inherit}
 /* ============ секции ============ */
 /* компенсация под «липкую» шапку: якорные ссылки не прячут заголовок секции под ней */
 section{padding:56px 0 8px;scroll-margin-top:88px}
-/* конструктору — контейнер пошире: без сайдбара сцена занимает всю ширину */
+/* редактору — контейнер пошире: без сайдбара сцена занимает всю ширину */
 #builder .wrap{max-width:1080px}
-/* заголовок конструктора сидит прямо на студии; описание — не по умолчанию,
-   а только на ховере/фокусе заголовка (текст один раз прочитали — дальше он не нужен) */
-.builder-head{cursor:help;scroll-margin-top:88px}
-.builder-sub{
-  max-height:0;opacity:0;overflow:hidden;margin:0;
-  transition:max-height .32s ease, opacity .22s ease, margin .32s ease;
+/* заголовок редактора — «жидкое стекло» в левом верхнем углу сцены, виден всегда
+   (описание больше не прячется под ховер); сцена читается сквозь подложку */
+.scene-head{
+  position:absolute;top:14px;left:14px;z-index:5;
+  max-width:min(52%, 384px);
+  padding:12px 16px 14px;
+  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius:16px;
+  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  backdrop-filter:blur(7px) saturate(1.15);
+  -webkit-backdrop-filter:blur(7px) saturate(1.15);
+  box-shadow:var(--shadow);
+  scroll-margin-top:88px;
 }
-.builder-head:hover ~ .builder-sub,
-.builder-head:focus ~ .builder-sub,
-.builder-sub:hover{
-  max-height:140px;opacity:1;margin:8px 0 20px;
+.scene-head h2{font-size:clamp(18px,2.1vw,24px);margin:6px 0 0}
+.scene-sub{font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0}
+.scene-head .guide-reopen{margin:12px 0 0}
+@media (max-width:900px){
+  .scene-head{top:8px;left:8px;max-width:min(70%,320px);padding:9px 12px 11px}
+  .scene-head h2{font-size:17px}
+  .scene-sub{font-size:12px}
 }
-@media (prefers-reduced-motion: reduce){ .builder-sub{transition:none} }
+/* на узких экранах описание убираем — над сценой остаётся компактная «шапка» */
+@media (max-width:560px){ .scene-sub{display:none} }
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
   display:flex;align-items:center;gap:10px;
@@ -501,6 +510,11 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
 .preset-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+/* «ОК, к делу» в гиде закрывает сайдбар медленно — видно, куда он уезжает (см. app.js) */
+.preset-panel.slow-hide{
+  transition:transform .85s ease, opacity .85s ease, visibility 0s linear .85s;
+}
+@media (prefers-reduced-motion: reduce){ .preset-panel.slow-hide{transition:none} }
 @media (max-width:900px){
   /* на телефоне панель — «шторка» снизу экрана, как чат */
   .preset-panel{

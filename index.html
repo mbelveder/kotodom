@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=23">
-<link rel="stylesheet" href="css/style.css?v=23">
-<script defer src="config.js?v=23"></script>
-<script defer src="js/zdog.dist.min.js?v=23"></script>
-<script defer src="js/catalog.js?v=23"></script>
-<script defer src="js/scene.js?v=23"></script>
-<script defer src="js/configurator.js?v=23"></script>
-<script defer src="js/chat.js?v=23"></script>
-<script defer src="js/app.js?v=23"></script>
+<link rel="stylesheet" href="css/fonts.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=25">
+<script defer src="config.js?v=25"></script>
+<script defer src="js/zdog.dist.min.js?v=25"></script>
+<script defer src="js/catalog.js?v=25"></script>
+<script defer src="js/scene.js?v=25"></script>
+<script defer src="js/configurator.js?v=25"></script>
+<script defer src="js/chat.js?v=25"></script>
+<script defer src="js/app.js?v=25"></script>
 </head>
 <body>
 
@@ -34,7 +34,7 @@
     <!-- штрих над второй «о»: ノ — один взмах кисти, читается как знак ударения -->
     <div class="brand disp">Кот<span class="jo">о<i>ノ</i></span>ши<small>домики для кошек</small></div>
     <nav class="head-nav">
-      <a href="#builder">Конструктор</a>
+      <a href="#builder">Редактор</a>
       <a href="#gallery" class="hide-m" id="navPresets">Готовые сборки</a>
       <a href="#smart" class="hide-m">Умная игрушка</a>
       <a href="#info" class="hide-m">Доставка</a>
@@ -55,7 +55,7 @@
           <span class="pt-ico">組</span>
           <div>
             <strong>Модульность</strong>
-            <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать.</p>
+            <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать</p>
           </div>
         </li>
         <li>
@@ -91,31 +91,30 @@
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">みほん</span>готовые сборки</div>
     <h2>Шесть идей для начала</h2>
-    <p class="sec-sub">Каждая карточка — настоящая сборка в конструкторе, не картинка для вида. Нажмите
-       «Собрать» — план откроется в сцене ниже, справа подсветится в списке готовых, а дальше можно
-       двигать модули под своего кота.</p>
+    <p class="sec-sub">Нажмите «Собрать» — домик откроется в редакторе, а дальше можно
+       двигать модули по своему желанию.</p>
     <div class="showcase-grid" id="showcaseGrid"></div>
   </div>
 </section>
 
 <section id="builder">
   <div class="wrap">
-    <!-- заголовок сидит прямо на конструкторе; описание — только по ховеру/фокусу, см. css -->
-    <div class="builder-head" id="builderHead" tabindex="0">
-      <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
-      <h2>Соберите свой Котоши</h2>
-    </div>
-    <p class="sec-sub builder-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
-       Не знаете, с чего начать? Откройте готовые сборки справа — или нажмите на Момо в углу сцены:
-       он расспросит о питомце и соберёт домик за вас.</p>
-    <!-- вернуть приветственные подсказки поверх сцены (гид показывается один раз, см. app.js) -->
-    <button class="guide-reopen" id="guideReopen" type="button">
-      <span class="gr-q" aria-hidden="true">?</span>с чего начать
-    </button>
   <div class="studio" id="studio">
     <div class="studio-main" id="studioMain">
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene" width="980" height="540"></canvas>
+        <!-- заголовок редактора — оверлей в левом верхнем углу сцены, виден всегда
+             (описание больше не прячется под ховер); «с чего начать» открывает гид -->
+        <div class="scene-head" id="builderHead">
+          <div class="sec-eyebrow"><span class="jp">くみたて</span>редактор</div>
+          <h2>Соберите свой Котоши</h2>
+          <p class="scene-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
+             Не знаете, с чего начать? Откройте готовые сборки справа — или нажмите на Момо в углу редактора:
+             он расспросит о питомце и соберёт домик за вас.</p>
+          <button class="guide-reopen" id="guideReopen" type="button">
+            <span class="gr-q" aria-hidden="true">?</span>с чего начать
+          </button>
+        </div>
         <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
         <button class="momo-fab" id="momoFab" aria-label="Открыть чат с Момо" aria-expanded="false">
           <img src="assets/logo-momo-chat.png?v=2" alt="" width="256" height="256" decoding="async">
@@ -129,9 +128,9 @@
         <button class="preset-tab" id="presetTab" aria-controls="presetPanel"
                 aria-expanded="false">готовые сборки</button>
 
-        <!-- приветственный слой конструктора: гид с тремя подсказками и стрелками,
+        <!-- приветственный слой редактора: гид с тремя подсказками и стрелками,
              растворяется по «ОК, к делу» (или клику по фону); показ один раз, см. app.js -->
-        <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в конструкторе" hidden>
+        <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в редакторе" hidden>
           <div class="bg-scrim"></div>
 
           <!-- 1. готовые сборки — стрелка вправо, к вкладке (короче — вкладка рядом) -->
@@ -143,12 +142,13 @@
             </svg>
           </div>
 
-          <!-- 2. собрать самому — стрелка тянется вниз до полки модулей (инвентаря) под сценой -->
+          <!-- 2. собрать самому — подпись выше и правее центра, длинная стрелка
+               тянется вниз до полки модулей (инвентаря) под сценой -->
           <div class="bg-tip bg-tip--self">
             <span class="bg-txt">Соберите домик<br>самостоятельно</span>
-            <svg class="bg-arw" viewBox="0 0 46 190" width="46" height="190" aria-hidden="true">
-              <path d="M23 4 C11 70 35 130 23 182" fill="none"/>
-              <path class="bg-head" d="M23 182 l-11 -7 M23 182 l11 -8" fill="none"/>
+            <svg class="bg-arw" viewBox="0 0 46 240" width="46" height="240" aria-hidden="true">
+              <path d="M23 4 C11 92 35 168 23 232" fill="none"/>
+              <path class="bg-head" d="M23 232 l-11 -7 M23 232 l11 -8" fill="none"/>
             </svg>
           </div>
 
@@ -168,7 +168,7 @@
         <div class="preset-head">
           <div>
             <div class="t">Готовые сборки</div>
-            <div class="sub">нажмите «собрать» — план появится в сцене</div>
+            <div class="sub">нажмите «собрать» — план появится в редакторе</div>
           </div>
           <button class="chat-x" id="presetX" aria-label="Свернуть готовые сборки">✕</button>
         </div>
@@ -200,13 +200,7 @@
       </aside>
     </div>
     <div class="hint-bar" id="hintBar">
-      <svg class="hint-arrow" width="44" height="34" viewBox="0 0 44 34" aria-hidden="true">
-        <path d="M4 3 C4 18, 14 26, 39 29" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-dasharray="1 6.5"/>
-        <path d="M30 23 L40 29.5 L29.5 33" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Можно добавлять модули на свой вкус — они внизу. Один клик по модулю в сцене — убрать его из конструктора.</span>
+      <span>Можно добавлять модули на свой вкус — они внизу. Один клик по модулю в редакторе — убрать его.</span>
     </div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
@@ -214,7 +208,7 @@
       <button class="btn btn-ghost" id="btnBulk">Заказать списком</button>
       <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
       <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
-      <span class="order-hint">«Оформить заказ» — то, что собрано в сцене. «Заказать списком» — просто модули по счёту, без сборки.</span>
+      <span class="order-hint">«Оформить заказ» — то, что собрано в редакторе. «Заказать списком» — просто модули по счёту, без сборки.</span>
     </div>
   </div>
   </div>
@@ -226,7 +220,7 @@
     <h2>Кот в игре, даже когда вы заняты</h2>
     <p class="sec-sub">Модуль «Умная игрушка» подхватывает игру, пока вы на работе или в дороге:
        пёрышко и дразнилка развлекают кота по сценариям — а вечером он снова весь ваш.
-       Найдёте модуль на полке конструктора выше.</p>
+       Найдёте модуль на полке редактора выше.</p>
     <div class="smart-film">
       <div class="film-frame">
         <video autoplay muted loop playsinline preload="metadata"
@@ -268,12 +262,12 @@
       <div class="step">
         <div class="ico">組</div>
         <h3>Соберите конфигурацию</h3>
-        <p>В конструкторе выше — из модулей, как из кубиков. Не знаете, с чего начать, — возьмите готовый план и меняйте его.</p>
+        <p>В редакторе выше — из модулей, как из кубиков. Не знаете, с чего начать, — возьмите готовый план и меняйте его.</p>
       </div>
       <div class="step">
         <div class="ico">話</div>
         <h3>Спросите Момо</h3>
-        <p>Момо живёт в конструкторе — нажмите на кота в углу сцены. Он знает все модули, цены и правила доставки, а подобранный домик собирает прямо в сцене.</p>
+        <p>Момо живёт в редакторе — нажмите на кота в углу. Он знает все модули, цены и правила доставки, а подобранный домик собирает прямо в редакторе.</p>
       </div>
       <div class="step">
         <div class="ico">箱</div>
