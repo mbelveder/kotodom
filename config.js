@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://turned-simpson-typically-cure.trycloudflare.com";
+window.KOTOSHI_API = "https://oliver-sleeve-interactions-snap.trycloudflare.com";
