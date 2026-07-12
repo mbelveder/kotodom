@@ -456,7 +456,11 @@ const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    loadPreset("wide"); // первая реплика (состав + умная игрушка) — в doneSay пресета
+    /* первая реплика (состав + умная игрушка) — в doneSay пресета.
+       Ждём закрытия приветственного гида, чтобы реплика и сборка не ушли
+       за затемнение (см. KD.onIntroDone в app.js) */
+    const boot = () => { if (!KD.studioBooted) loadPreset("wide"); };
+    if (KD.onIntroDone) KD.onIntroDone(boot); else boot();
   }
 }, { threshold: 0.35 });
 io.observe(sceneWrap);
