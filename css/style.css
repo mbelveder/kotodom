@@ -150,24 +150,32 @@ button{font-family:inherit}
   font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:58px;
   color:color-mix(in srgb, var(--aka) 42%, var(--panel));
 }
-/* подпись поверх фото — то же «жидкое стекло», что было у прежней галереи (см. историю) */
+/* описание поверх фото — «жидкое стекло», проявляется на ховере/фокусе,
+   как у карточек сайдбара (см. .pc-hover); имя сборки — не описание, оно ниже, всегда видно */
 .sc-cap{
-  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;
-  padding:12px;color:var(--ink);
+  position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:12px;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--ink);
   background:linear-gradient(to top,
-    color-mix(in srgb, var(--panel) 82%, transparent) 42%,
-    color-mix(in srgb, var(--panel) 34%, transparent) 74%, transparent);
+    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
+    color-mix(in srgb, var(--panel) 34%, transparent) 85%, transparent);
   backdrop-filter:blur(5px) saturate(1.1);
   -webkit-backdrop-filter:blur(5px) saturate(1.1);
-  /* стекло — только под подписью снизу; верх фото остаётся чистым */
-  mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
-  -webkit-mask-image:linear-gradient(to top, #000 55%, rgba(0,0,0,.4) 78%, transparent 96%);
+  opacity:0;transition:opacity .28s ease;pointer-events:none;
 }
-.sc-cap strong{font-size:15.5px;font-weight:800}
-.sc-cap span{font-size:12.5px;line-height:1.4;font-weight:600;color:var(--muted)}
-.sc-ft{padding:10px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sc-card:hover .sc-cap,.sc-card:focus-within .sc-cap{opacity:1}
+@media (prefers-reduced-motion: reduce){ .sc-cap{transition:none} }
+/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу на фото */
+@media (hover:none){
+  .sc-cap{opacity:1;
+    background:linear-gradient(to top,
+      color-mix(in srgb, var(--panel) 88%, transparent) 60%, transparent);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  }
+}
+.sc-ft{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.sc-nm{font-weight:800;font-size:15.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .sc-pr{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
-.sc-ft .btn{padding:8px 16px;font-size:13.5px}
+.sc-ft .btn{width:100%;padding:8px 16px;font-size:13.5px}
 
 /* ============ студия (конструктор) ============ */
 .studio{
