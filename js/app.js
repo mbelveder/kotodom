@@ -171,10 +171,10 @@ SHOWCASE.forEach(g => {
   el.innerHTML = `
     <div class="sc-media">
       ${media}
-      <div class="sc-cap"><strong>${g.nm}</strong><span>${g.ds}</span></div>
+      <div class="sc-cap">${g.ds}</div>
     </div>
     <div class="sc-ft">
-      <span class="sc-pr">${fmt(presetPrice(g.preset))}</span>
+      <div class="sc-nm">${g.nm}<span class="sc-pr">${fmt(presetPrice(g.preset))}</span></div>
       <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
     </div>`;
   showcaseGrid.appendChild(el);
