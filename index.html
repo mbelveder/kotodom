@@ -100,9 +100,12 @@
 
 <section id="builder">
   <div class="wrap">
-    <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
-    <h2>Соберите свой Котоши</h2>
-    <p class="sec-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
+    <!-- заголовок сидит прямо на конструкторе; описание — только по ховеру/фокусу, см. css -->
+    <div class="builder-head" id="builderHead" tabindex="0">
+      <div class="sec-eyebrow"><span class="jp">くみたて</span>конструктор</div>
+      <h2>Соберите свой Котоши</h2>
+    </div>
+    <p class="sec-sub builder-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
        Не знаете, с чего начать? Откройте готовые сборки справа — или нажмите на Момо в углу сцены:
        он расспросит о питомце и соберёт домик за вас.</p>
     <!-- вернуть приветственные подсказки поверх сцены (гид показывается один раз, см. app.js) -->
@@ -131,30 +134,30 @@
         <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в конструкторе" hidden>
           <div class="bg-scrim"></div>
 
-          <!-- 1. готовые сборки — стрелка вправо, к вкладке -->
+          <!-- 1. готовые сборки — стрелка вправо, к вкладке (короче — вкладка рядом) -->
           <div class="bg-tip bg-tip--presets">
             <span class="bg-txt">Используйте<br>готовые сборки</span>
-            <svg class="bg-arw" viewBox="0 0 90 46" width="90" height="46" aria-hidden="true">
-              <path d="M6 34 C40 40 66 32 80 18" fill="none"/>
-              <path class="bg-head" d="M80 18 l-13 1 M80 18 l-4 12" fill="none"/>
+            <svg class="bg-arw" viewBox="0 0 56 30" width="56" height="30" aria-hidden="true">
+              <path d="M4 22 C24 26 40 22 48 12" fill="none"/>
+              <path class="bg-head" d="M48 12 l-9 1 M48 12 l-3 8" fill="none"/>
             </svg>
           </div>
 
-          <!-- 2. собрать самому — стрелка вниз, к сцене -->
+          <!-- 2. собрать самому — стрелка тянется вниз до полки модулей (инвентаря) под сценой -->
           <div class="bg-tip bg-tip--self">
             <span class="bg-txt">Соберите домик<br>самостоятельно</span>
-            <svg class="bg-arw" viewBox="0 0 46 74" width="46" height="74" aria-hidden="true">
-              <path d="M23 6 C15 30 30 44 24 66" fill="none"/>
-              <path class="bg-head" d="M24 66 l-11 -6 M24 66 l11 -7" fill="none"/>
+            <svg class="bg-arw" viewBox="0 0 46 190" width="46" height="190" aria-hidden="true">
+              <path d="M23 4 C11 70 35 130 23 182" fill="none"/>
+              <path class="bg-head" d="M23 182 l-11 -7 M23 182 l11 -8" fill="none"/>
             </svg>
           </div>
 
-          <!-- 3. чат с Момо — стрелка вниз-влево, к аватару -->
+          <!-- 3. чат с Момо — стрелка вниз-влево, к аватару (короче — аватар рядом) -->
           <div class="bg-tip bg-tip--chat">
             <span class="bg-txt">Посоветуйтесь<br>в чате</span>
-            <svg class="bg-arw" viewBox="0 0 84 60" width="84" height="60" aria-hidden="true">
-              <path d="M76 10 C44 14 24 26 12 48" fill="none"/>
-              <path class="bg-head" d="M12 48 l14 -3 M12 48 l3 -13" fill="none"/>
+            <svg class="bg-arw" viewBox="0 0 50 34" width="50" height="34" aria-hidden="true">
+              <path d="M44 6 C26 8 14 16 7 28" fill="none"/>
+              <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
             </svg>
           </div>
 

@@ -87,11 +87,22 @@ const closeIntro = () => {
 if (buildGuide){
   const SEEN = "kd_guideSeen";
   let dismissed = true;   // гид скрыт по умолчанию, пока его не показали
+  /* клик «Собрать» в витрине над hero показывает гид поверх уже открытого
+     сайдбара (сайдбар при этом виден, но притемнён/расфокусирован затемнением
+     гида) — так посетитель узнаёт, где сайдбар и как выглядит подсвеченная
+     сборка, не возвращаясь в раздел «Готовые сборки». По «ОК»/Esc/клику мимо
+     гид уходит и забирает с собой сайдбар — сцена остаётся свободной для
+     ручной сборки или чата */
+  let closePresetsOnDismiss = false;
   const dismiss = () => {
     if (dismissed) return;
     dismissed = true;
     try { localStorage.setItem(SEEN, "1"); } catch (e) {}
     buildGuide.classList.add("hiding");
+    if (closePresetsOnDismiss){
+      closePresetsOnDismiss = false;
+      presetsOpen(false);
+    }
     /* done() идемпотентен: убираем слой из DOM после исчезновения и только
        тогда отпускаем первую реплику Момо. transitionend может не прийти
        (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
@@ -133,9 +144,10 @@ if (buildGuide){
   const reopen = $("#guideReopen");
   if (reopen) reopen.addEventListener("click", () => openGuide(false));
 
-  /* нужен снаружи: клик «Собрать» в витрине над hero открывает сайдбар сразу,
-     гид в это время должен уйти с дороги, а не закрыть панель своим затемнением */
-  KD.dismissGuide = dismiss;
+  KD.showGuideOverPresets = () => {
+    closePresetsOnDismiss = true;
+    openGuide(false);
+  };
 }
 
 /* ---------- витрина «готовые сборки» над hero: фото/мокап + подпись «жидким стеклом» ---------- */
@@ -151,12 +163,15 @@ function highlightPreset(key){
   presetList.scrollTo({ top: card.offsetTop - 8, behavior: "smooth" });
 }
 /* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор —
-   в отличие от кнопок сборки внутри самого конструктора, тут прокрутка уместна */
+   в отличие от кнопок сборки внутри самого конструктора, тут прокрутка уместна.
+   Скроллим до заголовка-разделителя «くみたて конструктор», а не до верха секции —
+   он сидит прямо на студии, и так студия оказывается видна сразу, без отступа под текст */
 function buildFromShowcase(key){
-  if (KD.dismissGuide) KD.dismissGuide(); // приветственный гид не должен скрыть открывшуюся панель
-  builderSec.scrollIntoView({ behavior: "smooth", block: "start" });
+  const head = $("#builderHead");
+  (head || builderSec).scrollIntoView({ behavior: "smooth", block: "start" });
   presetsOpen(true);
   KD.loadPreset(key);
+  if (KD.showGuideOverPresets) KD.showGuideOverPresets();
   /* подсветку — после transition панели (.28s): раньше scrollIntoView читает
      ещё не осевшие координаты (панель на пути из translateX(112%)) и уводит
      всю страницу непредсказуемо далеко */
