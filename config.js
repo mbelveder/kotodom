@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://video-object-prague-livestock.trycloudflare.com";
+window.KOTOSHI_API = "https://revolutionary-desktops-ladder-scuba.trycloudflare.com";
