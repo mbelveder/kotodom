@@ -236,11 +236,11 @@ function makeRoom(parent){
   new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:calm(P.shoji), translate:{ z:0.8 } });
   new Zdog.Shape({ addTo:win, stroke:3, color:calm(P.shoji), closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
   new Zdog.Shape({ addTo:win, stroke:3, color:calm(P.shoji), closed:false, translate:{ z:1.4 }, path:[ { x:-75, y:0 }, { x:75, y:0 } ] });
-  // ветка сакуры ЗА окном: между свечением (z:0) и рамой сёдзи (z:0.8+)
-  new Zdog.Shape({ addTo:win, stroke:2.4, color:calm(P.juteDark), closed:false, translate:{ z:0.3 },
+  // ветка сакуры перед окном: поверх рамы сёдзи (z:1.4)
+  new Zdog.Shape({ addTo:win, stroke:2.4, color:calm(P.juteDark), closed:false, translate:{ z:2.2 },
     path:[ { x:-70, y:-34 }, { bezier:[ { x:-30, y:-26 }, { x:0, y:-30 }, { x:40, y:-14 } ] } ] });
   [[-44,-32],[-16,-26],[8,-27],[26,-19],[44,-13]].forEach(([x,y]) =>
-    new Zdog.Shape({ addTo:win, stroke:7, color:calm(P.sakura), translate:{ z:0.5 }, path:[{ x, y }] }));
+    new Zdog.Shape({ addTo:win, stroke:7, color:calm(P.sakura), translate:{ z:2.4 }, path:[{ x, y }] }));
   // свиток на задней стене — приглушённый, чтобы не спорил с домиком
   const scroll = new Zdog.Anchor({ addTo:room, translate:{ x:-350, y:GROUND-218, z:WALLZ+1.5 } });
   new Zdog.Rect({ addTo:scroll, width:46, height:92, fill:true, stroke:3, color:P.wallSide });
