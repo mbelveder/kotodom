@@ -84,38 +84,52 @@ const closeIntro = () => {
 
 if (buildGuide){
   const SEEN = "kd_guideSeen";
+  let dismissed = true;   // гид скрыт по умолчанию, пока его не показали
+  const dismiss = () => {
+    if (dismissed) return;
+    dismissed = true;
+    try { localStorage.setItem(SEEN, "1"); } catch (e) {}
+    buildGuide.classList.add("hiding");
+    /* done() идемпотентен: убираем слой из DOM после исчезновения и только
+       тогда отпускаем первую реплику Момо. transitionend может не прийти
+       (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
+    let cleared = false;
+    const done = () => {
+      if (cleared) return;
+      cleared = true;
+      buildGuide.hidden = true;
+      closeIntro();
+    };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
+    else {
+      buildGuide.addEventListener("transitionend", done, { once: true });
+      setTimeout(done, 650);
+    }
+  };
+  /* firstRun — самый первый показ при загрузке: тогда придерживаем реплику Момо.
+     Повторный показ по кнопке этого не делает — Момо уже поздоровался */
+  const openGuide = firstRun => {
+    dismissed = false;
+    buildGuide.classList.remove("hiding");
+    buildGuide.hidden = false;
+    if (firstRun) introClosed = false;   // интро на экране — реплика Момо подождёт
+  };
+  /* слушатели закрытия вешаем один раз; работают и для первого показа, и для
+     повторного по кнопке. Esc реагирует, только пока гид на экране */
+  $("#buildGuideOk").addEventListener("click", dismiss);
+  buildGuide.querySelector(".bg-scrim").addEventListener("click", dismiss); // клик мимо подсказок
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !buildGuide.hidden) dismiss();
+  });
+
+  /* первый показ — один раз на браузер (по localStorage) */
   let seen = false;
   try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
-  if (!seen){
-    introClosed = false;          // интро на экране — реплика Момо подождёт
-    buildGuide.hidden = false;
-    let dismissed = false;
-    const dismiss = () => {
-      if (dismissed) return;
-      dismissed = true;
-      try { localStorage.setItem(SEEN, "1"); } catch (e) {}
-      buildGuide.classList.add("hiding");
-      /* done() идемпотентен: убираем слой из DOM после исчезновения и только
-         тогда отпускаем первую реплику Момо. transitionend может не прийти
-         (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
-      let cleared = false;
-      const done = () => {
-        if (cleared) return;
-        cleared = true;
-        buildGuide.hidden = true;
-        closeIntro();
-      };
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
-      else {
-        buildGuide.addEventListener("transitionend", done, { once: true });
-        setTimeout(done, 650);
-      }
-    };
-    $("#buildGuideOk").addEventListener("click", dismiss);
-    /* клик мимо подсказок (по затемнённому фону) тоже закрывает */
-    buildGuide.querySelector(".bg-scrim").addEventListener("click", dismiss);
-    document.addEventListener("keydown", e => { if (e.key === "Escape") dismiss(); });
-  }
+  if (!seen) openGuide(true);
+
+  /* маленькая кнопка «показать подсказки снова» под конструктором */
+  const reopen = $("#guideReopen");
+  if (reopen) reopen.addEventListener("click", () => openGuide(false));
 }
 
 /* ---------- логотип = кнопка «домой» ---------- */
