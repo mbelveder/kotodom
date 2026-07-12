@@ -136,14 +136,20 @@ sugToggle.type = "button";
 sugToggle.className = "sug-toggle";
 sugToggle.textContent = "🐾 подсказки";
 sugg.parentNode.insertBefore(sugToggle, sugg.nextSibling);
-sugHide.addEventListener("click", () => {
-  sugg.classList.add("hidden");
-  sugToggle.classList.add("show");
-});
+const hideSugg = () => { sugg.classList.add("hidden"); sugToggle.classList.add("show"); };
+sugHide.addEventListener("click", hideSugg);
 sugToggle.addEventListener("click", () => {
   sugg.classList.remove("hidden");
   sugToggle.classList.remove("show");
 });
+/* после первого отправленного сообщения подсказки сворачиваем сами — в переписке
+   место дорогое. Один раз: дальше посетитель сам управляет ими кнопкой «подсказки» */
+let suggCollapsed = false;
+function collapseHintsOnce(){
+  if (suggCollapsed) return;
+  suggCollapsed = true;
+  hideSugg();
+}
 
 /* ---------- предложение Момо: маркер [[BUILD:индекс:тип,…]] → кнопка ---------- */
 const BUILD_RE = /\[\[BUILD:([^\]]*)\]\]/;
@@ -198,6 +204,7 @@ async function ask(textOverride){
   if (!textOverride) input.value = "";
   add("user", text);
   history.push({ role: "user", content: text });
+  collapseHintsOnce();
 
   if (!KD.API){
     add("sys", "Момо сейчас дремлет. Загляните чуть позже — он ответит, как проснётся.");
