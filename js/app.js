@@ -70,29 +70,47 @@ if (navPresets) navPresets.addEventListener("click", () => {
 /* растворяющийся слой поверх сцены: подсказывает три пути (готовые сборки,
    сборка самому, чат с Момо). Показываем один раз — дальше не мозолит глаза */
 const buildGuide = $("#buildGuide");
+/* пока интро открыто — первая реплика Момо (автосборка «Проныры») ждёт,
+   иначе она уходила бы в пустоту за затемнением. По умолчанию интро «нет»:
+   если гид не показывается (уже видели / нет в DOM), реплика идёт сразу */
+const introCbs = [];
+let introClosed = true;
+KD.onIntroDone = cb => { introClosed ? cb() : introCbs.push(cb); };
+const closeIntro = () => {
+  if (introClosed) return;
+  introClosed = true;
+  while (introCbs.length) introCbs.shift()();
+};
+
 if (buildGuide){
   const SEEN = "kd_guideSeen";
-  let dismissed = false;
-  const dismiss = () => {
-    if (dismissed) return;
-    dismissed = true;
-    try { localStorage.setItem(SEEN, "1"); } catch (e) {}
-    buildGuide.classList.add("hiding");
-    /* done() идемпотентен: убираем слой из DOM после исчезновения.
-       transitionend может не прийти (фоновая вкладка тормозит анимации,
-       reduced-motion) — поэтому дублируем таймером, слой не «залипнет» */
-    let cleared = false;
-    const done = () => { if (cleared) return; cleared = true; buildGuide.hidden = true; };
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
-    else {
-      buildGuide.addEventListener("transitionend", done, { once: true });
-      setTimeout(done, 650);
-    }
-  };
   let seen = false;
   try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
   if (!seen){
+    introClosed = false;          // интро на экране — реплика Момо подождёт
     buildGuide.hidden = false;
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      try { localStorage.setItem(SEEN, "1"); } catch (e) {}
+      buildGuide.classList.add("hiding");
+      /* done() идемпотентен: убираем слой из DOM после исчезновения и только
+         тогда отпускаем первую реплику Момо. transitionend может не прийти
+         (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
+      let cleared = false;
+      const done = () => {
+        if (cleared) return;
+        cleared = true;
+        buildGuide.hidden = true;
+        closeIntro();
+      };
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
+      else {
+        buildGuide.addEventListener("transitionend", done, { once: true });
+        setTimeout(done, 650);
+      }
+    };
     $("#buildGuideOk").addEventListener("click", dismiss);
     /* клик мимо подсказок (по затемнённому фону) тоже закрывает */
     buildGuide.querySelector(".bg-scrim").addEventListener("click", dismiss);
