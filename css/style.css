@@ -462,12 +462,31 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   border:1px solid var(--line);border-radius:16px;
   overflow:hidden;flex:none;
 }
+.preset-card .pc-media{position:relative;overflow:hidden}
 .preset-card img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover}
-.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+/* описание поверх фото: «жидкое стекло» проявляется на ховере/фокусе —
+   так карточка ниже, и в узкой панели помещается больше сборок */
+.preset-card .pc-hover{
+  position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:12px;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--ink);
+  background:linear-gradient(to top,
+    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
+    color-mix(in srgb, var(--panel) 40%, transparent) 85%, transparent);
+  backdrop-filter:blur(10px) saturate(1.25);
+  -webkit-backdrop-filter:blur(10px) saturate(1.25);
+  opacity:0;transition:opacity .28s ease;pointer-events:none;
+}
+.preset-card:hover .pc-hover,.preset-card:focus-within .pc-hover{opacity:1}
+@media (prefers-reduced-motion: reduce){ .preset-card .pc-hover{transition:none} }
+/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу */
+@media (hover:none){
+  .preset-card .pc-hover{position:static;opacity:1;padding:8px 12px 10px;
+    backdrop-filter:none;-webkit-backdrop-filter:none;background:none;color:var(--muted)}
+}
+.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
 .preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.preset-card .pc-ds{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted);font-weight:600}
-.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%;margin-top:2px}
+.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%}
 
 /* как это работает */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}

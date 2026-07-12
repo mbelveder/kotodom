@@ -21,12 +21,16 @@ const presetPrice = key => Object.values(KD.PRESETS[key].cells)
 PRESET_CARDS.forEach(g => {
   const el = document.createElement("div");
   el.className = "preset-card";
+  /* описание переехало на фото «жидким стеклом» (проявляется на ховере) —
+     карточка стала ниже, в узкой панели помещается больше сборок */
   el.innerHTML = `
-    <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-         onerror="this.style.display='none'">
+    <div class="pc-media">
+      <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
+           onerror="this.closest('.pc-media').classList.add('no-img')">
+      <div class="pc-hover">${g.ds}</div>
+    </div>
     <div class="pc-body">
       <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <p class="pc-ds">${g.ds}</p>
       <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
     </div>`;
   presetList.appendChild(el);
