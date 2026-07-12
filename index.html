@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=22">
-<link rel="stylesheet" href="css/style.css?v=22">
-<script defer src="config.js?v=22"></script>
-<script defer src="js/zdog.dist.min.js?v=22"></script>
-<script defer src="js/catalog.js?v=22"></script>
-<script defer src="js/scene.js?v=22"></script>
-<script defer src="js/configurator.js?v=22"></script>
-<script defer src="js/chat.js?v=22"></script>
-<script defer src="js/app.js?v=22"></script>
+<link rel="stylesheet" href="css/fonts.css?v=23">
+<link rel="stylesheet" href="css/style.css?v=23">
+<script defer src="config.js?v=23"></script>
+<script defer src="js/zdog.dist.min.js?v=23"></script>
+<script defer src="js/catalog.js?v=23"></script>
+<script defer src="js/scene.js?v=23"></script>
+<script defer src="js/configurator.js?v=23"></script>
+<script defer src="js/chat.js?v=23"></script>
+<script defer src="js/app.js?v=23"></script>
 </head>
 <body>
 
@@ -35,7 +35,7 @@
     <div class="brand disp">Кот<span class="jo">о<i>ノ</i></span>ши<small>домики для кошек</small></div>
     <nav class="head-nav">
       <a href="#builder">Конструктор</a>
-      <a href="#builder" class="hide-m" id="navPresets">Готовые сборки</a>
+      <a href="#gallery" class="hide-m" id="navPresets">Готовые сборки</a>
       <a href="#smart" class="hide-m">Умная игрушка</a>
       <a href="#info" class="hide-m">Доставка</a>
       <span class="demo-pill">демо-магазин</span>
@@ -46,46 +46,55 @@
 <main>
 
 <section class="hero2">
-  <div class="wrap">
-    <div class="eyebrow-jp">ねこのいえ</div>
-    <h1>Умные модульные домики<br>для кошек и котов</h1>
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <ul class="hero-points">
-          <li>
-            <span class="pt-ico">組</span>
-            <div>
-              <strong>Модульность</strong>
-              <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать.</p>
-            </div>
-          </li>
-          <li>
-            <span class="pt-ico">遊</span>
-            <div>
-              <strong>Умная игрушка</strong>
-              <p>Настройте игровые сценарии и запускайте их через приложение или голосового ассистента.</p>
-            </div>
-          </li>
-          <li>
-            <span class="pt-ico">丈</span>
-            <div>
-              <strong>Прочность и безопасность</strong>
-              <p>Материалы стойкие к когтям, без острых углов — и легко чистятся.</p>
-            </div>
-          </li>
-        </ul>
-        <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
-      </div>
-      <div class="hero-media">
-        <div class="film-frame">
-          <video id="filmVid" autoplay muted loop playsinline preload="metadata"
-                 poster="assets/kotoshi-poster.jpg?v=2" aria-label="Кот обживает свой Котоши">
-            <source src="assets/kotoshi-loop.webm?v=3" type="video/webm">
-            <source src="assets/kotoshi-loop.mp4?v=3" type="video/mp4">
-          </video>
-        </div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow-jp">ねこのいえ</div>
+      <h1>Умные модульные домики<br>для кошек и котов</h1>
+      <ul class="hero-points">
+        <li>
+          <span class="pt-ico">組</span>
+          <div>
+            <strong>Модульность</strong>
+            <p>Переставляйте секции и докупайте новые в любой момент — коту всегда будет что исследовать.</p>
+          </div>
+        </li>
+        <li>
+          <span class="pt-ico">遊</span>
+          <div>
+            <strong>Умная игрушка</strong>
+            <p>Настройте игровые сценарии и запускайте их через приложение или голосового ассистента.</p>
+          </div>
+        </li>
+        <li>
+          <span class="pt-ico">丈</span>
+          <div>
+            <strong>Прочность и безопасность</strong>
+            <p>Материалы стойкие к когтям, без острых углов — и легко чистятся.</p>
+          </div>
+        </li>
+      </ul>
+      <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
+    </div>
+    <div class="hero-media">
+      <div class="film-frame">
+        <video id="filmVid" autoplay muted loop playsinline preload="metadata"
+               poster="assets/kotoshi-poster.jpg?v=2" aria-label="Кот обживает свой Котоши">
+          <source src="assets/kotoshi-loop.webm?v=3" type="video/webm">
+          <source src="assets/kotoshi-loop.mp4?v=3" type="video/mp4">
+        </video>
       </div>
     </div>
+  </div>
+</section>
+
+<section id="gallery">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">みほん</span>готовые сборки</div>
+    <h2>Шесть идей для начала</h2>
+    <p class="sec-sub">Каждая карточка — настоящая сборка в конструкторе, не картинка для вида. Нажмите
+       «Собрать» — план откроется в сцене ниже, справа подсветится в списке готовых, а дальше можно
+       двигать модули под своего кота.</p>
+    <div class="showcase-grid" id="showcaseGrid"></div>
   </div>
 </section>
 
@@ -187,7 +196,15 @@
         </div>
       </aside>
     </div>
-    <div class="hint-bar" id="hintBar">Модуль в сцене можно перетащить на новое место; короткий клик — убрать.</div>
+    <div class="hint-bar" id="hintBar">
+      <svg class="hint-arrow" width="44" height="34" viewBox="0 0 44 34" aria-hidden="true">
+        <path d="M4 3 C4 18, 14 26, 39 29" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-dasharray="1 6.5"/>
+        <path d="M30 23 L40 29.5 L29.5 33" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Можно добавлять модули на свой вкус — они внизу. Один клик по модулю в сцене — убрать его из конструктора.</span>
+    </div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>

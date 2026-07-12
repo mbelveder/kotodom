@@ -5,28 +5,41 @@ const $ = s => document.querySelector(s);
 const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
-/* ---------- готовые сборки: выдвижная панель у конструктора ---------- */
-const PRESET_CARDS = [
+/* ---------- готовые сборки: витрина над hero + выдвижная панель у конструктора ---------- */
+/* три сфотографированы, три — сложнее, ещё без съёмки (см. .sc-mock в css) */
+const SHOWCASE = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
   { img: "assets/render_wide.jpg", preset: "wide", nm: "«Проныра»",
     ds: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек, засад и послеобеденного сна." },
   { img: "assets/render_tower.jpg", preset: "tower", nm: "«Вальяжный»",
-    ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." }
+    ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." },
+  { img: "assets/brand-anchor.jpg", preset: "manor", nm: "«Резиденция»",
+    ds: "Два куба, тоннель, гамак, смотровая башня с крышей — и когтеточка с игрушкой на сдачу. Целая резиденция для кота с большими планами." },
+  { kanji: "塔", preset: "watch", nm: "«Дозорный»",
+    ds: "Фундамент и двойная смотровая башня с гамаком у подножья — для кота, который любит видеть всё, а спать не отходя от поста." },
+  { kanji: "走", preset: "zoomies", nm: "«Непоседа»",
+    ds: "Три куба с тоннелями в ряд, широкий гамак и башня с крышей — маршрут для кота, которому вечно неймётся." }
 ];
 const presetPanel = $("#presetPanel"), presetTab = $("#presetTab"),
-      presetList = $("#presetList"), studioMain = $("#studioMain");
+      presetList = $("#presetList"), studioMain = $("#studioMain"),
+      showcaseGrid = $("#showcaseGrid"), builderSec = $("#builder");
 const presetPrice = key => Object.values(KD.PRESETS[key].cells)
   .reduce((s, t) => s + KD.MODULES[t].price, 0);
-PRESET_CARDS.forEach(g => {
+SHOWCASE.forEach(g => {
   const el = document.createElement("div");
   el.className = "preset-card";
+  el.dataset.key = g.preset;
   /* описание переехало на фото «жидким стеклом» (проявляется на ховере) —
-     карточка стала ниже, в узкой панели помещается больше сборок */
+     карточка стала ниже, в узкой панели помещается больше сборок.
+     Для трёх сборок без фото (см. SHOWCASE) — тот же мокап с иероглифом, что в витрине над hero */
+  const pcMedia = g.img
+    ? `<img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
+         onerror="this.closest('.pc-media').classList.add('no-img')">`
+    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
   el.innerHTML = `
     <div class="pc-media">
-      <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-           onerror="this.closest('.pc-media').classList.add('no-img')">
+      ${pcMedia}
       <div class="pc-hover">${g.ds}</div>
     </div>
     <div class="pc-body">
@@ -51,24 +64,9 @@ $("#presetX").addEventListener("click", () => presetsOpen(false));
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && presetPanel.classList.contains("open")) presetsOpen(false);
 });
-/* «Готовые» в шапке ведёт к конструктору и сразу разворачивает панель.
-   Но пока открыт приветственный гид, панель ушла бы за затемнение — вместо этого
-   подсвечиваем нужную подсказку, чтобы взгляд нашёл вкладку сам */
-const navPresets = $("#navPresets");
-if (navPresets) navPresets.addEventListener("click", () => {
-  const guide = $("#buildGuide");
-  const guideUp = guide && !guide.hidden && !guide.classList.contains("hiding");
-  if (guideUp){
-    const tip = guide.querySelector(".bg-tip--presets");
-    if (tip){
-      tip.classList.remove("lit");   // рестарт вспышки при повторном клике
-      void tip.offsetWidth;
-      tip.classList.add("lit");
-    }
-    return;
-  }
-  presetsOpen(true);
-});
+/* «Готовые сборки» в шапке теперь ведёт на витрину над hero (#gallery, обычная
+   якорная ссылка) — панель у сцены она больше не форсит, поэтому старый
+   guide-aware обработчик клика по navPresets здесь не нужен */
 
 /* ---------- приветственный гид конструктора ---------- */
 /* растворяющийся слой поверх сцены: подсказывает три пути (готовые сборки,
@@ -134,7 +132,54 @@ if (buildGuide){
   /* маленькая кнопка «показать подсказки снова» под конструктором */
   const reopen = $("#guideReopen");
   if (reopen) reopen.addEventListener("click", () => openGuide(false));
+
+  /* нужен снаружи: клик «Собрать» в витрине над hero открывает сайдбар сразу,
+     гид в это время должен уйти с дороги, а не закрыть панель своим затемнением */
+  KD.dismissGuide = dismiss;
 }
+
+/* ---------- витрина «готовые сборки» над hero: фото/мокап + подпись «жидким стеклом» ---------- */
+function highlightPreset(key){
+  const card = presetList.querySelector(`.preset-card[data-key="${key}"]`);
+  if (!card) return;
+  card.classList.remove("hl");
+  void card.offsetWidth; // перезапуск анимации, если подсветили тот же план дважды подряд
+  card.classList.add("hl");
+  /* скроллим только сам список (его собственный overflow-y), а не card.scrollIntoView:
+     панель — absolute внутри ещё едущей секции конструктора, и scrollIntoView
+     на вложенном элементе задевает и document-скролл, гоняя всю страницу */
+  presetList.scrollTo({ top: card.offsetTop - 8, behavior: "smooth" });
+}
+/* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор —
+   в отличие от кнопок сборки внутри самого конструктора, тут прокрутка уместна */
+function buildFromShowcase(key){
+  if (KD.dismissGuide) KD.dismissGuide(); // приветственный гид не должен скрыть открывшуюся панель
+  builderSec.scrollIntoView({ behavior: "smooth", block: "start" });
+  presetsOpen(true);
+  KD.loadPreset(key);
+  /* подсветку — после transition панели (.28s): раньше scrollIntoView читает
+     ещё не осевшие координаты (панель на пути из translateX(112%)) и уводит
+     всю страницу непредсказуемо далеко */
+  setTimeout(() => highlightPreset(key), 320);
+}
+SHOWCASE.forEach(g => {
+  const el = document.createElement("div");
+  el.className = "sc-card";
+  const media = g.img
+    ? `<img src="${g.img}" alt="Сборка ${g.nm} в интерьере" loading="lazy">`
+    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
+  el.innerHTML = `
+    <div class="sc-media">
+      ${media}
+      <div class="sc-cap"><strong>${g.nm}</strong><span>${g.ds}</span></div>
+    </div>
+    <div class="sc-ft">
+      <span class="sc-pr">${fmt(presetPrice(g.preset))}</span>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
+    </div>`;
+  showcaseGrid.appendChild(el);
+  el.querySelector("button").addEventListener("click", () => buildFromShowcase(g.preset));
+});
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
