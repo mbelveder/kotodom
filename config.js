@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://february-difference-warm-forty.trycloudflare.com";
+window.KOTOSHI_API = "https://scheduling-survival-syndrome-planet.trycloudflare.com";
