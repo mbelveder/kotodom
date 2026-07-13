@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://silk-trust-thumbs-chemistry.trycloudflare.com";
+window.KOTOSHI_API = "https://involving-blvd-removal-lamb.trycloudflare.com";
