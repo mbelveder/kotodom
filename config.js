@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://yen-pal-requirement-arranged.trycloudflare.com";
+window.KOTOSHI_API = "https://llp-brochure-pad-cables.trycloudflare.com";
