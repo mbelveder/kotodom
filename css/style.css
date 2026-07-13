@@ -339,27 +339,17 @@ button{font-family:inherit}
 
 /* 1. готовые сборки — подсказка у самой вкладки, стрелка короткая */
 .bg-tip--presets{top:44%;right:3%;flex-direction:row}
-/* 2. собрать самому — подсказка у нижнего края сцены, левее центра (там садится
-   кнопка «ОК, к делу»), длинная стрелка уходит ниже scene-wrap к полке модулей
-   (.tray) — ни один родитель не обрезает overflow вплоть до .studio, так что
-   «хвост» стрелки виден поверх неё */
-.bg-tip--self{bottom:2%;left:44%;transform:translateX(-50%);flex-direction:column;gap:0}
+/* 2. собрать самому — подсказка ниже центра, к самому низу сцены (кнопка
+   «ОК, к делу» переехала в шапку — место внизу освободилось), длинная стрелка
+   уходит ниже scene-wrap к полке модулей (.tray) — ни один родитель не обрезает
+   overflow вплоть до .studio, так что «хвост» стрелки виден поверх неё */
+.bg-tip--self{bottom:-6%;left:44%;transform:translateX(-50%);flex-direction:column;gap:0}
 /* 3. чат — у самого аватара Момо в углу, стрелка короткая */
 .bg-tip--chat{left:3%;bottom:9%;flex-direction:column;gap:0}
 
-.bg-ok{
-  position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:3;
-  border:none;border-radius:14px;cursor:pointer;
-  background:var(--aka);color:#FFFBF3;
-  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:16px;
-  padding:12px 26px;
-  box-shadow:0 6px 18px color-mix(in srgb, var(--aka) 45%, transparent);
-  transition:transform .12s ease, background .12s ease;
-}
-.bg-ok:hover{background:var(--aka-deep);transform:translateX(-50%) translateY(-2px)}
-.bg-ok:active{transform:translateX(-50%) scale(.97)}
-
-/* маленькая кнопка «с чего начать» — возвращает приветственные подсказки */
+/* маленькая кнопка-тумблер «Инструкция» — возвращает приветственные подсказки;
+   пока гид открыт, та же кнопка становится «ОК, к делу» и закрывает его —
+   отдельной кнопки закрытия внизу гида больше нет, см. .guide-reopen.is-open и app.js */
 .guide-reopen{
   display:inline-flex;align-items:center;gap:7px;
   margin:4px 0 22px;
@@ -367,7 +357,7 @@ button{font-family:inherit}
   background:var(--panel);color:var(--muted);cursor:pointer;
   padding:5px 13px 5px 7px;
   font-weight:800;font-size:12.5px;letter-spacing:.01em;
-  transition:border-color .15s ease, color .15s ease;
+  transition:border-color .15s ease, color .15s ease, background .15s ease;
 }
 .guide-reopen:hover{border-color:var(--aka);color:var(--aka)}
 .guide-reopen .gr-q{
@@ -375,13 +365,15 @@ button{font-family:inherit}
   width:19px;height:19px;border-radius:50%;flex:none;
   background:var(--aka);color:#FFFBF3;font-size:12px;line-height:1;
 }
+.guide-reopen.is-open{border-color:var(--aka);background:var(--aka);color:#FFFBF3}
+.guide-reopen.is-open:hover{background:var(--aka-deep);border-color:var(--aka-deep)}
+.guide-reopen.is-open .gr-q{background:#FFFBF3;color:var(--aka)}
 
 @media (max-width:900px){
   .bg-txt{font-size:13px;padding:6px 10px}
   .bg-tip--presets{top:38%;right:2%}
   .bg-tip--chat{left:2%;bottom:12%}
   .bg-tip--presets .bg-arw,.bg-tip--chat .bg-arw{width:44px;height:auto}
-  .bg-ok{font-size:14px;padding:10px 20px;bottom:6%}
 }
 @media (prefers-reduced-motion: reduce){
   .build-guide{transition:none}
@@ -471,9 +463,11 @@ section{padding:56px 0 8px;scroll-margin-top:88px}
 /* редактору — контейнер пошире: без сайдбара сцена занимает всю ширину */
 #builder .wrap{max-width:1080px}
 /* заголовок редактора — «жидкое стекло» в левом верхнем углу сцены, виден всегда
-   (описание больше не прячется под ховер); сцена читается сквозь подложку */
+   (описание больше не прячется под ховер); сцена читается сквозь подложку.
+   z-index выше .build-guide (20) — шапка не гаснет под затемнением гида,
+   кнопка-тумблер внутри неё остаётся кликабельной поверх сцрима */
 .scene-head{
-  position:absolute;top:14px;left:14px;z-index:5;
+  position:absolute;top:14px;left:14px;z-index:21;
   max-width:min(52%, 384px);
   padding:12px 16px 14px;
   border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);

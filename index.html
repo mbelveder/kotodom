@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=27">
-<link rel="stylesheet" href="css/style.css?v=27">
-<script defer src="config.js?v=27"></script>
-<script defer src="js/zdog.dist.min.js?v=27"></script>
-<script defer src="js/catalog.js?v=27"></script>
-<script defer src="js/scene.js?v=27"></script>
-<script defer src="js/configurator.js?v=27"></script>
-<script defer src="js/chat.js?v=27"></script>
-<script defer src="js/app.js?v=27"></script>
+<link rel="stylesheet" href="css/fonts.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=28">
+<script defer src="config.js?v=28"></script>
+<script defer src="js/zdog.dist.min.js?v=28"></script>
+<script defer src="js/catalog.js?v=28"></script>
+<script defer src="js/scene.js?v=28"></script>
+<script defer src="js/configurator.js?v=28"></script>
+<script defer src="js/chat.js?v=28"></script>
+<script defer src="js/app.js?v=28"></script>
 </head>
 <body>
 
@@ -105,16 +105,18 @@
     <div class="studio-main" id="studioMain">
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene" width="980" height="540"></canvas>
-        <!-- заголовок редактора — оверлей в левом верхнем углу сцены, виден всегда
-             (описание больше не прячется под ховер); «с чего начать» открывает гид -->
+        <!-- заголовок редактора — оверлей в левом верхнем углу сцены, стоит поверх
+             приветственного гида (z-index выше .build-guide), чтобы не гаснуть
+             под затемнением; кнопка-тумблер открывает гид и она же, пока гид
+             открыт, становится «ОК, к делу» — второй кнопки для закрытия больше нет -->
         <div class="scene-head" id="builderHead">
           <div class="sec-eyebrow"><span class="jp">くみたて</span>редактор</div>
           <h2>Соберите свой Котоши</h2>
           <p class="scene-sub">Перетаскивайте модули в комнату — подсвеченные места покажут, куда можно ставить.
              Не знаете, с чего начать? Откройте готовые сборки справа — или нажмите на Момо в углу редактора:
              он расспросит о питомце и соберёт домик за вас.</p>
-          <button class="guide-reopen" id="guideReopen" type="button">
-            <span class="gr-q" aria-hidden="true">?</span>с чего начать
+          <button class="guide-reopen" id="guideToggle" type="button" aria-pressed="false">
+            <span class="gr-q" aria-hidden="true">?</span><span class="gr-txt">Инструкция</span>
           </button>
         </div>
         <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
@@ -162,8 +164,6 @@
               <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
             </svg>
           </div>
-
-          <button class="bg-ok" id="buildGuideOk" type="button">ОК, к делу</button>
         </div>
       </div>
       <aside class="preset-panel" id="presetPanel" aria-label="Готовые сборки">
