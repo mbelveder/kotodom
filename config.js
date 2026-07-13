@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://specify-drops-ripe-webpage.trycloudflare.com";
+window.KOTOSHI_API = "https://yen-pal-requirement-arranged.trycloudflare.com";
