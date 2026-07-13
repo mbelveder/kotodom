@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=27">
-<link rel="stylesheet" href="css/style.css?v=27">
-<script defer src="config.js?v=27"></script>
-<script defer src="js/zdog.dist.min.js?v=27"></script>
-<script defer src="js/catalog.js?v=27"></script>
-<script defer src="js/scene.js?v=27"></script>
-<script defer src="js/configurator.js?v=27"></script>
-<script defer src="js/chat.js?v=27"></script>
-<script defer src="js/app.js?v=27"></script>
+<link rel="stylesheet" href="css/fonts.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=28">
+<script defer src="config.js?v=28"></script>
+<script defer src="js/zdog.dist.min.js?v=28"></script>
+<script defer src="js/catalog.js?v=28"></script>
+<script defer src="js/scene.js?v=28"></script>
+<script defer src="js/configurator.js?v=28"></script>
+<script defer src="js/chat.js?v=28"></script>
+<script defer src="js/app.js?v=28"></script>
 </head>
 <body>
 
@@ -105,19 +105,26 @@
     <div class="studio-main" id="studioMain">
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene" width="980" height="540"></canvas>
-        <!-- заголовок редактора — оверлей в левом верхнем углу сцены, виден всегда;
-             инструкция свёрнута в <details>, не занимает место по умолчанию -->
+        <!-- заголовок редактора — оверлей в левом верхнем углу сцены, стоит поверх
+             приветственного гида (z-index выше .build-guide), не гаснет под
+             затемнением; «Инструкция» сворачивает подсказки в <details>, а внутри
+             неё — кнопка «показать подсказки ещё раз» (реоткрывает гид). Пока гид
+             открыт, тот же summary подменяет подпись на «ОК, к делу» и закрывает
+             гид — отдельной кнопки внизу гида больше нет, см. app.js -->
         <div class="scene-head" id="builderHead">
           <div class="sec-eyebrow"><span class="jp">くみたて</span>редактор</div>
           <h2>Соберите свой Котоши</h2>
-          <details class="scene-instr">
-            <summary>Инструкция</summary>
+          <details class="scene-instr" id="sceneInstr">
+            <summary id="guideToggle">Инструкция</summary>
             <p class="scene-sub-lead">Воспользуйтесь любым из способов или скомбинируйте несколько:</p>
             <ul class="scene-sub">
               <li>Перетаскивайте модули в комнату, для удаления кликните на модуль</li>
               <li>Откройте готовые сборки во вкладке справа</li>
               <li>Опишите своего питомца в чате с Момо, нашим ИИ-консультантом по кнопке в углу редактора</li>
             </ul>
+            <button class="guide-reopen" id="guideReopen" type="button">
+              <span class="gr-q" aria-hidden="true">?</span>показать подсказки ещё раз
+            </button>
           </details>
         </div>
         <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
@@ -165,8 +172,6 @@
               <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
             </svg>
           </div>
-
-          <button class="bg-ok" id="buildGuideOk" type="button">ОК, к делу</button>
         </div>
       </div>
       <aside class="preset-panel" id="presetPanel" aria-label="Готовые сборки">

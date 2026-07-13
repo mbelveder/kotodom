@@ -87,12 +87,25 @@ const closeIntro = () => {
 if (buildGuide){
   const SEEN = "kd_guideSeen";
   let dismissed = true;   // гид скрыт по умолчанию, пока его не показали
+  /* summary «Инструкция» в шапке сцены — пока гид открыт, подменяет подпись на
+     «ОК, к делу» и берёт на себя закрытие (шапка стоит поверх затемнения, см.
+     .scene-head z-index); отдельной кнопки закрытия внизу гида больше нет.
+     Кнопка «показать подсказки ещё раз» лежит внутри <details> и реоткрывает гид */
+  const sceneInstr = $("#sceneInstr");
+  const toggle = $("#guideToggle");
+  const reopen = $("#guideReopen");
+  const setToggle = open => {
+    if (!sceneInstr || !toggle) return;
+    sceneInstr.classList.toggle("is-guide-open", open);
+    toggle.textContent = open ? "ОК, к делу" : "Инструкция";
+  };
   /* гид открывает сайдбар «готовые сборки» под собой — подсказка «Используйте
      готовые сборки» показывает реальную панель. По «ОК»/Esc/клику мимо гид
      уходит и медленно уводит сайдбар, освобождая сцену для ручной сборки/чата */
   const dismiss = () => {
     if (dismissed) return;
     dismissed = true;
+    setToggle(false);
     try { localStorage.setItem(SEEN, "1"); } catch (e) {}
     buildGuide.classList.add("hiding");
     /* сайдбар «готовые сборки» открыт под гидом — на «ОК» он уезжает медленно,
@@ -124,14 +137,22 @@ if (buildGuide){
      Повторный показ по кнопке этого не делает — Момо уже поздоровался */
   const openGuide = firstRun => {
     dismissed = false;
+    setToggle(true);
+    if (sceneInstr) sceneInstr.open = false;   // схлопываем список инструкций — виден только «ОК, к делу»
     buildGuide.classList.remove("hiding");
     buildGuide.hidden = false;
     presetsOpen(true);   // показываем сайдбар под гидом — «ОК» его медленно уберёт
     if (firstRun) introClosed = false;   // интро на экране — реплика Момо подождёт
   };
-  /* слушатели закрытия вешаем один раз; работают и для первого показа, и для
+  /* пока гид открыт, клик по summary не разворачивает <details>, а закрывает гид —
+     иначе (гид уже закрыт) работает как обычный тумблер инструкции */
+  if (toggle) toggle.addEventListener("click", e => {
+    if (!dismissed) { e.preventDefault(); dismiss(); }
+  });
+  /* кнопка «показать подсказки ещё раз» внутри развёрнутой инструкции — реоткрывает гид */
+  if (reopen) reopen.addEventListener("click", () => openGuide(false));
+  /* слушатель закрытия вешаем один раз; работает и для первого показа, и для
      повторного по кнопке. Esc реагирует, только пока гид на экране */
-  $("#buildGuideOk").addEventListener("click", dismiss);
   buildGuide.querySelector(".bg-scrim").addEventListener("click", dismiss); // клик мимо подсказок
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && !buildGuide.hidden) dismiss();
@@ -141,10 +162,6 @@ if (buildGuide){
   let seen = false;
   try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
   if (!seen) openGuide(true);
-
-  /* маленькая кнопка «с чего начать» в углу сцены — снова показывает подсказки */
-  const reopen = $("#guideReopen");
-  if (reopen) reopen.addEventListener("click", () => openGuide(false));
 }
 
 /* ---------- витрина «готовые сборки» над hero: фото/мокап + подпись «жидким стеклом» ---------- */
