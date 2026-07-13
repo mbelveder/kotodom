@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=26">
-<link rel="stylesheet" href="css/style.css?v=26">
-<script defer src="config.js?v=26"></script>
-<script defer src="js/zdog.dist.min.js?v=26"></script>
-<script defer src="js/catalog.js?v=26"></script>
-<script defer src="js/scene.js?v=26"></script>
-<script defer src="js/configurator.js?v=26"></script>
-<script defer src="js/chat.js?v=26"></script>
-<script defer src="js/app.js?v=26"></script>
+<link rel="stylesheet" href="css/fonts.css?v=27">
+<link rel="stylesheet" href="css/style.css?v=27">
+<script defer src="config.js?v=27"></script>
+<script defer src="js/zdog.dist.min.js?v=27"></script>
+<script defer src="js/catalog.js?v=27"></script>
+<script defer src="js/scene.js?v=27"></script>
+<script defer src="js/configurator.js?v=27"></script>
+<script defer src="js/chat.js?v=27"></script>
+<script defer src="js/app.js?v=27"></script>
 </head>
 <body>
 
@@ -35,6 +35,8 @@
     <div class="brand disp">Кот<span class="jo">о<i>ノ</i></span>ши<small>домики для кошек</small></div>
     <nav class="head-nav">
       <a href="#builder">Редактор</a>
+      <span class="nav-soon hide-m" tabindex="0" role="note"
+        aria-label="Здесь будет каталог отдельных модулей с указанием размеров">Каталог модулей<span class="nav-tip" aria-hidden="true">Здесь будет каталог отдельных модулей с указанием размеров.</span></span>
       <a href="#gallery" class="hide-m" id="navPresets">Готовые сборки</a>
       <a href="#smart" class="hide-m">Умная игрушка</a>
       <a href="#info" class="hide-m">Доставка</a>
@@ -205,10 +207,8 @@
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>
-      <button class="btn btn-ghost" id="btnBulk">Заказать списком</button>
       <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
       <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
-      <span class="order-hint">«Оформить заказ» — то, что собрано в редакторе. «Заказать списком» — просто модули по счёту, без сборки.</span>
     </div>
   </div>
   </div>

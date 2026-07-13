@@ -264,46 +264,6 @@ $("#btnOrder").addEventListener("click", () => {
   checkoutStep(lines, KD.configurator.totals());
 });
 
-/* заказ списком: модули по счёту, без сборки в сцене */
-$("#btnBulk").addEventListener("click", () => {
-  const qty = {};
-  const rows = Object.entries(KD.MODULES).map(([t, m]) => `
-    <li><span>${m.name}</span><span class="n">${fmt(m.price)}</span>
-      <span class="qty"><button type="button" data-t="${t}" data-d="-1" aria-label="меньше">−</button><b
-        id="q_${t}">0</b><button type="button" data-t="${t}" data-d="1" aria-label="больше">+</button></span></li>`).join("");
-  open(`
-    <h3>Заказать списком</h3>
-    <p class="m-sub">Наберите модули по счёту — например, 5 тоннелей и 2 куба. Собирать в сцене не обязательно.</p>
-    <ul class="order-lines bulk-lines">${rows}</ul>
-    <ul class="order-lines">
-      <li id="bulkDisc" style="display:none"><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n" id="bulkDiscN"></span></li>
-      <li class="total"><span>Итого</span><span class="n" id="bulkTotal">0 ₽</span></li>
-    </ul>
-    <button class="btn btn-aka" id="bulkGo" style="width:100%" disabled>Продолжить</button>
-  `);
-  const goBtn = $("#bulkGo");
-  const bulkLines = () => Object.entries(qty).filter(([, n]) => n > 0)
-    .map(([t, n]) => ({ type: t, name: KD.MODULES[t].name, n, price: KD.MODULES[t].price, sum: KD.MODULES[t].price * n }));
-  const redraw = () => {
-    const t = linesTotals(bulkLines());
-    $("#bulkTotal").textContent = fmt(t.total);
-    $("#bulkDisc").style.display = t.disc ? "" : "none";
-    if (t.disc) $("#bulkDiscN").textContent = "−" + fmt(t.disc);
-    goBtn.disabled = !t.count;
-    goBtn.textContent = t.count ? `Продолжить · ${fmt(t.total)}` : "Продолжить";
-  };
-  body.querySelectorAll(".qty button").forEach(b => b.addEventListener("click", () => {
-    const t = b.dataset.t;
-    qty[t] = Math.min(20, Math.max(0, (qty[t] || 0) + (+b.dataset.d)));
-    $("#q_" + t).textContent = qty[t];
-    redraw();
-  }));
-  goBtn.addEventListener("click", () => {
-    const lines = bulkLines();
-    if (lines.length) checkoutStep(lines, linesTotals(lines), "Модули списком — Момо примет заказ, соберёте сами как захотите.");
-  });
-});
-
 function payStep(order){
   open(`
     <h3>Оплата</h3>
