@@ -720,7 +720,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   border:1.5px solid var(--line);
   border-radius:20px;
   box-shadow:var(--shadow);
-  z-index:7;
+  /* выше .scene-head (21) — панель встаёт в тот же левый верхний угол,
+     что и заголовок «Соберите свой Котоши», и должна перекрывать его, а не наоборот */
+  z-index:22;
   opacity:0;visibility:hidden;transform:translateX(-112%);
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
