@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://tablets-generating-pack-wan.trycloudflare.com";
+window.KOTOSHI_API = "https://armor-wing-strictly-schema.trycloudflare.com";
