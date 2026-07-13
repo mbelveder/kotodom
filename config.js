@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://boutique-mime-furnished-recommend.trycloudflare.com";
+window.KOTOSHI_API = "https://biblical-today-rural-challenge.trycloudflare.com";
