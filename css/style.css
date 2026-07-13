@@ -96,6 +96,30 @@ button{font-family:inherit}
 .head-nav{margin-left:auto;display:flex;gap:18px;align-items:center}
 .head-nav a{color:var(--ink);text-decoration:none;font-weight:700;font-size:15px}
 .head-nav a:hover{color:var(--aka)}
+/* «Каталог модулей» — пока заглушка: комментарий во всплывающей подсказке при наведении */
+.nav-soon{
+  position:relative;color:var(--ink);font-weight:700;font-size:15px;
+  cursor:default;border-bottom:1px dashed color-mix(in srgb, var(--ink) 32%, transparent);
+}
+.nav-soon:hover,.nav-soon:focus-visible{color:var(--aka);outline:none}
+.nav-tip{
+  position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%) translateY(-4px);
+  width:max-content;max-width:240px;z-index:20;
+  padding:9px 12px;border-radius:12px;
+  border:1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background:var(--panel);box-shadow:var(--shadow);
+  font-size:12.5px;line-height:1.4;font-weight:600;color:var(--muted);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+}
+.nav-tip::before{
+  content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-bottom-color:var(--panel);
+}
+.nav-soon:hover .nav-tip,.nav-soon:focus-visible .nav-tip{
+  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);
+  transition:opacity .18s ease, transform .18s ease;
+}
 .demo-pill{
   font-size:12px;font-weight:800;color:var(--aka);
   border:1.5px dashed var(--aka);border-radius:99px;padding:3px 10px;
@@ -424,11 +448,6 @@ button{font-family:inherit}
 .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .btn-ghost:hover{border-color:var(--ink)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.order-hint{
-  flex:1 1 240px;min-width:200px;
-  font-size:12.5px;line-height:1.45;color:var(--muted);font-weight:600;
-}
-
 /* ============ секции ============ */
 /* компенсация под «липкую» шапку: якорные ссылки не прячут заголовок секции под ней */
 section{padding:56px 0 8px;scroll-margin-top:88px}
@@ -653,16 +672,6 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .order-lines li.total{font-weight:800;font-size:16px;border-bottom:none}
 .order-lines .n{font-variant-numeric:tabular-nums}
-/* строки «заказать списком»: имя · цена · счётчик */
-.bulk-lines li{align-items:center}
-.bulk-lines li span:first-child{flex:1}
-.bulk-lines .qty{display:inline-flex;align-items:center;gap:8px}
-.bulk-lines .qty b{min-width:18px;text-align:center;font-variant-numeric:tabular-nums}
-.bulk-lines .qty button{
-  width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);
-  background:transparent;color:var(--ink);font-size:15px;line-height:1;cursor:pointer;
-}
-.bulk-lines .qty button:hover{border-color:var(--aka);color:var(--aka)}
 .f-row{margin-bottom:12px}
 .f-row label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
 .f-row input,.f-row textarea{
