@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://bodies-turn-releases-evaluations.trycloudflare.com";
+window.KOTOSHI_API = "https://prototype-platform-acquisitions-prospects.trycloudflare.com";
