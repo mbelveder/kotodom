@@ -347,17 +347,18 @@ button{font-family:inherit}
 /* 3. чат — у самого аватара Момо в углу, стрелка короткая */
 .bg-tip--chat{left:3%;bottom:9%;flex-direction:column;gap:0}
 
-/* маленькая кнопка-тумблер «Инструкция» — возвращает приветственные подсказки;
-   пока гид открыт, та же кнопка становится «ОК, к делу» и закрывает его —
-   отдельной кнопки закрытия внизу гида больше нет, см. .guide-reopen.is-open и app.js */
+/* маленькая кнопка «показать подсказки ещё раз» — внутри <details class="scene-instr">
+   (открывает приветственный гид заново); пока гид открыт, кнопки закрытия здесь
+   больше нет — эту роль берёт на себя summary «Инструкция» → «ОК, к делу»,
+   см. .scene-instr.is-guide-open и app.js */
 .guide-reopen{
   display:inline-flex;align-items:center;gap:7px;
-  margin:4px 0 22px;
+  margin:10px 0 0;
   border:1.5px solid var(--line);border-radius:99px;
   background:var(--panel);color:var(--muted);cursor:pointer;
   padding:5px 13px 5px 7px;
   font-weight:800;font-size:12.5px;letter-spacing:.01em;
-  transition:border-color .15s ease, color .15s ease, background .15s ease;
+  transition:border-color .15s ease, color .15s ease;
 }
 .guide-reopen:hover{border-color:var(--aka);color:var(--aka)}
 .guide-reopen .gr-q{
@@ -365,9 +366,6 @@ button{font-family:inherit}
   width:19px;height:19px;border-radius:50%;flex:none;
   background:var(--aka);color:#FFFBF3;font-size:12px;line-height:1;
 }
-.guide-reopen.is-open{border-color:var(--aka);background:var(--aka);color:#FFFBF3}
-.guide-reopen.is-open:hover{background:var(--aka-deep);border-color:var(--aka-deep)}
-.guide-reopen.is-open .gr-q{background:#FFFBF3;color:var(--aka)}
 
 @media (max-width:900px){
   .bg-txt{font-size:13px;padding:6px 10px}
@@ -479,15 +477,42 @@ section{padding:56px 0 8px;scroll-margin-top:88px}
   scroll-margin-top:88px;
 }
 .scene-head h2{font-size:clamp(18px,2.1vw,24px);margin:6px 0 0}
-.scene-sub{font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0}
-.scene-head .guide-reopen{margin:12px 0 0}
+.scene-instr{margin:8px 0 0}
+.scene-instr summary{
+  display:inline-flex;align-items:center;gap:6px;
+  cursor:pointer;list-style:none;
+  border:1.5px solid var(--line);border-radius:99px;
+  background:var(--panel);color:var(--muted);
+  padding:5px 13px;
+  font-weight:800;font-size:12.5px;letter-spacing:.01em;
+  transition:border-color .15s ease, color .15s ease;
+}
+.scene-instr summary::-webkit-details-marker{display:none}
+.scene-instr summary::marker{content:""}
+.scene-instr summary::after{
+  content:"";width:0;height:0;flex:none;
+  border-left:4px solid transparent;border-right:4px solid transparent;
+  border-top:5px solid currentColor;
+  transition:transform .15s ease;
+}
+.scene-instr[open] summary{border-color:var(--aka);color:var(--aka)}
+.scene-instr[open] summary::after{transform:rotate(180deg)}
+.scene-instr summary:hover{border-color:var(--aka);color:var(--aka)}
+/* пока приветственный гид открыт, summary подменяет подпись на «ОК, к делу»
+   (см. app.js) и становится акцентной кнопкой закрытия — стрелка-маркер не нужна */
+.scene-instr.is-guide-open summary{
+  background:var(--aka);border-color:var(--aka);color:#FFFBF3;
+}
+.scene-instr.is-guide-open summary:hover{background:var(--aka-deep);border-color:var(--aka-deep)}
+.scene-instr.is-guide-open summary::after{display:none}
+.scene-sub-lead{font-size:13px;line-height:1.5;color:var(--muted);margin:10px 0 0}
+.scene-sub{font-size:13px;line-height:1.5;color:var(--muted);margin:6px 0 0;padding-left:1.15em;list-style:disc}
+.scene-sub li+li{margin-top:4px}
 @media (max-width:900px){
   .scene-head{top:8px;left:8px;max-width:min(70%,320px);padding:9px 12px 11px}
   .scene-head h2{font-size:17px}
-  .scene-sub{font-size:12px}
+  .scene-sub-lead,.scene-sub{font-size:12px}
 }
-/* на узких экранах описание убираем — над сценой остаётся компактная «шапка» */
-@media (max-width:560px){ .scene-sub{display:none} }
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
   display:flex;align-items:center;gap:10px;
