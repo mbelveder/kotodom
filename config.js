@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://festival-recruitment-common-make.trycloudflare.com";
+window.KOTOSHI_API = "https://silk-trust-thumbs-chemistry.trycloudflare.com";
