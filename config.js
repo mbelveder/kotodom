@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://scheduling-survival-syndrome-planet.trycloudflare.com";
+window.KOTOSHI_API = "https://boutique-mime-furnished-recommend.trycloudflare.com";
