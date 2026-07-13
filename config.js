@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://mirrors-silent-forge-precisely.trycloudflare.com";
+window.KOTOSHI_API = "https://festival-recruitment-common-make.trycloudflare.com";
