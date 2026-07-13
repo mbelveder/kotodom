@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://involving-blvd-removal-lamb.trycloudflare.com";
+window.KOTOSHI_API = "https://february-difference-warm-forty.trycloudflare.com";
