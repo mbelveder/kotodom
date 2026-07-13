@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://producers-selective-busy-excluded.trycloudflare.com";
+window.KOTOSHI_API = "https://tablets-generating-pack-wan.trycloudflare.com";
