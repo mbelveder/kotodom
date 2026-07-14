@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://root-director-everywhere-availability.trycloudflare.com";
+window.KOTOSHI_API = "https://changes-earth-citizenship-mineral.trycloudflare.com";
