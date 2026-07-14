@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://biblical-today-rural-challenge.trycloudflare.com";
+window.KOTOSHI_API = "https://ocean-committee-statistics-because.trycloudflare.com";
