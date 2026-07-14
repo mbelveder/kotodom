@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://victor-seeking-venice-ent.trycloudflare.com";
+window.KOTOSHI_API = "https://portion-discipline-weather-port.trycloudflare.com";
