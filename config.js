@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://timely-gamma-perform-stop.trycloudflare.com";
+window.KOTOSHI_API = "https://scenic-monte-kid-craps.trycloudflare.com";
