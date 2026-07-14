@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://lived-normally-defensive-minutes.trycloudflare.com";
+window.KOTOSHI_API = "https://exhibitions-parameters-rental-upgrade.trycloudflare.com";
