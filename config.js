@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://soup-loading-hope-correctly.trycloudflare.com";
+window.KOTOSHI_API = "https://best-bags-exception-mason.trycloudflare.com";
