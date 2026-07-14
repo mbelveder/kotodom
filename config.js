@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://appear-smith-meaningful-guarantee.trycloudflare.com";
+window.KOTOSHI_API = "https://view-teaching-motivated-paintball.trycloudflare.com";
