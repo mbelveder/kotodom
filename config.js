@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://town-movements-corporate-deluxe.trycloudflare.com";
+window.KOTOSHI_API = "https://hospitality-mitchell-patio-phantom.trycloudflare.com";
