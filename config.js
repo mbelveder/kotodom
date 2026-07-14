@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://millions-respect-covering-hitachi.trycloudflare.com";
+window.KOTOSHI_API = "https://says-occur-broadcasting-compliance.trycloudflare.com";
