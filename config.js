@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://bidding-bob-backup-suffered.trycloudflare.com";
+window.KOTOSHI_API = "https://referenced-selecting-terminology-bunny.trycloudflare.com";
