@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://flush-irc-bug-spies.trycloudflare.com";
+window.KOTOSHI_API = "https://lived-normally-defensive-minutes.trycloudflare.com";
