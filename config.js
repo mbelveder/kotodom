@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://involvement-basic-cloth-evaluated.trycloudflare.com";
+window.KOTOSHI_API = "https://soup-loading-hope-correctly.trycloudflare.com";
