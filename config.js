@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://sword-days-represent-vocational.trycloudflare.com";
+window.KOTOSHI_API = "https://pocket-actively-ultimate-pensions.trycloudflare.com";
