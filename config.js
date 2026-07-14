@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://fires-norfolk-attorney-expert.trycloudflare.com";
+window.KOTOSHI_API = "https://ownership-seven-generates-begun.trycloudflare.com";
