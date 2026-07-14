@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://productions-acdbentity-referred-literally.trycloudflare.com";
+window.KOTOSHI_API = "https://planned-rehabilitation-advancement-authorized.trycloudflare.com";
