@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://diagram-nuts-resumes-suddenly.trycloudflare.com";
+window.KOTOSHI_API = "https://fibre-quad-opera-fame.trycloudflare.com";
