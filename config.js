@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://everything-reviewed-promised-pottery.trycloudflare.com";
+window.KOTOSHI_API = "https://tba-mpg-pot-milwaukee.trycloudflare.com";
