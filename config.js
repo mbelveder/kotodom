@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://arm-cheque-wallpapers-thoroughly.trycloudflare.com";
+window.KOTOSHI_API = "https://entities-constitutes-taxation-incurred.trycloudflare.com";
