@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://sorry-summaries-startup-holdem.trycloudflare.com";
+window.KOTOSHI_API = "https://diagram-nuts-resumes-suddenly.trycloudflare.com";
