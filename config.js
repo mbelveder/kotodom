@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://spears-obituaries-present-mixed.trycloudflare.com";
+window.KOTOSHI_API = "https://grand-aims-arrangement-exit.trycloudflare.com";
