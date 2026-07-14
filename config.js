@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://engage-prophet-til-shopper.trycloudflare.com";
+window.KOTOSHI_API = "https://partnerships-donors-sunset-tail.trycloudflare.com";
