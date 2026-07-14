@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://riverside-vacuum-exhibits-donate.trycloudflare.com";
+window.KOTOSHI_API = "https://lanes-approach-intro-switches.trycloudflare.com";
