@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://loops-discs-webster-lewis.trycloudflare.com";
+window.KOTOSHI_API = "https://detected-common-character-send.trycloudflare.com";
