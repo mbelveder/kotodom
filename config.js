@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://discussing-grade-suffered-mustang.trycloudflare.com";
+window.KOTOSHI_API = "https://void-architects-participants-expansys.trycloudflare.com";
