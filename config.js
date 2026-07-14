@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://mailing-anthropology-pas-horse.trycloudflare.com";
+window.KOTOSHI_API = "https://glass-inclusion-task-quizzes.trycloudflare.com";
