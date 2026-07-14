@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://says-occur-broadcasting-compliance.trycloudflare.com";
+window.KOTOSHI_API = "https://flush-irc-bug-spies.trycloudflare.com";
