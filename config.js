@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://fascinating-eos-begins-ways.trycloudflare.com";
+window.KOTOSHI_API = "https://mobiles-double-cigarettes-sentences.trycloudflare.com";
