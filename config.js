@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://entities-constitutes-taxation-incurred.trycloudflare.com";
+window.KOTOSHI_API = "https://strengthening-posted-infants-union.trycloudflare.com";
