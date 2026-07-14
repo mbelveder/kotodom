@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://vat-furthermore-radiation-detection.trycloudflare.com";
+window.KOTOSHI_API = "https://beam-carriers-creatures-charlie.trycloudflare.com";
