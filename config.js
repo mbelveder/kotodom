@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://scenic-monte-kid-craps.trycloudflare.com";
+window.KOTOSHI_API = "https://newcastle-end-saturday-launch.trycloudflare.com";
