@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://nail-mean-lyric-southwest.trycloudflare.com";
+window.KOTOSHI_API = "https://skilled-dryer-powder-pat.trycloudflare.com";
