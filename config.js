@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://strength-classification-hybrid-orientation.trycloudflare.com";
+window.KOTOSHI_API = "https://everything-reviewed-promised-pottery.trycloudflare.com";
