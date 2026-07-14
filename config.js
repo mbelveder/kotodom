@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://frontier-conviction-broadcasting-desert.trycloudflare.com";
+window.KOTOSHI_API = "https://provider-loaded-behavior-exclusively.trycloudflare.com";
