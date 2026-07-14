@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://tap-gamma-administered-refurbished.trycloudflare.com";
+window.KOTOSHI_API = "https://spray-tests-reproduce-damages.trycloudflare.com";
