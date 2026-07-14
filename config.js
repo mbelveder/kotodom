@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://provider-loaded-behavior-exclusively.trycloudflare.com";
+window.KOTOSHI_API = "https://york-starring-writing-veteran.trycloudflare.com";
