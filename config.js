@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://view-teaching-motivated-paintball.trycloudflare.com";
+window.KOTOSHI_API = "https://steve-arrested-morgan-larger.trycloudflare.com";
