@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://make-signal-polished-cricket.trycloudflare.com";
+window.KOTOSHI_API = "https://fascinating-eos-begins-ways.trycloudflare.com";
