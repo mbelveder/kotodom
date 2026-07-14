@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://inbox-itself-arts-declaration.trycloudflare.com";
+window.KOTOSHI_API = "https://losses-veterinary-sender-areas.trycloudflare.com";
