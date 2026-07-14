@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://primary-pre-diamond-procurement.trycloudflare.com";
+window.KOTOSHI_API = "https://arm-cheque-wallpapers-thoroughly.trycloudflare.com";
