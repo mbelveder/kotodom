@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://beam-carriers-creatures-charlie.trycloudflare.com";
+window.KOTOSHI_API = "https://technical-theory-newer-load.trycloudflare.com";
