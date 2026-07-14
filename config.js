@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://curriculum-bag-classroom-examinations.trycloudflare.com";
+window.KOTOSHI_API = "https://experimental-constitution-survivor-reef.trycloudflare.com";
