@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://titled-graphic-responsibility-custody.trycloudflare.com";
+window.KOTOSHI_API = "https://turner-filme-memo-about.trycloudflare.com";
