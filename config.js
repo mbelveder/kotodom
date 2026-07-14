@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://discussions-hrs-sheer-put.trycloudflare.com";
+window.KOTOSHI_API = "https://demonstrates-applicant-publication-uri.trycloudflare.com";
