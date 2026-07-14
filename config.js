@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://retained-arctic-holes-consultation.trycloudflare.com";
+window.KOTOSHI_API = "https://sorry-summaries-startup-holdem.trycloudflare.com";
