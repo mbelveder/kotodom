@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://steve-arrested-morgan-larger.trycloudflare.com";
+window.KOTOSHI_API = "https://situation-surplus-endless-alliance.trycloudflare.com";
