@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://situation-surplus-endless-alliance.trycloudflare.com";
+window.KOTOSHI_API = "https://world-pixels-recipient-licence.trycloudflare.com";
