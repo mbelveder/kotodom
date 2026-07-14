@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://permitted-wedding-replica-fotos.trycloudflare.com";
+window.KOTOSHI_API = "https://emerging-investigations-town-dakota.trycloudflare.com";
