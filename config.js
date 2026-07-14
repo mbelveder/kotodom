@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://ocean-committee-statistics-because.trycloudflare.com";
+window.KOTOSHI_API = "https://productions-acdbentity-referred-literally.trycloudflare.com";
