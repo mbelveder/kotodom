@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://psychology-she-schemes-unsubscribe.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
