@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://losses-veterinary-sender-areas.trycloudflare.com";
+window.KOTOSHI_API = "https://minerals-defense-turner-measuring.trycloudflare.com";
