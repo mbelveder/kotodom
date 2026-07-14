@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://allen-bachelor-depot-ears.trycloudflare.com";
+window.KOTOSHI_API = "https://reproduce-much-look-aruba.trycloudflare.com";
