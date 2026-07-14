@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://exhibitions-parameters-rental-upgrade.trycloudflare.com";
+window.KOTOSHI_API = "https://based-chapters-administrator-recommendation.trycloudflare.com";
