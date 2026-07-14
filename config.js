@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://negotiations-question-places-rpm.trycloudflare.com";
+window.KOTOSHI_API = "https://appear-smith-meaningful-guarantee.trycloudflare.com";
