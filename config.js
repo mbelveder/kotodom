@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://detected-common-character-send.trycloudflare.com";
+window.KOTOSHI_API = "https://strength-classification-hybrid-orientation.trycloudflare.com";
