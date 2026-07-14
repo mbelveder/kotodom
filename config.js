@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://fantastic-brakes-athens-epic.trycloudflare.com";
+window.KOTOSHI_API = "https://transmission-runner-sociology-inkjet.trycloudflare.com";
