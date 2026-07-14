@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://cloudy-differ-parker-bit.trycloudflare.com";
+window.KOTOSHI_API = "https://began-clip-ralph-vote.trycloudflare.com";
