@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://coverage-supposed-organizational-referenced.trycloudflare.com";
+window.KOTOSHI_API = "https://attacked-steady-deutsche-happen.trycloudflare.com";
