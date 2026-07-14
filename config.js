@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://prison-just-roughly-euro.trycloudflare.com";
+window.KOTOSHI_API = "https://merry-forestry-portraits-sales.trycloudflare.com";
