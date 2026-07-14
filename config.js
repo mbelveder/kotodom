@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://marked-rarely-biographies-voltage.trycloudflare.com";
+window.KOTOSHI_API = "https://player-acre-breaks-makeup.trycloudflare.com";
