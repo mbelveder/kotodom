@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://triumph-option-catering-proof.trycloudflare.com";
+window.KOTOSHI_API = "https://features-across-arrive-guests.trycloudflare.com";
