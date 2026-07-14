@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://examined-dans-asia-highland.trycloudflare.com";
+window.KOTOSHI_API = "https://brave-north-defines-coordination.trycloudflare.com";
