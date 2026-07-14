@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://consistency-musical-students-accurate.trycloudflare.com";
+window.KOTOSHI_API = "https://boots-leslie-base-controlled.trycloudflare.com";
