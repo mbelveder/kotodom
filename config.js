@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://pocket-actively-ultimate-pensions.trycloudflare.com";
+window.KOTOSHI_API = "https://computed-kennedy-occurring-shipment.trycloudflare.com";
