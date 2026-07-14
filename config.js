@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://multimedia-substantially-emacs-clause.trycloudflare.com";
+window.KOTOSHI_API = "https://timely-gamma-perform-stop.trycloudflare.com";
