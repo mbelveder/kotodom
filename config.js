@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://brave-north-defines-coordination.trycloudflare.com";
+window.KOTOSHI_API = "https://make-signal-polished-cricket.trycloudflare.com";
