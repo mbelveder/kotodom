@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://hong-pics-updating-studios.trycloudflare.com";
+window.KOTOSHI_API = "https://suitable-magazine-publishers-formats.trycloudflare.com";
