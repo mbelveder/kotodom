@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://qualified-democratic-inspector-organizations.trycloudflare.com";
+window.KOTOSHI_API = "https://belkin-words-pump-sunset.trycloudflare.com";
