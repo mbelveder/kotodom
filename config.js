@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://burke-rainbow-evaluations-affiliated.trycloudflare.com";
+window.KOTOSHI_API = "https://millions-respect-covering-hitachi.trycloudflare.com";
