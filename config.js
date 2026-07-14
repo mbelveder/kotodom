@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://releases-induced-bikini-nested.trycloudflare.com";
+window.KOTOSHI_API = "https://directed-crawford-exact-many.trycloudflare.com";
