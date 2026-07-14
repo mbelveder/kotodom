@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://ownership-seven-generates-begun.trycloudflare.com";
+window.KOTOSHI_API = "https://inbox-itself-arts-declaration.trycloudflare.com";
