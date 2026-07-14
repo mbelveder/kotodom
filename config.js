@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://recognition-balanced-bizarre-plane.trycloudflare.com";
+window.KOTOSHI_API = "https://lived-fire-promised-documents.trycloudflare.com";
