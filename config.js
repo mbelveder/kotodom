@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://glass-inclusion-task-quizzes.trycloudflare.com";
+window.KOTOSHI_API = "https://wichita-christina-contributions-allergy.trycloudflare.com";
