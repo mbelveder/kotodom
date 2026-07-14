@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://belkin-words-pump-sunset.trycloudflare.com";
+window.KOTOSHI_API = "https://socket-summaries-threaded-towers.trycloudflare.com";
