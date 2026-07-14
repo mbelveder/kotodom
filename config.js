@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://partnerships-donors-sunset-tail.trycloudflare.com";
+window.KOTOSHI_API = "https://nominations-clock-text-regression.trycloudflare.com";
