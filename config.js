@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://referenced-selecting-terminology-bunny.trycloudflare.com";
+window.KOTOSHI_API = "https://ron-rhode-established-brought.trycloudflare.com";
