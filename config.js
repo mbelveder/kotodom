@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://world-pixels-recipient-licence.trycloudflare.com";
+window.KOTOSHI_API = "https://movie-eyed-contractors-hugo.trycloudflare.com";
