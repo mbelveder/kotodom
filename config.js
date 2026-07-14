@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://reproduce-much-look-aruba.trycloudflare.com";
+window.KOTOSHI_API = "https://menus-held-equipment-science.trycloudflare.com";
