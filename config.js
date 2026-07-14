@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://planned-rehabilitation-advancement-authorized.trycloudflare.com";
+window.KOTOSHI_API = "https://vat-furthermore-radiation-detection.trycloudflare.com";
