@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://socket-summaries-threaded-towers.trycloudflare.com";
+window.KOTOSHI_API = "https://appliances-totally-utilities-shower.trycloudflare.com";
