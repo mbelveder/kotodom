@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://boots-leslie-base-controlled.trycloudflare.com";
+window.KOTOSHI_API = "https://involvement-basic-cloth-evaluated.trycloudflare.com";
