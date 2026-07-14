@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://lived-fire-promised-documents.trycloudflare.com";
+window.KOTOSHI_API = "https://workforce-seems-volume-encourages.trycloudflare.com";
