@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://nominations-clock-text-regression.trycloudflare.com";
+window.KOTOSHI_API = "https://hollow-buyer-matt-cent.trycloudflare.com";
