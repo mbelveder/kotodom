@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://skilled-dryer-powder-pat.trycloudflare.com";
+window.KOTOSHI_API = "https://coverage-supposed-organizational-referenced.trycloudflare.com";
