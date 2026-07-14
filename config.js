@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://void-architects-participants-expansys.trycloudflare.com";
+window.KOTOSHI_API = "https://hong-pics-updating-studios.trycloudflare.com";
