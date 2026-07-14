@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://agreed-must-blah-fundamental.trycloudflare.com";
+window.KOTOSHI_API = "https://platforms-flag-corrected-appreciate.trycloudflare.com";
