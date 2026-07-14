@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://suitable-magazine-publishers-formats.trycloudflare.com";
+window.KOTOSHI_API = "https://scheduling-passes-specs-single.trycloudflare.com";
