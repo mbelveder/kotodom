@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://gospel-climb-close-troubleshooting.trycloudflare.com";
+window.KOTOSHI_API = "https://triumph-option-catering-proof.trycloudflare.com";
