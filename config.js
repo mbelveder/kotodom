@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://player-acre-breaks-makeup.trycloudflare.com";
+window.KOTOSHI_API = "https://bee-removal-flux-revolutionary.trycloudflare.com";
