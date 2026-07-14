@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://investing-silicon-bring-games.trycloudflare.com";
+window.KOTOSHI_API = "https://discussing-grade-suffered-mustang.trycloudflare.com";
