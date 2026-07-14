@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://workforce-seems-volume-encourages.trycloudflare.com";
+window.KOTOSHI_API = "https://tap-gamma-administered-refurbished.trycloudflare.com";
