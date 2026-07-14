@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://heart-russell-potter-avi.trycloudflare.com";
+window.KOTOSHI_API = "https://agreed-must-blah-fundamental.trycloudflare.com";
