@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://scheduling-passes-specs-single.trycloudflare.com";
+window.KOTOSHI_API = "https://monitored-pty-bumper-strengthening.trycloudflare.com";
