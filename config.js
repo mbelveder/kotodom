@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://net-months-quick-brochure.trycloudflare.com";
+window.KOTOSHI_API = "https://absolutely-managing-drain-membrane.trycloudflare.com";
