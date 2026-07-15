@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://architecture-kinase-readers-stored.trycloudflare.com";
+window.KOTOSHI_API = "https://combined-muscle-mitsubishi-true.trycloudflare.com";
