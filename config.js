@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://absolutely-managing-drain-membrane.trycloudflare.com";
+window.KOTOSHI_API = "https://duty-cindy-flexibility-footage.trycloudflare.com";
