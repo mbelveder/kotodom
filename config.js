@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://experiments-auto-middle-orchestra.trycloudflare.com";
+window.KOTOSHI_API = "https://mate-cheats-jail-adaptation.trycloudflare.com";
