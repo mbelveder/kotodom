@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://welding-reservations-wives-languages.trycloudflare.com";
+window.KOTOSHI_API = "https://milan-payroll-labeled-whether.trycloudflare.com";
