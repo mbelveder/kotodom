@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://permitted-sticky-region-dennis.trycloudflare.com";
+window.KOTOSHI_API = "https://mumbai-player-expenses-bachelor.trycloudflare.com";
