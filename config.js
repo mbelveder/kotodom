@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://luxury-certainly-arab-satisfactory.trycloudflare.com";
+window.KOTOSHI_API = "https://transform-therefore-breath-singing.trycloudflare.com";
