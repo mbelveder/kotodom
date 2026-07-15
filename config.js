@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://continuous-phrases-you-conventional.trycloudflare.com";
+window.KOTOSHI_API = "https://keep-creates-remember-option.trycloudflare.com";
