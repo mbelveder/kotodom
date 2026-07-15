@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://consultants-mandatory-attacks-ecological.trycloudflare.com";
+window.KOTOSHI_API = "https://ocean-libraries-announcement-operational.trycloudflare.com";
