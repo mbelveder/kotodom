@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://griffin-wine-productive-necessary.trycloudflare.com";
+window.KOTOSHI_API = "https://ware-feels-price-mean.trycloudflare.com";
