@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://treat-yearly-timer-champions.trycloudflare.com";
+window.KOTOSHI_API = "https://dicke-bachelor-shades-composer.trycloudflare.com";
