@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://academics-symantec-arg-understand.trycloudflare.com";
+window.KOTOSHI_API = "https://griffin-wine-productive-necessary.trycloudflare.com";
