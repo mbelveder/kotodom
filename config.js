@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://blessed-maryland-describing-assistant.trycloudflare.com";
+window.KOTOSHI_API = "https://continuous-phrases-you-conventional.trycloudflare.com";
