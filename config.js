@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://dicke-bachelor-shades-composer.trycloudflare.com";
+window.KOTOSHI_API = "https://academics-symantec-arg-understand.trycloudflare.com";
