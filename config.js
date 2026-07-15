@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://ocean-libraries-announcement-operational.trycloudflare.com";
+window.KOTOSHI_API = "https://architecture-kinase-readers-stored.trycloudflare.com";
