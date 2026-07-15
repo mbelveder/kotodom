@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://mate-cheats-jail-adaptation.trycloudflare.com";
+window.KOTOSHI_API = "https://counters-continental-discovery-styles.trycloudflare.com";
