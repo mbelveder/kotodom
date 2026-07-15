@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://attribute-exactly-facts-solo.trycloudflare.com";
+window.KOTOSHI_API = "https://net-months-quick-brochure.trycloudflare.com";
