@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://counters-continental-discovery-styles.trycloudflare.com";
+window.KOTOSHI_API = "https://lafayette-rrp-roots-advertisers.trycloudflare.com";
