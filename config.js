@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://behind-yours-yale-upcoming.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
