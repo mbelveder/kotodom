@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://prints-formats-america-tank.trycloudflare.com";
+window.KOTOSHI_API = "https://permitted-sticky-region-dennis.trycloudflare.com";
