@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://sports-colored-acm-snake.trycloudflare.com";
+window.KOTOSHI_API = "https://settlement-fool-telephony-roles.trycloudflare.com";
