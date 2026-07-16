@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://equity-equilibrium-pre-photos.trycloudflare.com";
+window.KOTOSHI_API = "https://astrology-like-discussion-debug.trycloudflare.com";
