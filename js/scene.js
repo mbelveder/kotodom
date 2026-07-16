@@ -351,6 +351,7 @@ api.init = function(){
   /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конструктора домиков
      (раньше брали _snapshot, который никто не наполнял, — дом исчезал) */
   darkMq.addEventListener("change", () => {
+    if (KD.cancelDrag) KD.cancelDrag(); // драг держит якоря старой сцены
     build();
     const grid = KD.configurator ? KD.configurator.getGrid() : api._snapshot;
     if (grid) api.restore(grid);
@@ -375,6 +376,7 @@ api.restore = function(grid){
 };
 
 api.place = function(i, type, instant, opts){
+  if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту
   opts = Object.assign({}, opts);
   /* до какой высоты тянутся опоры: верх модуля снизу (или граница ячейки/пол) */
   const supOf = b => b && MODULES[b] ? CELL + (TOP_Y[b] ?? -CELL/2) : CELL/2;
@@ -438,14 +440,14 @@ api.cellClientPos = function(i){
    обрезаем по непрозрачным пикселям и вписываем в 76×64 (@2x) — иконка
    выглядит ровно так же, как модуль в сцене */
 api.moduleIcon = function(type){
+  const savedP = P;
+  try{
   const big = document.createElement("canvas");
   big.width = 420; big.height = 320;
-  const savedP = P;
   P = PALETTES.light; // чипы лотка всегда светлые (в тёмной теме — кремовые)
   const mini = new Zdog.Illustration({ element: big, zoom: 2 });
   const wld = new Zdog.Anchor({ addTo: mini, rotate: { x: -0.24, y: 0.30 } });
   makeModule(type, wld, {});
-  P = savedP;
   mini.updateRenderGraph();
   const W = big.width, Hh = big.height;
   const px = big.getContext("2d").getImageData(0, 0, W, Hh).data;
@@ -466,6 +468,11 @@ api.moduleIcon = function(type){
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(big, x0, y0, bw, bh, (OW-bw*k)/2, (OH-bh*k)/2, bw*k, bh*k);
   return out.toDataURL();
+  }catch(_){
+    return ""; // лоток покажет текстовую заглушку вместо иконки
+  }finally{
+    P = savedP;
+  }
 };
 
 /* «соло»-рендер: в сцене остаётся ТОЛЬКО постройка (без комнаты, декора и
