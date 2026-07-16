@@ -96,6 +96,30 @@ button{font-family:inherit}
 .head-nav{margin-left:auto;display:flex;gap:18px;align-items:center}
 .head-nav a{color:var(--ink);text-decoration:none;font-weight:700;font-size:15px}
 .head-nav a:hover{color:var(--aka)}
+/* «Каталог модулей» — пока заглушка: комментарий во всплывающей подсказке при наведении */
+.nav-soon{
+  position:relative;color:var(--ink);font-weight:700;font-size:15px;
+  cursor:default;border-bottom:1px dashed color-mix(in srgb, var(--ink) 32%, transparent);
+}
+.nav-soon:hover,.nav-soon:focus-visible{color:var(--aka);outline:none}
+.nav-tip{
+  position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%) translateY(-4px);
+  width:max-content;max-width:240px;z-index:20;
+  padding:9px 12px;border-radius:12px;
+  border:1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background:var(--panel);box-shadow:var(--shadow);
+  font-size:12.5px;line-height:1.4;font-weight:600;color:var(--muted);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+}
+.nav-tip::before{
+  content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-bottom-color:var(--panel);
+}
+.nav-soon:hover .nav-tip,.nav-soon:focus-visible .nav-tip{
+  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);
+  transition:opacity .18s ease, transform .18s ease;
+}
 .demo-pill{
   font-size:12px;font-weight:800;color:var(--aka);
   border:1.5px dashed var(--aka);border-radius:99px;padding:3px 10px;
@@ -103,22 +127,20 @@ button{font-family:inherit}
 }
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
 
-/* ============ hero: заголовок + буллеты и видео ============ */
-.hero2{padding:26px 0 4px;text-align:center}
-.hero2 .eyebrow-jp{
-  font-size:14px;font-weight:800;letter-spacing:.5em;color:var(--aka);
+/* ============ hero: заголовок слева (как в ранней версии), ролик справа ============ */
+.hero2{padding:34px 0 8px}
+.eyebrow-jp{
+  font-size:13px;font-weight:800;letter-spacing:.4em;color:var(--aka);
 }
-.hero2 h1{font-size:clamp(26px,3.6vw,38px);margin:4px 0 0}
+.hero-copy h1{font-size:clamp(26px,3.6vw,38px);margin:6px 0 22px}
 
-/* буллеты + видео под заголовком; текст снова выравнивается влево */
 .hero-grid{
   display:grid;grid-template-columns:1.05fr .95fr;gap:38px;align-items:center;
-  margin-top:28px;text-align:left;
 }
 @media (max-width:860px){
   .hero-grid{grid-template-columns:1fr;gap:24px}
 }
-.hero-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
+.hero-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:24px}
 .hero-points li{display:flex;gap:13px;align-items:flex-start}
 .pt-ico{
   flex:none;width:42px;height:42px;border-radius:13px;
@@ -130,7 +152,56 @@ button{font-family:inherit}
 .hero-points p{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--muted)}
 .hero-cta{display:inline-block;margin-top:24px;text-decoration:none}
 
-/* ============ студия (конструктор) ============ */
+/* ============ готовые сборки: витрина под hero (фото/мокап + видео уже отыграли своё выше) ============ */
+.showcase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+@media (max-width:900px){.showcase-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.showcase-grid{grid-template-columns:1fr}}
+.sc-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;
+}
+.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper)}
+.sc-media img{width:100%;height:100%;display:block;object-fit:cover}
+/* три сборки ещё без фотосъёмки — вместо неё мокап с иероглифом темы, честно без притворства */
+/* иероглиф держим в верхней трети: нижняя часть карточки уходит под подпись-стекло */
+.sc-mock{width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;padding-top:16%;
+  background:linear-gradient(155deg,
+    color-mix(in srgb, var(--sakura) 55%, var(--panel)),
+    color-mix(in srgb, var(--wood) 40%, var(--panel)));
+}
+.sc-mock span{
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:58px;
+  color:color-mix(in srgb, var(--aka) 42%, var(--panel));
+}
+/* описание поверх фото — «жидкое стекло», проявляется на ховере/фокусе,
+   как у карточек сайдбара (см. .pc-hover); имя сборки — не описание, оно ниже, всегда видно */
+.sc-cap{
+  position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:12px;font-size:14.5px;line-height:1.45;font-weight:600;color:var(--ink);
+  background:linear-gradient(to top,
+    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
+    color-mix(in srgb, var(--panel) 34%, transparent) 85%, transparent);
+  backdrop-filter:blur(5px) saturate(1.1);
+  -webkit-backdrop-filter:blur(5px) saturate(1.1);
+  opacity:0;transition:opacity .28s ease;pointer-events:none;
+}
+.sc-card:hover .sc-cap,.sc-card:focus-within .sc-cap{opacity:1}
+@media (prefers-reduced-motion: reduce){ .sc-cap{transition:none} }
+/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу на фото */
+@media (hover:none){
+  .sc-cap{opacity:1;
+    background:linear-gradient(to top,
+      color-mix(in srgb, var(--panel) 88%, transparent) 60%, transparent);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  }
+}
+.sc-ft{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.sc-nm{font-weight:800;font-size:15.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sc-pr{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.sc-ft .btn{width:100%;padding:8px 16px;font-size:13.5px}
+
+/* ============ студия (конструктор домиков) ============ */
 .studio{
   margin:26px auto 0;
   background:var(--panel);
@@ -221,10 +292,96 @@ button{font-family:inherit}
   .studio-main.chat-open .momo-say{left:10px;bottom:72px}
 }
 
-/* подсказка */
+/* ============ приветственный гид конструктора домиков ============ */
+/* слой поверх сцены: три подсказки со стрелками к реальным элементам
+   (готовые сборки → вкладка справа, сборка → сцена, чат → аватар слева).
+   Растворяется по «ОК, к делу»; показывается один раз, см. js/app.js */
+.build-guide{
+  position:absolute;inset:0;z-index:20;
+  opacity:1;transition:opacity .5s ease;
+}
+.build-guide[hidden]{display:none}
+.build-guide.hiding{opacity:0;pointer-events:none}
+.bg-scrim{
+  position:absolute;inset:0;
+  background:radial-gradient(120% 100% at 50% 40%,
+             color-mix(in srgb, var(--ink) 34%, transparent),
+             color-mix(in srgb, var(--ink) 60%, transparent));
+  -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);
+}
+.bg-tip{
+  position:absolute;z-index:2;display:flex;align-items:center;gap:2px;
+  pointer-events:none;
+}
+.bg-txt{
+  font-family:"M PLUS Rounded 1c",sans-serif;
+  font-weight:800;font-size:16px;line-height:1.18;text-align:center;
+  color:var(--ink);background:var(--panel);
+  border:1.5px solid var(--ink);border-radius:14px;
+  padding:8px 14px;box-shadow:3px 3px 0 var(--aka);
+}
+.bg-arw{flex:none;overflow:visible}
+.bg-arw path{fill:none;stroke:var(--aka);stroke-width:2.6;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* подсветка подсказки: клик по «Готовые сборки» в шапке, когда гид ещё открыт —
+   вспыхивает нужный ярлык вместо открытия панели за затемнением (см. app.js) */
+.bg-tip.lit .bg-txt{animation:bg-pulse 1s ease 2}
+@keyframes bg-pulse{
+  0%,100%{box-shadow:3px 3px 0 var(--aka);transform:none}
+  50%{box-shadow:0 0 0 5px color-mix(in srgb, var(--aka) 45%, transparent),3px 3px 0 var(--aka);
+      transform:scale(1.07)}
+}
+@media (prefers-reduced-motion: reduce){
+  .bg-tip.lit .bg-txt{animation:none;
+    box-shadow:0 0 0 5px color-mix(in srgb, var(--aka) 45%, transparent),3px 3px 0 var(--aka)}
+}
+
+/* 1. готовые сборки — подсказка у самой вкладки, стрелка короткая */
+.bg-tip--presets{top:44%;right:3%;flex-direction:row}
+/* 2. собрать самому — подсказка ниже центра, к самому низу сцены (кнопка
+   «ОК, к делу» переехала в шапку — место внизу освободилось), длинная стрелка
+   уходит ниже scene-wrap к полке модулей (.tray) — ни один родитель не обрезает
+   overflow вплоть до .studio, так что «хвост» стрелки виден поверх неё */
+.bg-tip--self{bottom:-6%;left:44%;transform:translateX(-50%);flex-direction:column;gap:0}
+/* 3. чат — у самого аватара Момо в углу, стрелка короткая */
+.bg-tip--chat{left:3%;bottom:9%;flex-direction:column;gap:0}
+
+/* маленькая кнопка «показать подсказки ещё раз» — внутри <details class="scene-instr">
+   (открывает приветственный гид заново); пока гид открыт, кнопки закрытия здесь
+   больше нет — эту роль берёт на себя summary «Инструкция» → «ОК, к делу»,
+   см. .scene-instr.is-guide-open и app.js */
+.guide-reopen{
+  display:inline-flex;align-items:center;gap:7px;
+  margin:10px 0 0;
+  border:1.5px solid var(--line);border-radius:99px;
+  background:var(--panel);color:var(--muted);cursor:pointer;
+  padding:5px 13px 5px 7px;
+  font-weight:800;font-size:12.5px;letter-spacing:.01em;
+  transition:border-color .15s ease, color .15s ease;
+}
+.guide-reopen:hover{border-color:var(--aka);color:var(--aka)}
+.guide-reopen .gr-q{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:19px;height:19px;border-radius:50%;flex:none;
+  background:var(--aka);color:#FFFBF3;font-size:12px;line-height:1;
+}
+
+@media (max-width:900px){
+  .bg-txt{font-size:13px;padding:6px 10px}
+  .bg-tip--presets{top:38%;right:2%}
+  .bg-tip--chat{left:2%;bottom:12%}
+  .bg-tip--presets .bg-arw,.bg-tip--chat .bg-arw{width:44px;height:auto}
+}
+@media (prefers-reduced-motion: reduce){
+  .build-guide{transition:none}
+}
+
+/* подсказка над полкой модулей */
 .hint-bar{
+  display:flex;align-items:center;justify-content:center;gap:10px;
   text-align:center;font-size:14px;color:var(--muted);font-weight:600;
-  padding:2px 16px 10px;
+  padding:2px 16px 12px;
 }
 
 /* полка модулей: все 9 видны сразу, без прокрутки */
@@ -301,16 +458,64 @@ button{font-family:inherit}
 .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .btn-ghost:hover{border-color:var(--ink)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.order-hint{
-  flex:1 1 240px;min-width:200px;
-  font-size:12.5px;line-height:1.45;color:var(--muted);font-weight:600;
-}
-
 /* ============ секции ============ */
-section{padding:56px 0 8px}
-/* конструктору — контейнер пошире: без сайдбара сцена занимает всю ширину */
+/* компенсация под «липкую» шапку: якорные ссылки не прячут заголовок секции под ней */
+section{padding:56px 0 8px;scroll-margin-top:88px}
+/* конструктору домиков — контейнер пошире: без сайдбара сцена занимает всю ширину */
 #builder .wrap{max-width:1080px}
-#builder .sec-sub{margin-bottom:20px}
+/* заголовок конструктора домиков — «жидкое стекло» в левом верхнем углу сцены, виден всегда
+   (описание больше не прячется под ховер); сцена читается сквозь подложку.
+   z-index выше .build-guide (20) — шапка не гаснет под затемнением гида,
+   кнопка-тумблер внутри неё остаётся кликабельной поверх сцрима */
+.scene-head{
+  position:absolute;top:14px;left:14px;z-index:21;
+  max-width:min(52%, 384px);
+  padding:12px 16px 14px;
+  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius:16px;
+  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  backdrop-filter:blur(7px) saturate(1.15);
+  -webkit-backdrop-filter:blur(7px) saturate(1.15);
+  box-shadow:var(--shadow);
+  scroll-margin-top:88px;
+}
+.scene-head h2{font-size:clamp(18px,2.1vw,24px);margin:6px 0 0}
+.scene-instr{margin:8px 0 0}
+.scene-instr summary{
+  display:inline-flex;align-items:center;gap:6px;
+  cursor:pointer;list-style:none;
+  border:1.5px solid var(--line);border-radius:99px;
+  background:var(--panel);color:var(--muted);
+  padding:5px 13px;
+  font-weight:800;font-size:12.5px;letter-spacing:.01em;
+  transition:border-color .15s ease, color .15s ease;
+}
+.scene-instr summary::-webkit-details-marker{display:none}
+.scene-instr summary::marker{content:""}
+.scene-instr summary::after{
+  content:"";width:0;height:0;flex:none;
+  border-left:4px solid transparent;border-right:4px solid transparent;
+  border-top:5px solid currentColor;
+  transition:transform .15s ease;
+}
+.scene-instr[open] summary{border-color:var(--aka);color:var(--aka)}
+.scene-instr[open] summary::after{transform:rotate(180deg)}
+.scene-instr summary:hover{border-color:var(--aka);color:var(--aka)}
+/* пока приветственный гид открыт, summary подменяет подпись на «ОК, к делу»
+   (см. app.js) и становится акцентной кнопкой закрытия — стрелка-маркер не нужна */
+.scene-instr.is-guide-open summary{
+  background:var(--aka);border-color:var(--aka);color:#FFFBF3;
+}
+.scene-instr.is-guide-open summary:hover{background:var(--aka-deep);border-color:var(--aka-deep)}
+.scene-instr.is-guide-open summary::after{display:none}
+.scene-sub-lead{font-size:13px;line-height:1.5;color:var(--muted);margin:10px 0 0}
+.scene-sub{font-size:13px;line-height:1.5;color:var(--muted);margin:6px 0 0;padding-left:1.15em;list-style:disc}
+.scene-sub li+li{margin-top:4px}
+@media (max-width:900px){
+  .scene-head{top:8px;left:8px;max-width:min(70%,320px);padding:9px 12px 11px}
+  .scene-head h2{font-size:17px}
+  .scene-sub-lead,.scene-sub{font-size:12px}
+}
 .sec-eyebrow{
   font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
   display:flex;align-items:center;gap:10px;
@@ -346,6 +551,11 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
 .preset-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+/* «ОК, к делу» в гиде закрывает сайдбар медленно — видно, куда он уезжает (см. app.js) */
+.preset-panel.slow-hide{
+  transition:transform .85s ease, opacity .85s ease, visibility 0s linear .85s;
+}
+@media (prefers-reduced-motion: reduce){ .preset-panel.slow-hide{transition:none} }
 @media (max-width:900px){
   /* на телефоне панель — «шторка» снизу экрана, как чат */
   .preset-panel{
@@ -372,14 +582,42 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   border:1px solid var(--line);border-radius:16px;
   overflow:hidden;flex:none;
 }
+/* aspect-ratio на самом media: три сборки без фото (см. SHOWCASE) кладут сюда
+   .sc-mock вместо img, а он высоты не задаёт — контейнер иначе схлопнется */
+.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9}
 .preset-card img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover}
-.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+/* описание поверх фото: «жидкое стекло» проявляется на ховере/фокусе —
+   так карточка ниже, и в узкой панели помещается больше сборок */
+.preset-card .pc-hover{
+  position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:12px;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--ink);
+  background:linear-gradient(to top,
+    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
+    color-mix(in srgb, var(--panel) 40%, transparent) 85%, transparent);
+  backdrop-filter:blur(10px) saturate(1.25);
+  -webkit-backdrop-filter:blur(10px) saturate(1.25);
+  opacity:0;transition:opacity .28s ease;pointer-events:none;
+}
+.preset-card:hover .pc-hover,.preset-card:focus-within .pc-hover{opacity:1}
+@media (prefers-reduced-motion: reduce){ .preset-card .pc-hover{transition:none} }
+/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу */
+@media (hover:none){
+  .preset-card .pc-hover{position:static;opacity:1;padding:8px 12px 10px;
+    backdrop-filter:none;-webkit-backdrop-filter:none;background:none;color:var(--muted)}
+}
+.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
 .preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.preset-card .pc-ds{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted);font-weight:600}
-.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%;margin-top:2px}
+.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%}
+/* карточка выбрана кликом «Собрать» в витрине над hero — коротко подсвечиваем, куда попал план */
+.preset-card.hl{animation:pc-hl 1.7s ease}
+@keyframes pc-hl{
+  0%,100%{box-shadow:none}
+  15%{box-shadow:0 0 0 3px color-mix(in srgb, var(--aka) 55%, transparent)}
+}
 
 /* как это работает */
+.modes-note{font-weight:800;color:var(--ink);font-size:15px;margin:0 0 14px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media (max-width:760px){.steps{grid-template-columns:1fr}}
 .step{
@@ -453,16 +691,6 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .order-lines li.total{font-weight:800;font-size:16px;border-bottom:none}
 .order-lines .n{font-variant-numeric:tabular-nums}
-/* строки «заказать списком»: имя · цена · счётчик */
-.bulk-lines li{align-items:center}
-.bulk-lines li span:first-child{flex:1}
-.bulk-lines .qty{display:inline-flex;align-items:center;gap:8px}
-.bulk-lines .qty b{min-width:18px;text-align:center;font-variant-numeric:tabular-nums}
-.bulk-lines .qty button{
-  width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);
-  background:transparent;color:var(--ink);font-size:15px;line-height:1;cursor:pointer;
-}
-.bulk-lines .qty button:hover{border-color:var(--aka);color:var(--aka)}
 .f-row{margin-bottom:12px}
 .f-row label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
 .f-row input,.f-row textarea{
@@ -495,7 +723,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   border:1.5px solid var(--line);
   border-radius:20px;
   box-shadow:var(--shadow);
-  z-index:7;
+  /* выше .scene-head (21) — панель встаёт в тот же левый верхний угол,
+     что и заголовок «Соберите свой Котоши», и должна перекрывать его, а не наоборот */
+  z-index:22;
   opacity:0;visibility:hidden;transform:translateX(-112%);
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
@@ -630,6 +860,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 @media (max-width:860px){ .film-frame{aspect-ratio:16/9} }
 .film-frame video{display:block;width:100%;height:100%;object-fit:cover}
+
+/* видео-демо в разделе «умная игрушка» — отдельная широкая рамка 16:9 */
+.smart-film{max-width:760px;margin:0 auto 28px}
+.smart-film .film-frame{aspect-ratio:16/9}
+.smart-film .film-cap{margin:12px 0 0;text-align:center;color:var(--muted);font-size:14.5px}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}

@@ -5,32 +5,49 @@ const $ = s => document.querySelector(s);
 const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
-/* ---------- готовые сборки: выдвижная панель у конструктора ---------- */
-const PRESET_CARDS = [
+/* ---------- готовые сборки: витрина над hero + выдвижная панель у конструктора домиков ---------- */
+/* три сфотографированы, три — сложнее, ещё без съёмки (см. .sc-mock в css) */
+const SHOWCASE = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
   { img: "assets/render_wide.jpg", preset: "wide", nm: "«Проныра»",
     ds: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек, засад и послеобеденного сна." },
   { img: "assets/render_tower.jpg", preset: "tower", nm: "«Вальяжный»",
-    ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." }
+    ds: "Куб, смотровая площадка и крыша — вертикальный дом для кота, который любит наблюдать сверху." },
+  { img: "assets/render_manor.jpg", preset: "manor", nm: "«Резиденция»",
+    ds: "Два куба с тоннелем, гамак, смотровая башня с крышей и когтеточка — целая резиденция для кота с большими планами." },
+  { img: "assets/render_watch.jpg", preset: "watch", nm: "«Дозорный»",
+    ds: "Четыре куба-фундамент, башня-каланча с крышей, гамак, когтеточка и чаша-лежанка на возвышении — самый большой комплекс: видно всё, а вздремнуть можно где угодно." },
+  { img: "assets/render_zoomies.jpg", preset: "zoomies", nm: "«Непоседа»",
+    ds: "Башня с крышей под самый потолок и высокий пьедестал с чашей-лежанкой рядом — вертикаль для кота, которому вечно надо быть выше всех." }
 ];
 const presetPanel = $("#presetPanel"), presetTab = $("#presetTab"),
-      presetList = $("#presetList"), studioMain = $("#studioMain");
+      presetList = $("#presetList"), studioMain = $("#studioMain"),
+      showcaseGrid = $("#showcaseGrid"), builderSec = $("#builder");
 const presetPrice = key => Object.values(KD.PRESETS[key].cells)
   .reduce((s, t) => s + KD.MODULES[t].price, 0);
-PRESET_CARDS.forEach(g => {
+SHOWCASE.forEach(g => {
   const el = document.createElement("div");
   el.className = "preset-card";
+  el.dataset.key = g.preset;
+  /* описание переехало на фото «жидким стеклом» (проявляется на ховере) —
+     карточка стала ниже, в узкой панели помещается больше сборок.
+     Для трёх сборок без фото (см. SHOWCASE) — тот же мокап с иероглифом, что в витрине над hero */
+  const pcMedia = g.img
+    ? `<img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
+         onerror="this.closest('.pc-media').classList.add('no-img')">`
+    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
   el.innerHTML = `
-    <img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-         onerror="this.style.display='none'">
+    <div class="pc-media">
+      ${pcMedia}
+      <div class="pc-hover">${g.ds}</div>
+    </div>
     <div class="pc-body">
       <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <p class="pc-ds">${g.ds}</p>
-      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе домиков</button>
     </div>`;
   presetList.appendChild(el);
-  /* без прокрутки и закрытия панели: посетитель уже у конструктора,
+  /* без прокрутки и закрытия панели: посетитель уже у конструктора домиков,
      а планы удобно примерять один за другим */
   el.querySelector("button").addEventListener("click", () => KD.loadPreset(g.preset));
 });
@@ -47,9 +64,151 @@ $("#presetX").addEventListener("click", () => presetsOpen(false));
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && presetPanel.classList.contains("open")) presetsOpen(false);
 });
-/* «Готовые» в шапке ведёт к конструктору и сразу разворачивает панель */
-const navPresets = $("#navPresets");
-if (navPresets) navPresets.addEventListener("click", () => presetsOpen(true));
+/* «Готовые сборки» в шапке теперь ведёт на витрину над hero (#gallery, обычная
+   якорная ссылка) — панель у сцены она больше не форсит, поэтому старый
+   guide-aware обработчик клика по navPresets здесь не нужен */
+
+/* ---------- приветственный гид конструктора домиков ---------- */
+/* растворяющийся слой поверх сцены: подсказывает три пути (готовые сборки,
+   сборка самому, чат с Момо). Показываем один раз — дальше не мозолит глаза */
+const buildGuide = $("#buildGuide");
+/* пока интро открыто — первая реплика Момо (автосборка «Проныры») ждёт,
+   иначе она уходила бы в пустоту за затемнением. По умолчанию интро «нет»:
+   если гид не показывается (уже видели / нет в DOM), реплика идёт сразу */
+const introCbs = [];
+let introClosed = true;
+KD.onIntroDone = cb => { introClosed ? cb() : introCbs.push(cb); };
+const closeIntro = () => {
+  if (introClosed) return;
+  introClosed = true;
+  while (introCbs.length) introCbs.shift()();
+};
+
+if (buildGuide){
+  const SEEN = "kd_guideSeen";
+  let dismissed = true;   // гид скрыт по умолчанию, пока его не показали
+  /* summary «Инструкция» в шапке сцены — пока гид открыт, подменяет подпись на
+     «ОК, к делу» и берёт на себя закрытие (шапка стоит поверх затемнения, см.
+     .scene-head z-index); отдельной кнопки закрытия внизу гида больше нет.
+     Кнопка «показать подсказки ещё раз» лежит внутри <details> и реоткрывает гид */
+  const sceneInstr = $("#sceneInstr");
+  const toggle = $("#guideToggle");
+  const reopen = $("#guideReopen");
+  const setToggle = open => {
+    if (!sceneInstr || !toggle) return;
+    sceneInstr.classList.toggle("is-guide-open", open);
+    toggle.textContent = open ? "ОК, к делу" : "Инструкция";
+  };
+  /* гид открывает сайдбар «готовые сборки» под собой — подсказка «Используйте
+     готовые сборки» показывает реальную панель. По «ОК»/Esc/клику мимо гид
+     уходит и медленно уводит сайдбар, освобождая сцену для ручной сборки/чата */
+  const dismiss = () => {
+    if (dismissed) return;
+    dismissed = true;
+    setToggle(false);
+    try { localStorage.setItem(SEEN, "1"); } catch (e) {}
+    buildGuide.classList.add("hiding");
+    /* сайдбар «готовые сборки» открыт под гидом — на «ОК» он уезжает медленно,
+       так видно, куда он прячется (см. .preset-panel.slow-hide) */
+    if (presetPanel.classList.contains("open")){
+      presetPanel.classList.add("slow-hide");
+      presetsOpen(false);
+      const unslow = () => presetPanel.classList.remove("slow-hide");
+      presetPanel.addEventListener("transitionend", unslow, { once: true });
+      setTimeout(unslow, 1000);
+    }
+    /* done() идемпотентен: убираем слой из DOM после исчезновения и только
+       тогда отпускаем первую реплику Момо. transitionend может не прийти
+       (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
+    let cleared = false;
+    const done = () => {
+      if (cleared) return;
+      cleared = true;
+      buildGuide.hidden = true;
+      closeIntro();
+    };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
+    else {
+      buildGuide.addEventListener("transitionend", done, { once: true });
+      setTimeout(done, 650);
+    }
+  };
+  /* firstRun — самый первый показ при загрузке: тогда придерживаем реплику Момо.
+     Повторный показ по кнопке этого не делает — Момо уже поздоровался */
+  const openGuide = firstRun => {
+    dismissed = false;
+    setToggle(true);
+    if (sceneInstr) sceneInstr.open = false;   // схлопываем список инструкций — виден только «ОК, к делу»
+    buildGuide.classList.remove("hiding");
+    buildGuide.hidden = false;
+    presetsOpen(true);   // показываем сайдбар под гидом — «ОК» его медленно уберёт
+    if (firstRun) introClosed = false;   // интро на экране — реплика Момо подождёт
+  };
+  /* пока гид открыт, клик по summary не разворачивает <details>, а закрывает гид —
+     иначе (гид уже закрыт) работает как обычный тумблер инструкции */
+  if (toggle) toggle.addEventListener("click", e => {
+    if (!dismissed) { e.preventDefault(); dismiss(); }
+  });
+  /* кнопка «показать подсказки ещё раз» внутри развёрнутой инструкции — реоткрывает гид */
+  if (reopen) reopen.addEventListener("click", () => openGuide(false));
+  /* слушатель закрытия вешаем один раз; работает и для первого показа, и для
+     повторного по кнопке. Esc реагирует, только пока гид на экране */
+  buildGuide.querySelector(".bg-scrim").addEventListener("click", dismiss); // клик мимо подсказок
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !buildGuide.hidden) dismiss();
+  });
+
+  /* первый показ — один раз на браузер (по localStorage) */
+  let seen = false;
+  try { seen = localStorage.getItem(SEEN) === "1"; } catch (e) {}
+  if (!seen) openGuide(true);
+}
+
+/* ---------- витрина «готовые сборки» над hero: фото/мокап + подпись «жидким стеклом» ---------- */
+function highlightPreset(key){
+  const card = presetList.querySelector(`.preset-card[data-key="${key}"]`);
+  if (!card) return;
+  card.classList.remove("hl");
+  void card.offsetWidth; // перезапуск анимации, если подсветили тот же план дважды подряд
+  card.classList.add("hl");
+  /* скроллим только сам список (его собственный overflow-y), а не card.scrollIntoView:
+     панель — absolute внутри ещё едущей секции конструктора домиков, и scrollIntoView
+     на вложенном элементе задевает и document-скролл, гоняя всю страницу */
+  presetList.scrollTo({ top: card.offsetTop - 8, behavior: "smooth" });
+}
+/* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор домиков —
+   в отличие от кнопок сборки внутри самого конструктора домиков, тут прокрутка уместна.
+   Скроллим до заголовка конструктора домиков на сцене, а не до верха секции — так студия
+   видна сразу. Приветственный гид тут НЕ показываем: сайдбар просто открывается
+   и остаётся открытым, чтобы примерять планы один за другим */
+function buildFromShowcase(key){
+  const head = $("#builderHead");
+  (head || builderSec).scrollIntoView({ behavior: "smooth", block: "start" });
+  presetsOpen(true);
+  KD.loadPreset(key);
+  /* подсветку — после transition панели (.28s): раньше scrollIntoView читает
+     ещё не осевшие координаты (панель на пути из translateX(112%)) и уводит
+     всю страницу непредсказуемо далеко */
+  setTimeout(() => highlightPreset(key), 320);
+}
+SHOWCASE.forEach(g => {
+  const el = document.createElement("div");
+  el.className = "sc-card";
+  const media = g.img
+    ? `<img src="${g.img}" alt="Сборка ${g.nm} в интерьере" loading="lazy">`
+    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
+  el.innerHTML = `
+    <div class="sc-media">
+      ${media}
+      <div class="sc-cap">${g.ds}</div>
+    </div>
+    <div class="sc-ft">
+      <div class="sc-nm">${g.nm}<span class="sc-pr">${fmt(presetPrice(g.preset))}</span></div>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
+    </div>`;
+  showcaseGrid.appendChild(el);
+  el.querySelector("button").addEventListener("click", () => buildFromShowcase(g.preset));
+});
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
@@ -120,46 +279,6 @@ $("#btnOrder").addEventListener("click", () => {
   const lines = KD.configurator.orderLines();
   if (!lines.length) return;
   checkoutStep(lines, KD.configurator.totals());
-});
-
-/* заказ списком: модули по счёту, без сборки в сцене */
-$("#btnBulk").addEventListener("click", () => {
-  const qty = {};
-  const rows = Object.entries(KD.MODULES).map(([t, m]) => `
-    <li><span>${m.name}</span><span class="n">${fmt(m.price)}</span>
-      <span class="qty"><button type="button" data-t="${t}" data-d="-1" aria-label="меньше">−</button><b
-        id="q_${t}">0</b><button type="button" data-t="${t}" data-d="1" aria-label="больше">+</button></span></li>`).join("");
-  open(`
-    <h3>Заказать списком</h3>
-    <p class="m-sub">Наберите модули по счёту — например, 5 тоннелей и 2 куба. Собирать в сцене не обязательно.</p>
-    <ul class="order-lines bulk-lines">${rows}</ul>
-    <ul class="order-lines">
-      <li id="bulkDisc" style="display:none"><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n" id="bulkDiscN"></span></li>
-      <li class="total"><span>Итого</span><span class="n" id="bulkTotal">0 ₽</span></li>
-    </ul>
-    <button class="btn btn-aka" id="bulkGo" style="width:100%" disabled>Продолжить</button>
-  `);
-  const goBtn = $("#bulkGo");
-  const bulkLines = () => Object.entries(qty).filter(([, n]) => n > 0)
-    .map(([t, n]) => ({ type: t, name: KD.MODULES[t].name, n, price: KD.MODULES[t].price, sum: KD.MODULES[t].price * n }));
-  const redraw = () => {
-    const t = linesTotals(bulkLines());
-    $("#bulkTotal").textContent = fmt(t.total);
-    $("#bulkDisc").style.display = t.disc ? "" : "none";
-    if (t.disc) $("#bulkDiscN").textContent = "−" + fmt(t.disc);
-    goBtn.disabled = !t.count;
-    goBtn.textContent = t.count ? `Продолжить · ${fmt(t.total)}` : "Продолжить";
-  };
-  body.querySelectorAll(".qty button").forEach(b => b.addEventListener("click", () => {
-    const t = b.dataset.t;
-    qty[t] = Math.min(20, Math.max(0, (qty[t] || 0) + (+b.dataset.d)));
-    $("#q_" + t).textContent = qty[t];
-    redraw();
-  }));
-  goBtn.addEventListener("click", () => {
-    const lines = bulkLines();
-    if (lines.length) checkoutStep(lines, linesTotals(lines), "Модули списком — Момо примет заказ, соберёте сами как захотите.");
-  });
 });
 
 function payStep(order){

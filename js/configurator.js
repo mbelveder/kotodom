@@ -1,4 +1,4 @@
-/* Котоши — конструктор: drag-and-drop, правила, цены, заселение */
+/* Котоши — конструктор домиков: drag-and-drop, правила, цены, заселение */
 "use strict";
 (function(){
 const { COLS, ROWS, CELL, MODULES, PRESETS, SAY, EXT, fmt } = KD;
@@ -99,7 +99,7 @@ const NO_SLOT_HINTS = {
   hammock: "Гамак вешается над кубом или лежанкой. Постройте что-нибудь под него.",
   hammock2: "Широкому гамаку нужны две соседние опоры — например, два куба в ряд.",
   scratch: "Когтеточке нужен пол или крыша модуля — всё занято.",
-  play: "Игрушке нужен пол или верх модуля — всё занято.",
+  play: "Чаше-лежанке нужен пол или верх модуля — всё занято.",
 };
 
 /* ---------- цена ---------- */
@@ -200,12 +200,6 @@ function buildTray(){
     el.title = m.desc;
     tray.appendChild(el);
     el.addEventListener("pointerdown", e => startDrag(e, key, el));
-    /* умная игрушка светится, пока её не рассмотрят: наведение открывает
-       описание (title) и гасит свечение */
-    if (key === "play"){
-      el.classList.add("glow");
-      el.addEventListener("pointerenter", () => el.classList.remove("glow"), { once: true });
-    }
   });
 }
 
@@ -417,18 +411,11 @@ btnUndo.addEventListener("click", () => {
 });
 btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); clearAll(); } });
 
-/* первая реплика — про состав сборки (без имени плана: оно вторично) плюс
-   один раз про умную игрушку: её идею посетители сами пока не считывают */
-let toyPitched = false;
-function withToyPitch(text){
-  if (toyPitched) return text;
-  toyPitched = true;
-  return text + " И взгляните на умную игрушку на полке — она играет с котом сама, пока вас нет дома.";
-}
+/* реплика при выборе плана — про состав сборки (без имени плана: оно вторично) */
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return;
-  applyCells(p.cells, withToyPitch(p.say));
+  applyCells(p.cells, p.say);
 }
 KD.loadPreset = loadPreset;
 
@@ -449,14 +436,18 @@ function applyCells(cells, doneSay){
     .filter(([i, t]) => Number.isInteger(i) && i >= 0 && i < N && MODULES[t])
     .sort((a, b) => a[0] - b[0]);
   quietUntil = Date.now() + entries.length * 160 + 400;
+  const skipped = []; // модули, для которых Момо предложил невалидную ячейку — отчитываемся, а не молчим
   entries.forEach(([i, t], step) => {
     setTimeout(() => {
       if (gen !== buildGen) return;               // сборку перебили
-      if (!validCells(t).includes(i)) return;     // нет опоры/занято — пропускаем
-      place(i, t, { silent: true });
+      const ok = validCells(t).includes(i);        // нет опоры/занято — пропускаем, но запоминаем
+      if (ok) place(i, t, { silent: true }); else skipped.push(t);
       if (step === entries.length - 1){
         popSound();
-        if (doneSay) say(doneSay, Math.max(4800, doneSay.length * 55)); // длинной реплике — больше времени
+        if (skipped.length){
+          const names = [...new Set(skipped)].map(x => (MODULES[x] && MODULES[x].name) || x).join(", ");
+          say(`Не поместилось: ${names} — не хватило опоры или места. Передвиньте модули вручную, чтобы освободить место.`, 6500);
+        } else if (doneSay) say(doneSay, Math.max(4800, doneSay.length * 55)); // длинной реплике — больше времени
       }
     }, step * 160);
   });
@@ -468,6 +459,13 @@ KD.applyConfig = cells => applyCells(cells, "Собрал! Двигайте мо
 KD.configurator = {
   getGrid: () => grid.slice(),
   totals,
+  /* индекс:тип текущих ячеек — тот же формат, что в маркере [[BUILD:…]] Момо,
+     чтобы модель получала РЕАЛЬНЫЕ позиции вместо угадывания по названию×count */
+  cellsSummary(){
+    const parts = [];
+    for (let i = 0; i < N; i++) if (grid[i] && grid[i] !== EXT) parts.push(`${i}:${grid[i]}`);
+    return parts.join(",");
+  },
   orderLines(){
     const cnt = {};
     grid.filter(t => MODULES[t]).forEach(t => cnt[t] = (cnt[t] || 0) + 1);
@@ -477,7 +475,7 @@ KD.configurator = {
   },
   summary(){
     const lines = this.orderLines();
-    if (!lines.length) return "конструктор пока пуст";
+    if (!lines.length) return "конструктор домиков пока пуст";
     const t = totals();
     return lines.map(l => `${l.name}×${l.n}`).join(", ") + ` — итого ${fmt(t.total)}` + (t.disc ? " (со скидкой 5%)" : "");
   }
@@ -488,14 +486,55 @@ KD.scene.init();
 buildTray();
 refresh();
 
-/* конструктор оживает, когда доезжаешь до него: грузим «Проныру» с анимацией сборки
-   (если пользователь уже выбрал план в галерее — оставляем его выбор) */
+/* конструктор домиков оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
+   но МОЛЧА — первая реплика Момо ждёт, пока посетитель сам возьмётся за сборку
+   (перетащит модуль, уберёт его или выберет план). Ждём и закрытия гида, чтобы
+   сборка не анимировалась за затемнением (см. KD.onIntroDone в app.js) */
 const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    loadPreset("wide"); // первая реплика (состав + умная игрушка) — в doneSay пресета
+    const boot = () => { if (!KD.studioBooted) applyCells(PRESETS.wide.cells); };
+    if (KD.onIntroDone) KD.onIntroDone(boot); else boot();
   }
 }, { threshold: 0.35 });
 io.observe(sceneWrap);
+
+/* ---------- служебный «соло»-режим: ?solo[=пресет] ----------
+   Показывает в сцене ТОЛЬКО постройку на ровном фоне — без комнаты, декора,
+   подписей размеров и интерфейса страницы. Нужен, чтобы снимать чистые
+   структурные референсы постройки под генерацию фото-рендеров.
+   Примеры: ?solo=watch, ?solo=zoomies, ?solo (текущая/пустая сцена). */
+(function solo(){
+  const params = new URLSearchParams(location.search);
+  if (!params.has("solo")) return;
+  const key = params.get("solo");
+  KD.studioBooted = true;                 // гид и авто-сборка не вмешиваются
+  io.disconnect();
+  const strip = () => {
+    // прячем всё, кроме цепочки предков холста: на каждом уровне от sceneWrap
+    // до <body> гасим соседей — остаётся только сцена
+    let node = sceneWrap;
+    while (node && node.parentElement){
+      for (const sib of node.parentElement.children) if (sib !== node) sib.style.display = "none";
+      if (node.parentElement === document.body) break;
+      node = node.parentElement;
+    }
+    // и оверлеи ВНУТРИ sceneWrap (они — соседи холста, цикл выше их не трогает)
+    ["#builderHead", "#momoSay", "#momoFab", "#buildGuide", ".price-tag", "#presetTab"]
+      .forEach(s => { const e = document.querySelector(s); if (e) e.style.display = "none"; });
+    document.body.style.background = "#F2ECDD";
+    window.scrollTo(0, 0);
+  };
+  const enter = () => {
+    strip();
+    if (PRESETS[key]) loadPreset(key);
+    KD.scene.soloHouse();
+    // повторяем изоляцию после отложенной сборки пресета (place() держит houseA в кадре)
+    const delay = PRESETS[key] ? Object.keys(PRESETS[key].cells).length * 160 + 500 : 200;
+    setTimeout(() => KD.scene.soloHouse(), delay);
+  };
+  if (document.readyState === "complete") enter();
+  else window.addEventListener("load", enter);
+})();
 })();
