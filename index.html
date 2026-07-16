@@ -35,7 +35,7 @@
     <div class="brand disp">Кот<span class="jo">о<i>ノ</i></span>ши<small>домики для кошек</small></div>
     <nav class="head-nav">
       <a href="#gallery" class="hide-m" id="navPresets">Готовые сборки</a>
-      <a href="#builder">Редактор</a>
+      <a href="#builder">Конструктор домиков</a>
       <a href="#smart" class="hide-m">Умная игрушка</a>
       <span class="nav-soon hide-m" tabindex="0" role="note"
         aria-label="Здесь будет каталог отдельных модулей с указанием размеров">Каталог модулей<span class="nav-tip" aria-hidden="true">Здесь будет каталог отдельных модулей с указанием размеров.</span></span>
@@ -91,9 +91,9 @@
 
 <section id="gallery">
   <div class="wrap">
-    <div class="sec-eyebrow"><span class="jp">みほん</span>готовые сборки</div>
-    <h2>Шесть идей для начала</h2>
-    <p class="sec-sub">Нажмите «Собрать» — домик откроется в редакторе, а дальше можно
+    <div class="sec-eyebrow"><span class="jp">みほん</span>идеи для начала</div>
+    <h2>Готовые сборки</h2>
+    <p class="sec-sub">Нажмите «Собрать» — домик откроется в конструкторе домиков, а дальше можно
        двигать модули по своему желанию.</p>
     <div class="showcase-grid" id="showcaseGrid"></div>
   </div>
@@ -105,22 +105,22 @@
     <div class="studio-main" id="studioMain">
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene" width="980" height="540"></canvas>
-        <!-- заголовок редактора — оверлей в левом верхнем углу сцены, стоит поверх
+        <!-- заголовок конструктора домиков — оверлей в левом верхнем углу сцены, стоит поверх
              приветственного гида (z-index выше .build-guide), не гаснет под
              затемнением; «Инструкция» сворачивает подсказки в <details>, а внутри
              неё — кнопка «показать подсказки ещё раз» (реоткрывает гид). Пока гид
              открыт, тот же summary подменяет подпись на «ОК, к делу» и закрывает
              гид — отдельной кнопки внизу гида больше нет, см. app.js -->
         <div class="scene-head" id="builderHead">
-          <div class="sec-eyebrow"><span class="jp">くみたて</span>редактор</div>
-          <h2>Соберите свой Котоши</h2>
+          <div class="sec-eyebrow"><span class="jp">くみたて</span>соберите свой котоши</div>
+          <h2>Конструктор домиков</h2>
           <details class="scene-instr" id="sceneInstr">
             <summary id="guideToggle">Инструкция</summary>
             <p class="scene-sub-lead">Воспользуйтесь любым из способов или скомбинируйте несколько:</p>
             <ul class="scene-sub">
               <li>Перетаскивайте модули в комнату, для удаления кликните на модуль</li>
               <li>Откройте готовые сборки во вкладке справа</li>
-              <li>Опишите своего питомца в чате с Момо, нашим ИИ-консультантом по кнопке в углу редактора</li>
+              <li>Опишите своего питомца в чате с Момо, нашим ИИ-консультантом по кнопке в углу конструктора домиков</li>
             </ul>
             <button class="guide-reopen" id="guideReopen" type="button">
               <span class="gr-q" aria-hidden="true">?</span>показать подсказки ещё раз
@@ -140,9 +140,9 @@
         <button class="preset-tab" id="presetTab" aria-controls="presetPanel"
                 aria-expanded="false">готовые сборки</button>
 
-        <!-- приветственный слой редактора: гид с тремя подсказками и стрелками,
+        <!-- приветственный слой конструктора домиков: гид с тремя подсказками и стрелками,
              растворяется по «ОК, к делу» (или клику по фону); показ один раз, см. app.js -->
-        <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в редакторе" hidden>
+        <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в конструкторе домиков" hidden>
           <div class="bg-scrim"></div>
 
           <!-- 1. готовые сборки — стрелка вправо, к вкладке (короче — вкладка рядом) -->
@@ -178,7 +178,7 @@
         <div class="preset-head">
           <div>
             <div class="t">Готовые сборки</div>
-            <div class="sub">нажмите «собрать» — план появится в редакторе</div>
+            <div class="sub">нажмите «собрать» — план появится в конструкторе домиков</div>
           </div>
           <button class="chat-x" id="presetX" aria-label="Свернуть готовые сборки">✕</button>
         </div>
@@ -210,7 +210,7 @@
       </aside>
     </div>
     <div class="hint-bar" id="hintBar">
-      <span>Можно добавлять модули на свой вкус — они внизу. Один клик по модулю в редакторе — убрать его.</span>
+      <span>Можно добавлять модули на свой вкус — они внизу. Один клик по модулю в конструкторе домиков — убрать его.</span>
     </div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
@@ -272,12 +272,12 @@
       <div class="step">
         <div class="ico">組</div>
         <h3>Соберите конфигурацию</h3>
-        <p>В редакторе выше — из модулей, как из кубиков. Не знаете, с чего начать, — возьмите готовый план и меняйте его.</p>
+        <p>В конструкторе домиков выше — из модулей, как из кубиков. Не знаете, с чего начать, — возьмите готовый план и меняйте его.</p>
       </div>
       <div class="step">
         <div class="ico">話</div>
         <h3>Спросите Момо</h3>
-        <p>Момо живёт в редакторе — нажмите на кота в углу. Он знает все модули, цены и правила доставки, а подобранный домик собирает прямо в редакторе.</p>
+        <p>Момо живёт в конструкторе домиков — нажмите на кота в углу. Он знает все модули, цены и правила доставки, а подобранный домик собирает прямо в конструкторе домиков.</p>
       </div>
       <div class="step">
         <div class="ico">箱</div>

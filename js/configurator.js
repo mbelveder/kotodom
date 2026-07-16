@@ -1,4 +1,4 @@
-/* Котоши — редактор: drag-and-drop, правила, цены, заселение */
+/* Котоши — конструктор домиков: drag-and-drop, правила, цены, заселение */
 "use strict";
 (function(){
 const { COLS, ROWS, CELL, MODULES, PRESETS, SAY, EXT, fmt } = KD;
@@ -426,7 +426,7 @@ KD.configurator = {
   },
   summary(){
     const lines = this.orderLines();
-    if (!lines.length) return "редактор пока пуст";
+    if (!lines.length) return "конструктор домиков пока пуст";
     const t = totals();
     return lines.map(l => `${l.name}×${l.n}`).join(", ") + ` — итого ${fmt(t.total)}` + (t.disc ? " (со скидкой 5%)" : "");
   }
@@ -437,7 +437,7 @@ KD.scene.init();
 buildTray();
 refresh();
 
-/* редактор оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
+/* конструктор домиков оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
    но МОЛЧА — первая реплика Момо ждёт, пока посетитель сам возьмётся за сборку
    (перетащит модуль, уберёт его или выберет план). Ждём и закрытия гида, чтобы
    сборка не анимировалась за затемнением (см. KD.onIntroDone в app.js) */
@@ -450,4 +450,42 @@ const io = new IntersectionObserver(entries => {
   }
 }, { threshold: 0.35 });
 io.observe(sceneWrap);
+
+/* ---------- служебный «соло»-режим: ?solo[=пресет] ----------
+   Показывает в сцене ТОЛЬКО постройку на ровном фоне — без комнаты, декора,
+   подписей размеров и интерфейса страницы. Нужен, чтобы снимать чистые
+   структурные референсы постройки под генерацию фото-рендеров.
+   Примеры: ?solo=watch, ?solo=zoomies, ?solo (текущая/пустая сцена). */
+(function solo(){
+  const params = new URLSearchParams(location.search);
+  if (!params.has("solo")) return;
+  const key = params.get("solo");
+  KD.studioBooted = true;                 // гид и авто-сборка не вмешиваются
+  io.disconnect();
+  const strip = () => {
+    // прячем всё, кроме цепочки предков холста: на каждом уровне от sceneWrap
+    // до <body> гасим соседей — остаётся только сцена
+    let node = sceneWrap;
+    while (node && node.parentElement){
+      for (const sib of node.parentElement.children) if (sib !== node) sib.style.display = "none";
+      if (node.parentElement === document.body) break;
+      node = node.parentElement;
+    }
+    // и оверлеи ВНУТРИ sceneWrap (они — соседи холста, цикл выше их не трогает)
+    ["#builderHead", "#momoSay", "#momoFab", "#buildGuide", ".price-tag", "#presetTab"]
+      .forEach(s => { const e = document.querySelector(s); if (e) e.style.display = "none"; });
+    document.body.style.background = "#F2ECDD";
+    window.scrollTo(0, 0);
+  };
+  const enter = () => {
+    strip();
+    if (PRESETS[key]) loadPreset(key);
+    KD.scene.soloHouse();
+    // повторяем изоляцию после отложенной сборки пресета (place() держит houseA в кадре)
+    const delay = PRESETS[key] ? Object.keys(PRESETS[key].cells).length * 160 + 500 : 200;
+    setTimeout(() => KD.scene.soloHouse(), delay);
+  };
+  if (document.readyState === "complete") enter();
+  else window.addEventListener("load", enter);
+})();
 })();

@@ -178,7 +178,7 @@ function parseBuild(full){
 function offerBuild(botEl, build){
   const b = document.createElement("button");
   b.className = "msg-build";
-  b.textContent = "🛠 Собрать в редакторе";
+  b.textContent = "🛠 Собрать в конструкторе домиков";
   b.addEventListener("click", () => {
     if (!KD.applyConfig || !KD.applyConfig(build.cells)) return;
     b.disabled = true;

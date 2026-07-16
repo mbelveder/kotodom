@@ -16,7 +16,8 @@ const PALETTES = {
     matcha:"#6E8F63", matchaDark:"#57744E", pot:"#B0705A",
     lamp:"#F7E5B5", lampGlow:"rgba(247,224,172,0.18)", lampRib:"#D9BE8A", stand:"#6B5F52",
     cat:"#FFFDF8", ink:"#2E2A33", ghost:"rgba(199,66,58,0.16)", ghostHot:"rgba(199,66,58,0.42)",
-    windowGlow:"#FBF3DC", shoji:"#C9B48E", note:"#847B69"
+    windowGlow:"#FBF3DC", shoji:"#C9B48E", note:"#847B69",
+    glass:"rgba(235,203,151,0.30)", glassDeep:"rgba(192,146,99,0.34)"
   },
   dark: {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
@@ -27,7 +28,8 @@ const PALETTES = {
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
     lamp:"#F3D992", lampGlow:"rgba(243,217,146,0.12)", lampRib:"#C7A860", stand:"#8A7E6E",
     cat:"#FBF7EC", ink:"#221F2B", ghost:"rgba(224,90,78,0.20)", ghostHot:"rgba(224,90,78,0.5)",
-    windowGlow:"#6B604B", shoji:"#6E6478", note:"#A79F8F"
+    windowGlow:"#6B604B", shoji:"#6E6478", note:"#A79F8F",
+    glass:"rgba(221,184,126,0.26)", glassDeep:"rgba(168,127,82,0.32)"
   }
 };
 let P = PALETTES.light;
@@ -150,23 +152,23 @@ function makeModule(type, parent, opts){
     new Zdog.Shape({ addTo:a, stroke:9, color:P.sakura, path:[{ y: B - 7 - L - 3 }] }); // помпон
   }
   else if (type === "play"){
-    // чаша-лежанка: широкая приплюснутая полусфера-гнездо на приземистой опоре
-    // основание-«блин» на полу
-    new Zdog.Cylinder({ addTo:a, diameter:36, length:7, rotate:{ x:TAU/4 },
-      translate:{ y: B - 3.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
-    // приземистая колонна-опора
-    new Zdog.Cylinder({ addTo:a, diameter:20, length:16, rotate:{ x:TAU/4 },
-      translate:{ y: B - 15 }, color:P.wood, frontFace:P.wood, backface:P.wood2, stroke:false });
-    // чаша: полусфера куполом вниз, приплюснута по высоте — гнездо шире, чем глубже
-    const bowl = new Zdog.Anchor({ addTo:a, translate:{ y: B - 44 }, scale:{ y:0.72 } });
+    // чаша-лежанка: приплюснутая полусфера-гнездо на высокой опоре-колонне —
+    // чаша приподнята над полом, а не стоит прямо на нём
+    // нога-основание на полу
+    new Zdog.Cylinder({ addTo:a, diameter:34, length:8, rotate:{ x:TAU/4 },
+      translate:{ y: B - 4 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
+    // колонна-опора, высотой почти во весь модуль — как у когтеточки
+    new Zdog.Cylinder({ addTo:a, diameter:16, length:46, rotate:{ x:TAU/4 },
+      translate:{ y: B - 31 }, color:P.wood, frontFace:P.wood, backface:P.wood2, stroke:false });
+    // чаша: полусфера куполом вниз, приплюснута по высоте — гнездо шире, чем глубже.
+    // Тело чаши прозрачное (акрил) и пустое — единственное непрозрачное здесь — опора-колонна,
+    // видимая сквозь стенки; никакой подушки внутри, чтобы не перекрывать прозрачность.
+    const bowl = new Zdog.Anchor({ addTo:a, translate:{ y: B - 74 }, scale:{ y:0.72 } });
     new Zdog.Hemisphere({ addTo:bowl, diameter:58, rotate:{ x:-TAU/4 },
-      color:P.wood2, backface:P.wood, stroke:false });
-    // мягкая подушка в чаше
-    new Zdog.Ellipse({ addTo:bowl, diameter:44, rotate:{ x:TAU/4 },
-      translate:{ y:2 }, stroke:9, fill:true, color:P.cushion });
-    // приподнятый бортик-кромка чаши
+      color:P.glass, backface:P.glassDeep, stroke:false });
+    // непрозрачный ободок по верхнему краю чаши
     new Zdog.Ellipse({ addTo:bowl, diameter:58, rotate:{ x:TAU/4 },
-      translate:{ y:-1 }, stroke:4, color:P.woodTop });
+      translate:{ y:-1 }, stroke:5, color:P.aka });
   }
   return a;
 }
@@ -346,7 +348,7 @@ const api = KD.scene = {};
 
 api.init = function(){
   build();
-  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки редактора
+  /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конструктора домиков
      (раньше брали _snapshot, который никто не наполнял, — дом исчезал) */
   darkMq.addEventListener("change", () => {
     build();
@@ -466,6 +468,16 @@ api.moduleIcon = function(type){
   return out.toDataURL();
 };
 
+/* «соло»-рендер: в сцене остаётся ТОЛЬКО постройка (без комнаты, декора и
+   подписей размеров) на ровном фоне. Служебный режим для съёмки чистых
+   структурных референсов постройки под генерацию фото (см. ?solo в конструкторе). */
+api.soloHouse = function(){
+  world.children = [houseA];
+  canvas.style.background = "#F2ECDD";
+  dimLabels = [];        // убрать подписи размеров ковра с холста
+  dirty = true;
+};
+
 /* пульс модуля (при визите кота) */
 api.pulse = function(i){
   const a = moduleAnchors[i];
@@ -532,7 +544,7 @@ api.moveIn = async function(visits, onVisit, onDone){
   // обход модулей
   for (let k = 0; k < visits.length; k++){
     const i = visits[k];
-    const type = onVisit(i, k); // редактор вернёт тип и покажет сердечко
+    const type = onVisit(i, k); // конструктор домиков вернёт тип и покажет сердечко
     const mw = (MODULES[type] && MODULES[type].w) || 1;
     const tx = cellX(colOf(i)) + (mw-1)*CELL/2; // широкий модуль: кот садится в середину
     const ty = cellY(rowOf(i)) + (SIT_Y[type] ?? -29) + (moduleDy[i] || 0) - 13; // лапы на «крышу» модуля
