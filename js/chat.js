@@ -293,7 +293,7 @@ async function ask(textOverride){
 }
 
 send.addEventListener("click", () => ask());
-input.addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
+input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) ask(); });
 
 /* приветствие ждёт в панели заранее. Адрес сервера сразу сверяем со свежим
    config.js (мимо кэша): подключённый <script> мог протухнуть в кэше браузера

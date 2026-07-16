@@ -188,11 +188,15 @@ function clearAll(silent){
 const ICON_SRC = {}; // type -> dataURL снимка настоящего Zdog-модуля
 function buildTray(){
   Object.entries(MODULES).forEach(([key, m]) => {
-    ICON_SRC[key] = KD.scene.moduleIcon(key);
+    /* сбой рендера одной иконки не должен оставлять лоток пустым */
+    try{ ICON_SRC[key] = KD.scene.moduleIcon(key); }catch(_){ ICON_SRC[key] = ""; }
+    const ico = ICON_SRC[key]
+      ? `<img class="ico" src="${ICON_SRC[key]}" alt="" draggable="false">`
+      : `<div class="ico ico-txt">${m.jp}</div>`;
     const el = document.createElement("div");
     el.className = "chip";
     el.dataset.type = key;
-    el.innerHTML = `<img class="ico" src="${ICON_SRC[key]}" alt="" draggable="false"><div class="nm">${m.name}<span class="nm-jp">${m.jp}</span></div><div class="pr">${fmt(m.price)}</div>`;
+    el.innerHTML = `${ico}<div class="nm">${m.name}<span class="nm-jp">${m.jp}</span></div><div class="pr">${fmt(m.price)}</div>`;
     el.title = m.desc;
     tray.appendChild(el);
     el.addEventListener("pointerdown", e => startDrag(e, key, el));
@@ -210,7 +214,9 @@ const ghostEl = $("#dragGhost");
 let drag = null;
 
 function startDrag(e, type, chip){
-  if (animating) return;
+  /* только левая кнопка и первый палец: правый клик открывает контекстное меню
+     и глотает pointerup — призрак оставался висеть на экране навсегда */
+  if (animating || drag || e.button !== 0 || !e.isPrimary) return;
   e.preventDefault();
   const valid = validCells(type);
   if (!valid.length){
@@ -222,12 +228,8 @@ function startDrag(e, type, chip){
   }
   beginDrag(e, type, chip, null, valid);
 }
-/* общий драг: из лотка (origin=null) или перенос модуля из сцены (origin={from, prevGrid}) */
-function beginDrag(e, type, el, origin, valid){
-  valid = valid || validCells(type);
-  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true }); return; }
-  const w = wOf(type);
-  // кэш экранных позиций валидных ячеек (для широких — центр всей площадки)
+/* кэш экранных позиций валидных ячеек (для широких — центр всей площадки) */
+function cellPositions(valid, w){
   const pos = {};
   valid.forEach(i => {
     const p = KD.scene.cellClientPos(i);
@@ -237,19 +239,40 @@ function beginDrag(e, type, el, origin, valid){
     }
     pos[i] = p;
   });
+  return pos;
+}
+/* общий драг: из лотка (origin=null) или перенос модуля из сцены (origin={from, prevGrid}) */
+function beginDrag(e, type, el, origin, valid){
+  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true }); return; }
+  valid = valid || validCells(type);
+  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true }); return; }
+  const w = wOf(type);
+  const pos = cellPositions(valid, w);
   const a = KD.scene.cellClientPos(0), b = KD.scene.cellClientPos(1);
   const cellPx = Math.hypot(b.x - a.x, b.y - a.y);
-  drag = { type, valid, pos, hot: null, thresh: cellPx * 0.72, origin, w };
-  ghostEl.innerHTML = `<img src="${ICON_SRC[type]}" alt="" draggable="false">`;
+  drag = { type, valid, pos, hot: null, thresh: Math.max(cellPx * 0.72, 26),
+           origin, w, el, pointerId: e.pointerId };
+  ghostEl.innerHTML = ICON_SRC[type]
+    ? `<img src="${ICON_SRC[type]}" alt="" draggable="false">`
+    : `<div class="ico-txt">${MODULES[type].jp}</div>`;
   ghostEl.style.display = "block";
   moveGhost(e);
   KD.scene.showGhosts(valid, null, w);
   updateHot(e);   // курсор уже может стоять над валидной ячейкой
   canvas.classList.add("placing");
-  el.setPointerCapture(e.pointerId);
   el.addEventListener("pointermove", onDragMove);
-  el.addEventListener("pointerup", onDragUp, { once: true });
-  el.addEventListener("pointercancel", onDragCancel, { once: true });
+  el.addEventListener("pointerup", onDragUp);
+  el.addEventListener("pointercancel", onDragCancel);
+  try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  /* страховка: если capture не сработал или отпускание ушло мимо элемента
+     (потеря фокуса, второй палец, контекстное меню) — драг всё равно
+     завершится, и призрак не останется висеть на экране */
+  window.addEventListener("pointerup", onDragUp);
+  window.addEventListener("pointercancel", onDragCancel);
+  window.addEventListener("blur", onWinBlur);
+  window.addEventListener("contextmenu", onCtxMenu, true);
+  window.addEventListener("scroll", onViewChange, true);
+  window.addEventListener("resize", onViewChange);
 }
 function moveGhost(e){
   ghostEl.style.left = e.clientX + "px";
@@ -270,17 +293,22 @@ function updateHot(e){
   }
 }
 function onDragMove(e){
-  if (!drag) return;
+  if (!drag || e.pointerId !== drag.pointerId) return;
   moveGhost(e);
   updateHot(e);
 }
 function onDragUp(e){
+  if (!drag || e.pointerId !== drag.pointerId) return;
   const d = drag;
-  endDrag(e);
-  if (!d) return;
+  endDrag();
   if (d.hot !== null && d.hot !== undefined){
     if (d.origin && d.hot === d.origin.from){
       place(d.hot, d.type, { silent: true, instant: true });  // вернул на прежнее место
+      return;
+    }
+    /* пока шёл драг, ячейку могла занять отложенная сборка пресета */
+    if (!validCells(d.type).includes(d.hot)){
+      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true });
       return;
     }
     if (d.origin) undoStack.push(d.origin.prevGrid); else snapshot();
@@ -290,15 +318,35 @@ function onDragUp(e){
   }
 }
 function onDragCancel(e){
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  cancelDrag();
+}
+function cancelDrag(){
   const d = drag;
-  endDrag(e);
+  endDrag();
   if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true });
 }
-function endDrag(e){
-  if (e && e.target.releasePointerCapture && e.pointerId !== undefined){
-    try{ e.target.releasePointerCapture(e.pointerId); }catch(_){}
+/* сцена пересобирается при смене темы — драг со ссылками на старую сцену не жилец */
+KD.cancelDrag = cancelDrag;
+function onWinBlur(){ cancelDrag(); }
+function onCtxMenu(e){ e.preventDefault(); } // меню посреди драга глотает pointerup
+function onViewChange(){
+  if (!drag) return;
+  drag.pos = cellPositions(drag.valid, drag.w); // страница сдвинулась — ячейки теперь в других экранных координатах
+}
+function endDrag(){
+  if (drag && drag.el){
+    try{ drag.el.releasePointerCapture(drag.pointerId); }catch(_){}
+    drag.el.removeEventListener("pointermove", onDragMove);
+    drag.el.removeEventListener("pointerup", onDragUp);
+    drag.el.removeEventListener("pointercancel", onDragCancel);
   }
-  e && e.target.removeEventListener("pointermove", onDragMove);
+  window.removeEventListener("pointerup", onDragUp);
+  window.removeEventListener("pointercancel", onDragCancel);
+  window.removeEventListener("blur", onWinBlur);
+  window.removeEventListener("contextmenu", onCtxMenu, true);
+  window.removeEventListener("scroll", onViewChange, true);
+  window.removeEventListener("resize", onViewChange);
   ghostEl.style.display = "none";
   KD.scene.clearGhosts();
   canvas.classList.remove("placing");
@@ -318,6 +366,7 @@ function cellAt(x, y){
 }
 let downPt = null, pickPending = null;
 canvas.addEventListener("pointerdown", e => {
+  if (e.button !== 0 || !e.isPrimary){ downPt = null; pickPending = null; return; }
   downPt = { x: e.clientX, y: e.clientY };
   if (animating) return;
   const i = cellAt(e.clientX, e.clientY);
