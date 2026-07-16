@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://approve-generate-testament-exposed.trycloudflare.com";
+window.KOTOSHI_API = "https://losses-qualification-seafood-determine.trycloudflare.com";
