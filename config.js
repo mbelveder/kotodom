@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://keyboard-services-acknowledge-really.trycloudflare.com";
+window.KOTOSHI_API = "https://equity-equilibrium-pre-photos.trycloudflare.com";
