@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://cameras-bones-joy-england.trycloudflare.com";
+window.KOTOSHI_API = "https://gulf-denied-const-convenient.trycloudflare.com";
