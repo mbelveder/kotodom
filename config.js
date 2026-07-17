@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://cordless-according-jean-cave.trycloudflare.com";
+window.KOTOSHI_API = "https://bid-pharmaceutical-occur-slow.trycloudflare.com";
