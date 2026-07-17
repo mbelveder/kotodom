@@ -241,6 +241,11 @@ button{font-family:inherit}
   box-shadow:4px 4px 0 var(--aka);
   min-width:150px;
 }
+/* чат открыт: панель накрывает правый верхний угол — бирка переезжает в левый
+   нижний. Только на десктопе: на телефоне чат — шторка поверх низа экрана */
+@media (min-width:901px){
+  .studio-main.chat-open .price-tag{top:auto;right:auto;left:16px;bottom:16px}
+}
 .price-tag .lbl{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .price-tag .sum{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;line-height:1.2}
 .price-tag .disc{font-size:12.5px;font-weight:700;color:var(--ok);min-height:18px}
@@ -341,11 +346,11 @@ button{font-family:inherit}
    поэтому стрелку зеркалим, а row-reverse ставит её перед текстом */
 .bg-tip--presets{top:44%;left:3%;flex-direction:row-reverse}
 .bg-tip--presets .bg-arw{transform:scaleX(-1)}
-/* 2. собрать самому — подсказка ниже центра, к самому низу сцены (кнопка
-   «ОК, к делу» переехала в шапку — место внизу освободилось), длинная стрелка
-   уходит ниже scene-wrap к полке модулей (.tray) — ни один родитель не обрезает
-   overflow вплоть до .studio, так что «хвост» стрелки виден поверх неё */
-.bg-tip--self{bottom:-6%;left:44%;transform:translateX(-50%);flex-direction:column;gap:0}
+/* 2. собрать самому — подсказка правее центра, длинная стрелка спускается
+   к нижней кромке сцены и указывает чуть выше слова «клик» в подсказке
+   .hint-bar под сценой — ни один родитель не обрезает overflow вплоть
+   до .studio, так что «хвост» стрелки виден до самого низа */
+.bg-tip--self{bottom:0;left:55%;transform:translateX(-50%);flex-direction:column;gap:0}
 /* 3. чат — у самого аватара Момо в правом углу; svg нарисован «вниз-влево»,
    зеркалим — стрелка уходит вниз-вправо */
 .bg-tip--chat{right:3%;bottom:9%;flex-direction:column;gap:0}
@@ -557,15 +562,6 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
 .preset-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
-/* пока открыт приветственный гид, панель ныряет под затемнение (20) и шапку
-   сцены (21) — иначе она накрыла бы кнопку «ОК, к делу»; класс снимает app.js
-   после того, как панель медленно уехала */
-.studio-main.guide-open .preset-panel{z-index:8}
-/* «ОК, к делу» в гиде закрывает сайдбар медленно — видно, куда он уезжает (см. app.js) */
-.preset-panel.slow-hide{
-  transition:transform .85s ease, opacity .85s ease, visibility 0s linear .85s;
-}
-@media (prefers-reduced-motion: reduce){ .preset-panel.slow-hide{transition:none} }
 @media (max-width:900px){
   /* на телефоне панель — «шторка» снизу экрана, как чат */
   .preset-panel{
@@ -573,7 +569,6 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
     height:min(72vh, 560px);z-index:70;
     transform:translateY(112%);
   }
-  .studio-main.guide-open .preset-panel{z-index:70}
 }
 .preset-head{
   display:flex;align-items:center;gap:10px;

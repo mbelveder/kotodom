@@ -126,29 +126,13 @@ if (buildGuide){
     sceneInstr.classList.toggle("is-guide-open", open);
     toggle.textContent = open ? "ОК, к делу" : "Инструкция";
   };
-  /* гид открывает сайдбар «готовые сборки» под собой — подсказка «Используйте
-     готовые сборки» показывает реальную панель. По «ОК»/Esc/клику мимо гид
-     уходит и медленно уводит сайдбар, освобождая сцену для ручной сборки/чата */
+  /* по «ОК»/Esc/клику мимо гид уходит, освобождая сцену для сборки/чата */
   const dismiss = () => {
     if (dismissed) return;
     dismissed = true;
     setToggle(false);
     try { localStorage.setItem(SEEN, "1"); } catch (e) {}
     buildGuide.classList.add("hiding");
-    /* сайдбар «готовые сборки» открыт под гидом — на «ОК» он уезжает медленно,
-       так видно, куда он прячется (см. .preset-panel.slow-hide) */
-    if (presetPanel.classList.contains("open")){
-      presetPanel.classList.add("slow-hide");
-      presetsOpen(false);
-      /* guide-open (панель под затемнением, z-index:8) снимаем только после
-         отъезда: вернись z-index:22 сразу — панель мелькнула бы поверх шапки */
-      const unslow = () => {
-        presetPanel.classList.remove("slow-hide");
-        studioMain.classList.remove("guide-open");
-      };
-      presetPanel.addEventListener("transitionend", unslow, { once: true });
-      setTimeout(unslow, 1000);
-    } else studioMain.classList.remove("guide-open");
     /* done() идемпотентен: убираем слой из DOM после исчезновения и только
        тогда отпускаем первую реплику Момо. transitionend может не прийти
        (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
@@ -173,10 +157,10 @@ if (buildGuide){
     if (sceneInstr) sceneInstr.open = false;   // схлопываем список инструкций — виден только «ОК, к делу»
     buildGuide.classList.remove("hiding");
     buildGuide.hidden = false;
-    /* guide-open прячет панель под затемнение (z-index:8 < 20) — иначе она,
-       вставая слева, накрыла бы «ОК, к делу» в шапке сцены */
-    studioMain.classList.add("guide-open");
-    presetsOpen(true);   // показываем сайдбар под гидом — «ОК» его медленно уберёт
+    /* гид показывает чистую сцену: сайдбар не открываем, стрелка подсказки
+       ведёт к закрытой вкладке у левого края (а открытый — закрываем: панель
+       z-index 22 накрыла бы «ОК, к делу» в шапке сцены) */
+    presetsOpen(false);
     if (firstRun) introClosed = false;   // интро на экране — реплика Момо подождёт
   };
   /* пока гид открыт, клик по summary не разворачивает <details>, а закрывает гид —

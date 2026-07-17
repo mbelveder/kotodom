@@ -74,7 +74,9 @@ function openChat(){
   /* на телефоне обе панели — шторки снизу: две сразу не помещаются */
   if (KD.closePresets && matchMedia("(max-width: 900px)").matches) KD.closePresets();
   msgs.scrollTop = msgs.scrollHeight;
-  if (matchMedia("(min-width: 901px)").matches) input.focus();
+  /* preventScroll: поле ещё едет в панели из-за правого края — без него браузер
+     доскролливал страницу к полю посреди transition, и сцена дёргалась */
+  if (matchMedia("(min-width: 901px)").matches) input.focus({ preventScroll: true });
 }
 function closeChat(){
   panel.classList.remove("open");
