@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://movements-obj-lift-membership.trycloudflare.com";
+window.KOTOSHI_API = "https://plugins-penn-applications-liability.trycloudflare.com";
