@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://hoped-herbal-perl-battery.trycloudflare.com";
+window.KOTOSHI_API = "https://silicon-passenger-dolls-mba.trycloudflare.com";
