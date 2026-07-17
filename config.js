@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://plugins-penn-applications-liability.trycloudflare.com";
+window.KOTOSHI_API = "https://bone-merry-robot-website.trycloudflare.com";
