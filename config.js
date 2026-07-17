@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://beds-seeks-cat-registration.trycloudflare.com";
+window.KOTOSHI_API = "https://fwd-chose-generating-cms.trycloudflare.com";
