@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://danny-two-palmer-gratis.trycloudflare.com";
+window.KOTOSHI_API = "https://movements-obj-lift-membership.trycloudflare.com";
