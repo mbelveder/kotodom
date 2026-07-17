@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://bid-pharmaceutical-occur-slow.trycloudflare.com";
+window.KOTOSHI_API = "https://collapse-porcelain-perception-rock.trycloudflare.com";
