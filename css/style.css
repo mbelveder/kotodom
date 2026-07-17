@@ -216,8 +216,8 @@ button{font-family:inherit}
 @media (prefers-color-scheme: dark){ :root{ --scene-edge:#3B3244 } }
 :root[data-theme="light"]{ --scene-edge:#C9AC80 }
 :root[data-theme="dark"]{ --scene-edge:#3B3244 }
-/* сцена во всю ширину; чат (слева, из аватара Момо) и готовые сборки (справа,
-   из вертикальной вкладки) открываются панелями поверх сцены —
+/* сцена во всю ширину; готовые сборки (слева, из вертикальной вкладки) и чат
+   (справа, из аватара Момо) открываются панелями поверх сцены —
    высоту ряда всегда задаёт только сцена */
 .studio-main{position:relative}
 .scene-wrap{
@@ -245,9 +245,9 @@ button{font-family:inherit}
 .price-tag .sum{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;line-height:1.2}
 .price-tag .disc{font-size:12.5px;font-weight:700;color:var(--ok);min-height:18px}
 
-/* аватар Момо: и «лицо» сцены, и кнопка чата */
+/* аватар Момо: и «лицо» сцены, и кнопка чата — в правом нижнем углу */
 .momo-fab{
-  position:absolute;left:14px;bottom:14px;z-index:6;
+  position:absolute;right:14px;bottom:14px;z-index:6;
   width:64px;height:64px;border-radius:50%;
   padding:0;border:2px solid var(--ink);
   background:var(--panel);cursor:pointer;
@@ -268,14 +268,14 @@ button{font-family:inherit}
 @media (prefers-reduced-motion: reduce){ .momo-fab img{animation:none} }
 .studio-main.chat-open .momo-fab{opacity:0;pointer-events:none;transform:scale(.6)}
 
-/* реплика Момо — баббл растёт из аватара */
+/* реплика Момо — баббл растёт из аватара (справа) */
 .momo-say{
-  position:absolute;left:14px;bottom:88px;max-width:300px;
+  position:absolute;right:14px;bottom:88px;max-width:300px;
   background:var(--panel);border:1.5px solid var(--ink);
-  border-radius:16px;border-bottom-left-radius:4px;
+  border-radius:16px;border-bottom-right-radius:4px;
   padding:9px 14px;font-size:14.5px;font-weight:700;
   box-shadow:var(--shadow);
-  opacity:0;transform:translateY(8px) scale(.96);transform-origin:0 100%;
+  opacity:0;transform:translateY(8px) scale(.96);transform-origin:100% 100%;
   transition:opacity .22s ease, transform .22s ease;
   pointer-events:none;
   z-index:5;
@@ -284,17 +284,17 @@ button{font-family:inherit}
 .momo-say.show{opacity:1;transform:none;animation:say-pop .22s ease}
 @keyframes say-pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
 .momo-say .who{color:var(--aka);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;display:block}
-/* чат открыт: аватар «развернулся» в панель, реплики уезжают правее панели */
-.studio-main.chat-open .momo-say{left:352px;bottom:14px}
+/* чат открыт: аватар «развернулся» в панель, реплики уезжают левее панели */
+.studio-main.chat-open .momo-say{right:352px;bottom:14px}
 @media (max-width:900px){
-  .momo-fab{width:52px;height:52px;left:10px;bottom:10px}
-  .momo-say{max-width:min(300px, 66vw);bottom:72px;left:10px}
-  .studio-main.chat-open .momo-say{left:10px;bottom:72px}
+  .momo-fab{width:52px;height:52px;right:10px;bottom:10px}
+  .momo-say{max-width:min(300px, 66vw);bottom:72px;right:10px}
+  .studio-main.chat-open .momo-say{right:10px;bottom:72px}
 }
 
 /* ============ приветственный гид конструктора домиков ============ */
 /* слой поверх сцены: три подсказки со стрелками к реальным элементам
-   (готовые сборки → вкладка справа, сборка → сцена, чат → аватар слева).
+   (готовые сборки → вкладка слева, сборка → сцена, чат → аватар справа).
    Растворяется по «ОК, к делу»; показывается один раз, см. js/app.js */
 .build-guide{
   position:absolute;inset:0;z-index:20;
@@ -337,15 +337,19 @@ button{font-family:inherit}
     box-shadow:0 0 0 5px color-mix(in srgb, var(--aka) 45%, transparent),3px 3px 0 var(--aka)}
 }
 
-/* 1. готовые сборки — подсказка у самой вкладки, стрелка короткая */
-.bg-tip--presets{top:44%;right:3%;flex-direction:row}
+/* 1. готовые сборки — подсказка у самой вкладки слева; svg нарисован «вправо»,
+   поэтому стрелку зеркалим, а row-reverse ставит её перед текстом */
+.bg-tip--presets{top:44%;left:3%;flex-direction:row-reverse}
+.bg-tip--presets .bg-arw{transform:scaleX(-1)}
 /* 2. собрать самому — подсказка ниже центра, к самому низу сцены (кнопка
    «ОК, к делу» переехала в шапку — место внизу освободилось), длинная стрелка
    уходит ниже scene-wrap к полке модулей (.tray) — ни один родитель не обрезает
    overflow вплоть до .studio, так что «хвост» стрелки виден поверх неё */
 .bg-tip--self{bottom:-6%;left:44%;transform:translateX(-50%);flex-direction:column;gap:0}
-/* 3. чат — у самого аватара Момо в углу, стрелка короткая */
-.bg-tip--chat{left:3%;bottom:9%;flex-direction:column;gap:0}
+/* 3. чат — у самого аватара Момо в правом углу; svg нарисован «вниз-влево»,
+   зеркалим — стрелка уходит вниз-вправо */
+.bg-tip--chat{right:3%;bottom:9%;flex-direction:column;gap:0}
+.bg-tip--chat .bg-arw{transform:scaleX(-1)}
 
 /* маленькая кнопка «показать подсказки ещё раз» — внутри <details class="scene-instr">
    (открывает приветственный гид заново); пока гид открыт, кнопки закрытия здесь
@@ -369,8 +373,8 @@ button{font-family:inherit}
 
 @media (max-width:900px){
   .bg-txt{font-size:13px;padding:6px 10px}
-  .bg-tip--presets{top:38%;right:2%}
-  .bg-tip--chat{left:2%;bottom:12%}
+  .bg-tip--presets{top:38%;left:2%}
+  .bg-tip--chat{right:2%;bottom:12%}
   .bg-tip--presets .bg-arw,.bg-tip--chat .bg-arw{width:44px;height:auto}
 }
 @media (prefers-reduced-motion: reduce){
@@ -525,32 +529,38 @@ section{padding:56px 0 8px;scroll-margin-top:88px}
 section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 .sec-sub{color:var(--muted);max-width:640px;margin:0 0 24px}
 
-/* ============ готовые сборки: выдвижная панель справа от сцены ============ */
-/* зеркалит чат Момо: чат выезжает слева, сборки — справа; высоту задаёт сцена */
+/* ============ готовые сборки: выдвижная панель слева от сцены ============ */
+/* зеркалит чат Момо: сборки выезжают слева, чат — справа; высоту задаёт сцена */
 .preset-tab{
-  position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:6;
+  position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:6;
   writing-mode:vertical-rl;
-  padding:14px 7px;border:1.5px solid var(--ink);border-right:none;
-  border-radius:14px 0 0 14px;
+  padding:14px 7px;border:1.5px solid var(--ink);border-left:none;
+  border-radius:0 14px 14px 0;
   background:var(--panel);color:var(--ink);cursor:pointer;
   font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-  box-shadow:-3px 3px 0 var(--aka);
+  box-shadow:3px 3px 0 var(--aka);
   transition:padding .15s ease, color .15s ease, opacity .18s ease;
 }
-.preset-tab:hover{padding-right:12px;color:var(--aka)}
+.preset-tab:hover{padding-left:12px;color:var(--aka)}
 .studio-main.presets-open .preset-tab{opacity:0;pointer-events:none}
 .preset-panel{
-  position:absolute;right:12px;top:12px;bottom:12px;width:322px;
+  position:absolute;left:12px;top:12px;bottom:12px;width:322px;
   display:flex;flex-direction:column;overflow:hidden;
   background:var(--panel);
   border:1.5px solid var(--line);
   border-radius:20px;
   box-shadow:var(--shadow);
-  z-index:7;
-  opacity:0;visibility:hidden;transform:translateX(112%);
+  /* выше .scene-head (21): панель теперь слева и встаёт в тот же угол, что и
+     заголовок «Конструктор домиков» — должна перекрывать его, как чат раньше */
+  z-index:22;
+  opacity:0;visibility:hidden;transform:translateX(-112%);
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
 .preset-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+/* пока открыт приветственный гид, панель ныряет под затемнение (20) и шапку
+   сцены (21) — иначе она накрыла бы кнопку «ОК, к делу»; класс снимает app.js
+   после того, как панель медленно уехала */
+.studio-main.guide-open .preset-panel{z-index:8}
 /* «ОК, к делу» в гиде закрывает сайдбар медленно — видно, куда он уезжает (см. app.js) */
 .preset-panel.slow-hide{
   transition:transform .85s ease, opacity .85s ease, visibility 0s linear .85s;
@@ -563,6 +573,7 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
     height:min(72vh, 560px);z-index:70;
     transform:translateY(112%);
   }
+  .studio-main.guide-open .preset-panel{z-index:70}
 }
 .preset-head{
   display:flex;align-items:center;gap:10px;
@@ -609,6 +620,12 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 .preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%}
+/* выбранная сборка: план из витрины загружен в конструктор и ещё не изменён
+   руками — метка держится, пока конфигурацию не поправят (см. app.js) */
+.preset-card.chosen{
+  border-color:var(--aka);
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--aka) 40%, transparent);
+}
 /* карточка выбрана кликом «Собрать» в витрине над hero — коротко подсвечиваем, куда попал план */
 .preset-card.hl{animation:pc-hl 1.7s ease}
 @keyframes pc-hl{
@@ -715,18 +732,17 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .err-note{color:var(--aka);font-size:13.5px;font-weight:700;min-height:18px;margin-top:6px}
 
-/* ============ чат Момо: панель поверх сцены, открывается аватаром ============ */
+/* ============ чат Момо: панель поверх сцены справа, открывается аватаром ============ */
 .chat-panel{
-  position:absolute;left:12px;top:12px;bottom:12px;width:322px;
+  position:absolute;right:12px;top:12px;bottom:12px;width:322px;
   display:flex;flex-direction:column;overflow:hidden;
   background:var(--panel);
   border:1.5px solid var(--line);
   border-radius:20px;
   box-shadow:var(--shadow);
-  /* выше .scene-head (21) — панель встаёт в тот же левый верхний угол,
-     что и заголовок «Соберите свой Котоши», и должна перекрывать его, а не наоборот */
+  /* панель накрывает ценник-бирку в правом верхнем углу — она главнее */
   z-index:22;
-  opacity:0;visibility:hidden;transform:translateX(-112%);
+  opacity:0;visibility:hidden;transform:translateX(112%);
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
 .chat-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}

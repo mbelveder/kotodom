@@ -49,14 +49,41 @@ SHOWCASE.forEach(g => {
   presetList.appendChild(el);
   /* без прокрутки и закрытия панели: посетитель уже у конструктора домиков,
      а планы удобно примерять один за другим */
-  el.querySelector("button").addEventListener("click", () => KD.loadPreset(g.preset));
+  el.querySelector("button").addEventListener("click", () => {
+    if (KD.loadPreset(g.preset)) markChosen(g.preset);
+  });
 });
+
+/* «выбранная сборка»: карточка плана, который сейчас стоит в конструкторе
+   в неизменном виде. Любая ручная правка (перенос, удаление, очистка, отмена,
+   сборка от Момо) снимает метку — см. KD.onUserEdit из configurator.js */
+let chosenCard = null;
+function markChosen(key){
+  if (chosenCard) chosenCard.classList.remove("chosen");
+  chosenCard = presetList.querySelector(`.preset-card[data-key="${key}"]`);
+  if (!chosenCard) return;
+  chosenCard.classList.add("chosen");
+  /* панель может быть закрыта — список прокручиваем заранее, чтобы при
+     открытии выбранный план был сразу на виду */
+  presetList.scrollTo({ top: chosenCard.offsetTop - 8 });
+}
+KD.onUserEdit = () => {
+  if (!chosenCard) return;
+  chosenCard.classList.remove("chosen");
+  chosenCard = null;
+};
+
 function presetsOpen(on){
   presetPanel.classList.toggle("open", on);
   studioMain.classList.toggle("presets-open", on);
   presetTab.setAttribute("aria-expanded", on ? "true" : "false");
   /* на телефоне обе панели — шторки снизу: две сразу не помещаются */
   if (on && KD.closeChat && matchMedia("(max-width: 900px)").matches) KD.closeChat();
+  /* в конструкторе стоит нетронутый план из витрины — при открытии панели
+     коротко подсвечиваем его карточку (после transition, чтобы был виден) */
+  if (on && chosenCard) setTimeout(() => {
+    if (chosenCard) highlightPreset(chosenCard.dataset.key);
+  }, 300);
 }
 KD.closePresets = () => presetsOpen(false);
 presetTab.addEventListener("click", () => presetsOpen(true));
@@ -113,10 +140,15 @@ if (buildGuide){
     if (presetPanel.classList.contains("open")){
       presetPanel.classList.add("slow-hide");
       presetsOpen(false);
-      const unslow = () => presetPanel.classList.remove("slow-hide");
+      /* guide-open (панель под затемнением, z-index:8) снимаем только после
+         отъезда: вернись z-index:22 сразу — панель мелькнула бы поверх шапки */
+      const unslow = () => {
+        presetPanel.classList.remove("slow-hide");
+        studioMain.classList.remove("guide-open");
+      };
       presetPanel.addEventListener("transitionend", unslow, { once: true });
       setTimeout(unslow, 1000);
-    }
+    } else studioMain.classList.remove("guide-open");
     /* done() идемпотентен: убираем слой из DOM после исчезновения и только
        тогда отпускаем первую реплику Момо. transitionend может не прийти
        (фоновая вкладка тормозит анимации, reduced-motion) — дублируем таймером */
@@ -141,6 +173,9 @@ if (buildGuide){
     if (sceneInstr) sceneInstr.open = false;   // схлопываем список инструкций — виден только «ОК, к делу»
     buildGuide.classList.remove("hiding");
     buildGuide.hidden = false;
+    /* guide-open прячет панель под затемнение (z-index:8 < 20) — иначе она,
+       вставая слева, накрыла бы «ОК, к делу» в шапке сцены */
+    studioMain.classList.add("guide-open");
     presetsOpen(true);   // показываем сайдбар под гидом — «ОК» его медленно уберёт
     if (firstRun) introClosed = false;   // интро на экране — реплика Момо подождёт
   };
@@ -179,17 +214,13 @@ function highlightPreset(key){
 /* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор домиков —
    в отличие от кнопок сборки внутри самого конструктора домиков, тут прокрутка уместна.
    Скроллим до заголовка конструктора домиков на сцене, а не до верха секции — так студия
-   видна сразу. Приветственный гид тут НЕ показываем: сайдбар просто открывается
-   и остаётся открытым, чтобы примерять планы один за другим */
+   видна сразу. Сайдбар НЕ открываем — план и так виден в сцене; его карточку
+   помечаем и прокручиваем к ней список, чтобы открывший сайдбар сразу увидел
+   выбранную сборку */
 function buildFromShowcase(key){
   const head = $("#builderHead");
   (head || builderSec).scrollIntoView({ behavior: "smooth", block: "start" });
-  presetsOpen(true);
-  KD.loadPreset(key);
-  /* подсветку — после transition панели (.28s): раньше scrollIntoView читает
-     ещё не осевшие координаты (панель на пути из translateX(112%)) и уводит
-     всю страницу непредсказуемо далеко */
-  setTimeout(() => highlightPreset(key), 320);
+  if (KD.loadPreset(key)) markChosen(key);
 }
 SHOWCASE.forEach(g => {
   const el = document.createElement("div");

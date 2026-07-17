@@ -239,8 +239,8 @@ function makeRoom(parent){
     translate:{ y:GROUND-WH/2, z:WALLZ } });
   new Zdog.Shape({ addTo:room, stroke:7, color:P.floorSide, closed:false,
     path:[ { x:-FW/2+4, y:GROUND-3, z:WALLZ+2 }, { x:FW/2-4, y:GROUND-3, z:WALLZ+2 } ] });
-  // сёдзи-окно на задней стене
-  const win = new Zdog.Anchor({ addTo:room, translate:{ x:40, y:GROUND-216, z:WALLZ+1.5 } });
+  // сёдзи-окно на задней стене — пониже, ближе к «человеческой» высоте подоконника
+  const win = new Zdog.Anchor({ addTo:room, translate:{ x:40, y:GROUND-176, z:WALLZ+1.5 } });
   new Zdog.Rect({ addTo:win, width:150, height:120, fill:true, stroke:6, color:calm(P.windowGlow) });
   new Zdog.Rect({ addTo:win, width:150, height:120, stroke:5, color:calm(P.shoji), translate:{ z:0.8 } });
   new Zdog.Shape({ addTo:win, stroke:3, color:calm(P.shoji), closed:false, translate:{ z:1.4 }, path:[ { x:0, y:-60 }, { x:0, y:60 } ] });
@@ -315,8 +315,8 @@ function build(){
   });
   /* y:-10, не меньше: при -26 окно и свиток упирались в верхний край холста
      и комната выглядела «обрезанной» сверху.
-     x:8 — дом правее центра: панель чата слева перекрывает меньше сцены */
-  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: 8, y: -10 } });
+     x:-8 — дом левее центра: панель чата справа перекрывает меньше сцены */
+  world = new Zdog.Anchor({ addTo: illo, rotate: { x: -0.24, y: 0.30 }, translate:{ x: -8, y: -10 } });
   // комната — единая Group, ЖЁСТКО закреплённая позади всего:
   // средняя глубина группы зависит от размеров пола/швов, и при глубоком поле
   // сортировка начинала рисовать комнату ПОВЕРХ модулей (плоские кубы,

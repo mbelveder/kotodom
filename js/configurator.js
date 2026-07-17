@@ -130,6 +130,10 @@ function refresh(){
 /* ---------- операции ---------- */
 function snapshot(){ undoStack.push(grid.slice()); if (undoStack.length > 40) undoStack.shift(); }
 
+/* конфигурацию изменили руками (или Момо) — app.js снимает метку «выбранная
+   сборка» с карточки плана в сайдбаре: план в сцене уже не совпадает с ней */
+function notifyEdit(){ if (KD.onUserEdit) KD.onUserEdit(); }
+
 /* тоннель: с соседом в ряду — вдоль ряда, одиночный — входом к зрителю */
 function tunnelAxis(i){
   const col = i % COLS;
@@ -306,6 +310,7 @@ function onDragUp(e){
       return;
     }
     if (d.origin) undoStack.push(d.origin.prevGrid); else snapshot();
+    notifyEdit();
     place(d.hot, d.type, d.origin ? { moved: true } : undefined);
   } else if (d.origin){
     place(d.origin.from, d.type, { silent: true, instant: true }); // не донёс — вернуть
@@ -388,6 +393,7 @@ canvas.addEventListener("pointerup", e => {
   best = mainOf(best);
   if (!canRemove(best)){ say(pick(SAY.blocked)); KD.scene.pulse(best); return; }
   snapshot();
+  notifyEdit();
   removeAt(best);
 });
 
@@ -396,6 +402,7 @@ btnUndo.addEventListener("click", () => {
   if (!undoStack.length || animating) return;
   buildGen++; // отменяем «хвост» отложенной сборки
   const prev = undoStack.pop();
+  notifyEdit();
   const bel = i => (i >= COLS ? prev[i - COLS] : null);
   for (let i = 0; i < N; i++){
     if (grid[i] === prev[i]) continue;
@@ -409,13 +416,15 @@ btnUndo.addEventListener("click", () => {
   }
   refresh();
 });
-btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); clearAll(); } });
+btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); notifyEdit(); clearAll(); } });
 
-/* реплика при выборе плана — про состав сборки (без имени плана: оно вторично) */
+/* реплика при выборе плана — про состав сборки (без имени плана: оно вторично).
+   Возвращает true, если сборка реально запустилась (app.js по этому признаку
+   помечает карточку плана «выбранной») */
 function loadPreset(key){
   const p = PRESETS[key];
-  if (!p) return;
-  applyCells(p.cells, p.say);
+  if (!p) return false;
+  return applyCells(p.cells, p.say);
 }
 KD.loadPreset = loadPreset;
 
@@ -453,7 +462,11 @@ function applyCells(cells, doneSay){
   });
   return entries.length > 0;
 }
-KD.applyConfig = cells => applyCells(cells, "Собрал! Двигайте модули, если хочется по-другому.");
+KD.applyConfig = cells => {
+  const ok = applyCells(cells, "Собрал! Двигайте модули, если хочется по-другому.");
+  if (ok) notifyEdit(); // сборка от Момо — уже не «готовый план» из сайдбара
+  return ok;
+};
 
 /* ---------- API для заказа и чата ---------- */
 KD.configurator = {
