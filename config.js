@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://function-battery-learn-fabulous.trycloudflare.com";
+window.KOTOSHI_API = "https://inns-insight-refers-newfoundland.trycloudflare.com";
