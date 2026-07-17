@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://driver-geek-needle-sticker.trycloudflare.com";
+window.KOTOSHI_API = "https://exceptions-thick-vacation-liberal.trycloudflare.com";
