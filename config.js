@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://collapse-porcelain-perception-rock.trycloudflare.com";
+window.KOTOSHI_API = "https://auditor-tribal-ask-maternity.trycloudflare.com";
