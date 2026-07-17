@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://fwd-chose-generating-cms.trycloudflare.com";
+window.KOTOSHI_API = "https://armed-experience-reputation-yen.trycloudflare.com";
