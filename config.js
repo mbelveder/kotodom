@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://popular-contributions-neo-lightning.trycloudflare.com";
+window.KOTOSHI_API = "https://bryan-indicator-stuff-rate.trycloudflare.com";
