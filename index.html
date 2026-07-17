@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=30">
-<link rel="stylesheet" href="css/style.css?v=30">
-<script defer src="config.js?v=30"></script>
-<script defer src="js/zdog.dist.min.js?v=30"></script>
-<script defer src="js/catalog.js?v=30"></script>
-<script defer src="js/scene.js?v=30"></script>
-<script defer src="js/configurator.js?v=30"></script>
-<script defer src="js/chat.js?v=30"></script>
-<script defer src="js/app.js?v=30"></script>
+<link rel="stylesheet" href="css/fonts.css?v=31">
+<link rel="stylesheet" href="css/style.css?v=31">
+<script defer src="config.js?v=31"></script>
+<script defer src="js/zdog.dist.min.js?v=31"></script>
+<script defer src="js/catalog.js?v=31"></script>
+<script defer src="js/scene.js?v=31"></script>
+<script defer src="js/configurator.js?v=31"></script>
+<script defer src="js/chat.js?v=31"></script>
+<script defer src="js/app.js?v=31"></script>
 </head>
 <body>
 
@@ -119,8 +119,8 @@
             <p class="scene-sub-lead">Воспользуйтесь любым из способов или скомбинируйте несколько:</p>
             <ul class="scene-sub">
               <li>Перетаскивайте модули в комнату, для удаления кликните на модуль</li>
-              <li>Откройте готовые сборки во вкладке справа</li>
-              <li>Опишите своего питомца в чате с Момо, нашим ИИ-консультантом по кнопке в углу конструктора домиков</li>
+              <li>Откройте готовые сборки во вкладке слева</li>
+              <li>Опишите своего питомца в чате с Момо, нашим ИИ-консультантом по кнопке в правом нижнем углу конструктора домиков</li>
             </ul>
             <button class="guide-reopen" id="guideReopen" type="button">
               <span class="gr-q" aria-hidden="true">?</span>показать подсказки ещё раз
@@ -145,7 +145,7 @@
         <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в конструкторе домиков" hidden>
           <div class="bg-scrim"></div>
 
-          <!-- 1. готовые сборки — стрелка вправо, к вкладке (короче — вкладка рядом) -->
+          <!-- 1. готовые сборки — стрелка влево, к вкладке у левого края (svg зеркалится в css) -->
           <div class="bg-tip bg-tip--presets">
             <span class="bg-txt">Используйте<br>готовые сборки</span>
             <svg class="bg-arw" viewBox="0 0 56 30" width="56" height="30" aria-hidden="true">
@@ -164,9 +164,9 @@
             </svg>
           </div>
 
-          <!-- 3. чат с Момо — стрелка вниз-влево, к аватару (короче — аватар рядом) -->
+          <!-- 3. чат с Момо — стрелка вниз-вправо, к аватару в правом углу (svg зеркалится в css) -->
           <div class="bg-tip bg-tip--chat">
-            <span class="bg-txt">Опишите своего питомца<br>в чате</span>
+            <span class="bg-txt">Размеры модулей<br>и рекомендации</span>
             <svg class="bg-arw" viewBox="0 0 50 34" width="50" height="34" aria-hidden="true">
               <path d="M44 6 C26 8 14 16 7 28" fill="none"/>
               <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
