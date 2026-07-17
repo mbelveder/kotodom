@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://select-deleted-configure-educational.trycloudflare.com";
+window.KOTOSHI_API = "https://popular-contributions-neo-lightning.trycloudflare.com";
