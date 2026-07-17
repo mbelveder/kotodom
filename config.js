@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://bryan-indicator-stuff-rate.trycloudflare.com";
+window.KOTOSHI_API = "https://mic-components-assume-neon.trycloudflare.com";
