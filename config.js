@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://brandon-coins-boss-character.trycloudflare.com";
+window.KOTOSHI_API = "https://beds-seeks-cat-registration.trycloudflare.com";
