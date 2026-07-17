@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://mic-components-assume-neon.trycloudflare.com";
+window.KOTOSHI_API = "https://danny-two-palmer-gratis.trycloudflare.com";
