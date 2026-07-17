@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://produces-commissioner-prozac-yet.trycloudflare.com";
+window.KOTOSHI_API = "https://driver-geek-needle-sticker.trycloudflare.com";
