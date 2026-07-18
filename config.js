@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://gulf-denied-const-convenient.trycloudflare.com";
+window.KOTOSHI_API = "https://shareholders-newcastle-thousands-alan.trycloudflare.com";
