@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://api.trycloudflare.com";
+window.KOTOSHI_API = "https://spirituality-mins-chassis-developer.trycloudflare.com";
