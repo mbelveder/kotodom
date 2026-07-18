@@ -8,6 +8,14 @@ const msgs = $("#chatMsgs"), input = $("#chatInput"), send = $("#chatSend"),
       panel = $("#chatPanel"), fab = $("#momoFab"),
       closeBtn = $("#chatX"), studioMain = $("#studioMain");
 
+/* ярлык «Размеры модулей и рекомендации» у аватара: живёт до первого открытия
+   чата, дальше не нужен — помним это между визитами (localStorage) */
+const chatTip = $("#chatTip");
+const TIP_SEEN = "kd_chatTipSeen";
+try {
+  if (chatTip && localStorage.getItem(TIP_SEEN) === "1") chatTip.classList.add("done");
+} catch(e){}
+
 /* адрес API: ?api=… > config.js (свежий из репозитория) > localStorage.
    config.js важнее localStorage: иначе устаревший сохранённый адрес
    перекрывает только что запушенный туннель */
@@ -70,6 +78,11 @@ function openChat(){
   panel.classList.add("open");
   studioMain.classList.add("chat-open");
   fab.setAttribute("aria-expanded", "true");
+  /* чат открыли — ярлык у аватара своё отслужил, убираем навсегда */
+  if (chatTip && !chatTip.classList.contains("done")){
+    chatTip.classList.add("done");
+    try { localStorage.setItem(TIP_SEEN, "1"); } catch(e){}
+  }
   if (KD.hideSay) KD.hideSay(); // независимая реплика рядом с открытым чатом путает
   /* на телефоне обе панели — шторки снизу: две сразу не помещаются */
   if (KD.closePresets && matchMedia("(max-width: 900px)").matches) KD.closePresets();

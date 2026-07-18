@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=34">
-<link rel="stylesheet" href="css/style.css?v=34">
-<script defer src="config.js?v=34"></script>
-<script defer src="js/zdog.dist.min.js?v=34"></script>
-<script defer src="js/catalog.js?v=34"></script>
-<script defer src="js/scene.js?v=34"></script>
-<script defer src="js/configurator.js?v=34"></script>
-<script defer src="js/chat.js?v=34"></script>
-<script defer src="js/app.js?v=34"></script>
+<link rel="stylesheet" href="css/fonts.css?v=35">
+<link rel="stylesheet" href="css/style.css?v=35">
+<script defer src="config.js?v=35"></script>
+<script defer src="js/zdog.dist.min.js?v=35"></script>
+<script defer src="js/catalog.js?v=35"></script>
+<script defer src="js/scene.js?v=35"></script>
+<script defer src="js/configurator.js?v=35"></script>
+<script defer src="js/chat.js?v=35"></script>
+<script defer src="js/app.js?v=35"></script>
 </head>
 <body>
 
@@ -140,8 +140,9 @@
         <button class="preset-tab" id="presetTab" aria-controls="presetPanel"
                 aria-expanded="false">готовые сборки</button>
 
-        <!-- приветственный слой конструктора домиков: гид с тремя подсказками и стрелками,
-             растворяется по «ОК, к делу» (или клику по фону); показ один раз, см. app.js -->
+        <!-- приветственный слой конструктора домиков: гид с подсказками и стрелками
+             (третья — #chatTip ниже, вне слоя), растворяется по «ОК, к делу»
+             (или клику по фону); показ один раз, см. app.js -->
         <div class="build-guide" id="buildGuide" role="dialog" aria-label="С чего начать в конструкторе домиков" hidden>
           <div class="bg-scrim"></div>
 
@@ -164,14 +165,19 @@
             </svg>
           </div>
 
-          <!-- 3. чат с Момо — стрелка вниз-вправо, к аватару в правом углу (svg зеркалится в css) -->
-          <div class="bg-tip bg-tip--chat">
-            <span class="bg-txt">Размеры модулей<br>и рекомендации</span>
-            <svg class="bg-arw" viewBox="0 0 50 34" width="50" height="34" aria-hidden="true">
-              <path d="M44 6 C26 8 14 16 7 28" fill="none"/>
-              <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
-            </svg>
-          </div>
+        </div>
+
+        <!-- 3. чат с Момо — ярлык живёт ВНЕ гида: под интро выглядит как остальные
+             подсказки (ярко, над затемнением), после закрытия гида остаётся у аватара
+             в приглушённом виде и убирается навсегда после первого открытия чата
+             (localStorage kd_chatTipSeen, см. js/chat.js). Должен стоять сразу после
+             .build-guide — css переключает вид сосед-селектором. Svg зеркалится в css -->
+        <div class="bg-tip bg-tip--chat" id="chatTip">
+          <span class="bg-txt">Размеры модулей<br>и рекомендации</span>
+          <svg class="bg-arw" viewBox="0 0 50 34" width="50" height="34" aria-hidden="true">
+            <path d="M44 6 C26 8 14 16 7 28" fill="none"/>
+            <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
+          </svg>
         </div>
       </div>
       <aside class="preset-panel" id="presetPanel" aria-label="Готовые сборки">
