@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://descending-oval-program-pdf.trycloudflare.com";
+window.KOTOSHI_API = "https://acquire-sig-seq-education.trycloudflare.com";
