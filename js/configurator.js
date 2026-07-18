@@ -46,6 +46,10 @@ const popSound  = () => blip(420, 640, 0.12, 0.06);
 /* ---------- Момо говорит ---------- */
 let sayTimer = null;
 function say(text, dur){
+  /* пока интро-гид на экране, бабблы не показываем: реплика ушла бы под
+     затемнение (KD.guideShown задаёт app.js; первая реплика автосборки
+     и так ждёт закрытия интро через KD.onIntroDone) */
+  if (KD.guideShown && KD.guideShown()) return;
   clearTimeout(sayTimer);
   /* реплика поверх реплики: баббл «выныривает» заново, а не подменяет текст
      на лету — подмена посреди показа выглядела мерцанием */
@@ -416,7 +420,27 @@ btnUndo.addEventListener("click", () => {
   }
   refresh();
 });
-btnClear.addEventListener("click", () => { if (!animating){ buildGen++; snapshot(); notifyEdit(); clearAll(); } });
+/* «Очистить» сносит всю сборку разом — просим второй клик как подтверждение:
+   первый клик «взводит» кнопку (подпись меняется), повторный — очищает,
+   4 секунды бездействия — тихий откат */
+let clearArmTimer = null;
+const disarmClear = () => {
+  clearTimeout(clearArmTimer);
+  btnClear.classList.remove("armed");
+  btnClear.textContent = "Очистить";
+};
+btnClear.addEventListener("click", () => {
+  if (animating) return;
+  if (!btnClear.classList.contains("armed")){
+    btnClear.classList.add("armed");
+    btnClear.textContent = "Точно убрать всё?";
+    clearTimeout(clearArmTimer);
+    clearArmTimer = setTimeout(disarmClear, 4000);
+    return;
+  }
+  disarmClear();
+  buildGen++; snapshot(); notifyEdit(); clearAll();
+});
 
 /* реплика при выборе плана — про состав сборки (без имени плана: оно вторично).
    Возвращает true, если сборка реально запустилась (app.js по этому признаку
