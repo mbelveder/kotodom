@@ -369,9 +369,8 @@ button{font-family:inherit}
 }
 .bg-tip--chat .bg-arw path{stroke:color-mix(in srgb, var(--muted) 70%, transparent)}
 /* первый раз открыли чат — ярлык больше не нужен (kd_chatTipSeen, js/chat.js);
-   но под повторно открытым гидом третья подсказка всё равно показывается */
+   реоткрытие гида снимает .done и оживляет ярлык (KD.reviveChatTip) */
 .bg-tip--chat.done{display:none}
-.build-guide:not([hidden]):not(.hiding) ~ .bg-tip--chat.done{display:flex}
 /* гид на экране: полная яркость, как у остальных подсказок, поверх затемнения (20) */
 .build-guide:not([hidden]):not(.hiding) ~ .bg-tip--chat{z-index:21}
 .build-guide:not([hidden]):not(.hiding) ~ .bg-tip--chat .bg-txt{

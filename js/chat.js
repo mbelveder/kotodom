@@ -15,6 +15,14 @@ const TIP_SEEN = "kd_chatTipSeen";
 try {
   if (chatTip && localStorage.getItem(TIP_SEEN) === "1") chatTip.classList.add("done");
 } catch(e){}
+/* реоткрытие гида («показать подсказки ещё раз») — явная просьба вернуть
+   подсказки: оживляем ярлык, даже если чат уже открывали; после закрытия
+   гида он останется в приглушённом виде до следующего открытия чата */
+KD.reviveChatTip = () => {
+  if (!chatTip) return;
+  chatTip.classList.remove("done");
+  try { localStorage.removeItem(TIP_SEEN); } catch(e){}
+};
 
 /* адрес API: ?api=… > config.js (свежий из репозитория) > localStorage.
    config.js важнее localStorage: иначе устаревший сохранённый адрес

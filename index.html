@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=35">
-<link rel="stylesheet" href="css/style.css?v=35">
-<script defer src="config.js?v=35"></script>
-<script defer src="js/zdog.dist.min.js?v=35"></script>
-<script defer src="js/catalog.js?v=35"></script>
-<script defer src="js/scene.js?v=35"></script>
-<script defer src="js/configurator.js?v=35"></script>
-<script defer src="js/chat.js?v=35"></script>
-<script defer src="js/app.js?v=35"></script>
+<link rel="stylesheet" href="css/fonts.css?v=36">
+<link rel="stylesheet" href="css/style.css?v=36">
+<script defer src="config.js?v=36"></script>
+<script defer src="js/zdog.dist.min.js?v=36"></script>
+<script defer src="js/catalog.js?v=36"></script>
+<script defer src="js/scene.js?v=36"></script>
+<script defer src="js/configurator.js?v=36"></script>
+<script defer src="js/chat.js?v=36"></script>
+<script defer src="js/app.js?v=36"></script>
 </head>
 <body>
 
@@ -169,9 +169,10 @@
 
         <!-- 3. чат с Момо — ярлык живёт ВНЕ гида: под интро выглядит как остальные
              подсказки (ярко, над затемнением), после закрытия гида остаётся у аватара
-             в приглушённом виде и убирается навсегда после первого открытия чата
-             (localStorage kd_chatTipSeen, см. js/chat.js). Должен стоять сразу после
-             .build-guide — css переключает вид сосед-селектором. Svg зеркалится в css -->
+             в приглушённом виде и убирается после первого открытия чата (localStorage
+             kd_chatTipSeen); реоткрытие гида возвращает его (см. js/chat.js). Должен
+             стоять сразу после .build-guide — css переключает вид сосед-селектором.
+             Svg зеркалится в css -->
         <div class="bg-tip bg-tip--chat" id="chatTip">
           <span class="bg-txt">Размеры модулей<br>и рекомендации</span>
           <svg class="bg-arw" viewBox="0 0 50 34" width="50" height="34" aria-hidden="true">
