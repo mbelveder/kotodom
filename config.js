@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://whale-costa-contractor-programmers.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
