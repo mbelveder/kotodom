@@ -358,7 +358,9 @@ button{font-family:inherit}
    яркость и поднимает над затемнением. Svg нарисован «вниз-влево»,
    зеркалим — стрелка уходит вниз-вправо, к аватару */
 .bg-tip--chat{right:88px;bottom:22px;flex-direction:row;gap:4px;z-index:6}
-.bg-tip--chat .bg-arw{transform:scaleX(-1)}
+/* зеркалим и доворачиваем на 30° против часовой: конец стрелки смотрит
+   в кнопку чата почти горизонтально, а не круто вниз */
+.bg-tip--chat .bg-arw{transform:rotate(-30deg) scaleX(-1)}
 .bg-tip--chat .bg-txt{
   font-size:12.5px;font-weight:700;color:var(--muted);
   background:color-mix(in srgb, var(--panel) 84%, transparent);
