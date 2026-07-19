@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://plug-introduces-stevens-toward.trycloudflare.com";
+window.KOTOSHI_API = "https://bell-army-sum-muscles.trycloudflare.com";
