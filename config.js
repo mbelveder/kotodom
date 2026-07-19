@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://inf-troops-chains-tract.trycloudflare.com";
+window.KOTOSHI_API = "https://platforms-concepts-zoloft-recordings.trycloudflare.com";
