@@ -11,6 +11,7 @@ const PALETTES = {
     wall:"#EFE4CE", wallSide:"#E5D7BC", floor:"#E3CBA2", floorSide:"#C9AC80",
     rug:"#D96A55", rugIn:"#F0DFC8",
     wood:"#DCB683", wood2:"#C09263", woodTop:"#EBCB97", hole:"#4A3C50",
+    edge:"#4A3728", carpet:"#4A4547", carpetDeep:"#3B3739", canvas:"#E9DCC0",
     aka:"#C7423A", akaDeep:"#A93129", sakura:"#F3CDC6", cushion:"#EFB9AF",
     jute:"#C89B6C", juteDark:"#AB8050",
     matcha:"#6E8F63", matchaDark:"#57744E", pot:"#B0705A",
@@ -23,6 +24,7 @@ const PALETTES = {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
     rug:"#A34A3C", rugIn:"#5A4E62",
     wood:"#C9A26C", wood2:"#A87F52", woodTop:"#DDB87E", hole:"#1E1A26",
+    edge:"#5F4A37", carpet:"#5B5661", carpetDeep:"#49444E", canvas:"#D8C8A8",
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
     jute:"#B98F5C", juteDark:"#97713F",
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
@@ -71,20 +73,43 @@ function makeModule(type, parent, opts){
   const SB = (opts && opts.supY) || B;   // фактическая опора: верх модуля снизу (или пол)
   /* видимый бок темнее фронта — иначе куб и лежанка читаются плоскими:
      при повороте сцены (rotate.y > 0) зритель видит фронт и правую грань */
-  const woodBox = extra => box(a, Object.assign({
-    topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood2,
-    frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
+  const woodBox = extra => {
+    const b = box(a, Object.assign({
+      topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood2,
+      frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
+    /* тёмная кромка фанеры по канту фронтальной панели — как у реального
+       прототипа (торцы фанеры затемнены под венге) */
+    new Zdog.Rect({ addTo:a, width:extra.width-3, height:extra.height-3,
+      translate:{ x:(extra.translate && extra.translate.x) || 0,
+                  y:extra.translate.y, z:extra.depth/2+0.9 },
+      stroke:1.8, color:P.edge });
+    return b;
+  };
   if (type === "base"){
     woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
-    new Zdog.Ellipse({ addTo:a, diameter:S*0.52, translate:{ y: B - H/2, z:S/2+0.8 },
-      fill:true, stroke:1, color:P.hole });
+    /* лаз-«домик» с пятиугольной аркой — как у реального куба.
+       Лаз и прорези сидят в нижней части фронта: после наклона сцены их средняя
+       глубина оказывается ЗА фронтальной гранью куба и сортировка красила бы их
+       под ней — поэтому sortValue смещаем вручную (тот же приём, что у roomG) */
+    const deco = sh => { sh.updateSortValue = function(){
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 4; }; return sh; };
+    const dw = S*0.46, dh = H*0.52, dx = -4, dy = B - 3;
+    deco(new Zdog.Shape({ addTo:a, fill:true, stroke:2, color:P.hole, translate:{ z:S/2+1.1 },
+      path:[ { x:dx-dw/2, y:dy }, { x:dx-dw/2, y:dy-dh*0.62 }, { x:dx, y:dy-dh },
+             { x:dx+dw/2, y:dy-dh*0.62 }, { x:dx+dw/2, y:dy } ] }));
+    /* вентиляционные прорези справа от лаза */
+    [0,1,2].forEach(k => deco(new Zdog.Rect({ addTo:a, width:2.4, height:13, fill:true,
+      stroke:1.4, color:P.hole, translate:{ x:S/2-5-k*5.5, y:B-15, z:S/2+1.1 } })));
+    /* ковролиновая площадка-когтеточка на крыше куба */
+    new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
+      color:P.carpet, rotate:{ x:TAU/4 }, translate:{ y: B - H - 1.5 } });
   }
   else if (type === "lounge"){
     const h = 30;
     woodBox({ width:S, height:SB-(B-h), depth:S, translate:{ y: (B-h+SB)/2 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.74, height:S*0.6,
       rotate:{ x:TAU/4 }, translate:{ y: B - h - 1 },
-      stroke:10, fill:true, color:P.cushion });
+      stroke:10, fill:true, color:P.canvas });
   }
   else if (type === "tunnel"){
     // ось: "x" — соединяет соседние модули, "z" — одиночный, входом к зрителю
@@ -94,9 +119,9 @@ function makeModule(type, parent, opts){
     new Zdog.Cylinder({ addTo:t, diameter:D, length:S+2,
       rotate:{ y:TAU/4 }, color:P.wood, frontFace:P.hole, backface:P.hole, stroke:false });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:(S+2)/2 },
-      stroke:4, color:P.wood2 });
+      stroke:4, color:P.edge });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:-(S+2)/2 },
-      stroke:4, color:P.wood2 });
+      stroke:4, color:P.edge });
   }
   else if (type === "tower"){
     box(a, { width:14, height:SB-(B-(H-9)), depth:14, translate:{ y: (B-(H-9)+SB)/2 },
@@ -104,14 +129,14 @@ function makeModule(type, parent, opts){
       frontFace:P.wood2, rearFace:P.juteDark });
     woodBox({ width:S+4, height:9, depth:S-4, translate:{ y: -B + 5.5 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.6, height:S*0.44,
-      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.cushion });
+      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.canvas });
   }
   else if (type === "hammock"){
     [-1,1].forEach(s => box(a, { width:6, height:SB-(B-H), depth:6,
       translate:{ x:s*(S/2-4), y: (B-H+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.canvas,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
   }
@@ -124,16 +149,17 @@ function makeModule(type, parent, opts){
       translate:{ x:p.x, y:(B-H+p.s)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.canvas,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
   else if (type === "roof"){
     // крыша прижата к низу своей ячейки — сидит на модуле снизу
+    /* скаты обиты ковролином — наклонная когтеточка, как у реального домика */
     const W = S+8, slope = S*0.72;
-    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.aka,
+    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.carpet,
       rotate:{ x:TAU/8 }, translate:{ y:16, z: S/4+2 } });
-    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.akaDeep,
+    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.carpetDeep,
       rotate:{ x:-TAU/8 }, translate:{ y:16, z:-S/4-2 } });
     // фронтоны
     [-1,1].forEach(s => new Zdog.Shape({ addTo:a, fill:true, stroke:1, color:P.wood,
