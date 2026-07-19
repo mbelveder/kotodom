@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://assist-msgid-stroke-anything.trycloudflare.com";
+window.KOTOSHI_API = "https://boot-equipment-filed-trembl.trycloudflare.com";
