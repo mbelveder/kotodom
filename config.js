@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://willow-yours-civilian-lung.trycloudflare.com";
+window.KOTOSHI_API = "https://seriously-answers-tank-sampling.trycloudflare.com";
