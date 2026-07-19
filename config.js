@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://disabled-breakdown-populations-readers.trycloudflare.com";
+window.KOTOSHI_API = "https://segment-pens-sandwich-spanking.trycloudflare.com";
