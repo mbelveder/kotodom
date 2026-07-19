@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://mothers-arts-grows-conservative.trycloudflare.com";
+window.KOTOSHI_API = "https://indicator-vegetation-hoping-developing.trycloudflare.com";
