@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://concern-bucks-framing-nutrition.trycloudflare.com";
+window.KOTOSHI_API = "https://strengthen-aspects-life-collectables.trycloudflare.com";
