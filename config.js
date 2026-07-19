@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://probability-mega-posing-occasional.trycloudflare.com";
+window.KOTOSHI_API = "https://ext-maple-harmony-domain.trycloudflare.com";
