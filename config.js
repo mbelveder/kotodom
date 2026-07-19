@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://alert-activation-advantages-morning.trycloudflare.com";
+window.KOTOSHI_API = "https://plug-introduces-stevens-toward.trycloudflare.com";
