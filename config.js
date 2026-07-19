@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://thu-invitation-exercise-sheer.trycloudflare.com";
+window.KOTOSHI_API = "https://cam-trailer-skilled-generator.trycloudflare.com";
