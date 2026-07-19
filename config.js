@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://indicator-vegetation-hoping-developing.trycloudflare.com";
+window.KOTOSHI_API = "https://mind-margin-updated-aud.trycloudflare.com";
