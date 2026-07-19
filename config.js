@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://expand-craft-powered-delete.trycloudflare.com";
+window.KOTOSHI_API = "https://chem-modern-kent-moore.trycloudflare.com";
