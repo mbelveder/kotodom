@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://fiction-questions-annually-barn.trycloudflare.com";
+window.KOTOSHI_API = "https://alert-activation-advantages-morning.trycloudflare.com";
