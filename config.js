@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://acquire-sig-seq-education.trycloudflare.com";
+window.KOTOSHI_API = "https://publicly-characterized-knock-redeem.trycloudflare.com";
