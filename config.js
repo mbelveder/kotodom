@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://losses-chubby-organizer-approval.trycloudflare.com";
+window.KOTOSHI_API = "https://bush-veterinary-hindu-occupational.trycloudflare.com";
