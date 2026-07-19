@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://hrs-file-formal-big.trycloudflare.com";
+window.KOTOSHI_API = "https://attacked-skiing-relevant-evaluated.trycloudflare.com";
