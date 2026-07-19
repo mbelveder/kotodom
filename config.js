@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://guys-martial-syracuse-endless.trycloudflare.com";
+window.KOTOSHI_API = "https://chef-regulated-publishers-wall.trycloudflare.com";
