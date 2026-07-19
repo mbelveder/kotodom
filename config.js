@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://facilitate-say-adequate-homes.trycloudflare.com";
+window.KOTOSHI_API = "https://api.trycloudflare.com";
