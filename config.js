@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://second-later-presentations-average.trycloudflare.com";
+window.KOTOSHI_API = "https://coating-app-munich-cho.trycloudflare.com";
