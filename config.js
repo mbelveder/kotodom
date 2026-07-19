@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://ext-maple-harmony-domain.trycloudflare.com";
+window.KOTOSHI_API = "https://dentists-searches-daughters-gathering.trycloudflare.com";
