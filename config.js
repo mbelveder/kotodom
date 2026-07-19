@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://publicly-characterized-knock-redeem.trycloudflare.com";
+window.KOTOSHI_API = "https://expand-craft-powered-delete.trycloudflare.com";
