@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://install-destination-mirror-malpractice.trycloudflare.com";
+window.KOTOSHI_API = "https://pirates-whom-counting-actions.trycloudflare.com";
