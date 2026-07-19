@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://forecast-dir-bill-raising.trycloudflare.com";
+window.KOTOSHI_API = "https://gui-tutorial-narrow-captain.trycloudflare.com";
