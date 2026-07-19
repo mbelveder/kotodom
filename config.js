@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://strengthen-aspects-life-collectables.trycloudflare.com";
+window.KOTOSHI_API = "https://thou-pump-acc-readings.trycloudflare.com";
