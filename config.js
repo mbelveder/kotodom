@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://rec-meals-kong-fact.trycloudflare.com";
+window.KOTOSHI_API = "https://load-capabilities-calculators-positioning.trycloudflare.com";
