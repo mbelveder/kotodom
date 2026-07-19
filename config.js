@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://pirates-whom-counting-actions.trycloudflare.com";
+window.KOTOSHI_API = "https://alphabetical-injection-chips-golden.trycloudflare.com";
