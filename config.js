@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://coating-app-munich-cho.trycloudflare.com";
+window.KOTOSHI_API = "https://assist-msgid-stroke-anything.trycloudflare.com";
