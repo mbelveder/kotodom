@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://segment-pens-sandwich-spanking.trycloudflare.com";
+window.KOTOSHI_API = "https://install-destination-mirror-malpractice.trycloudflare.com";
