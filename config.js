@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://boot-equipment-filed-trembl.trycloudflare.com";
+window.KOTOSHI_API = "https://spa-widescreen-varied-provincial.trycloudflare.com";
