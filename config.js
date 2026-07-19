@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://chef-regulated-publishers-wall.trycloudflare.com";
+window.KOTOSHI_API = "https://rec-meals-kong-fact.trycloudflare.com";
