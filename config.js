@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://mind-margin-updated-aud.trycloudflare.com";
+window.KOTOSHI_API = "https://calculate-smell-studies-oaks.trycloudflare.com";
