@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://words-ronald-patient-refrigerator.trycloudflare.com";
+window.KOTOSHI_API = "https://disabled-breakdown-populations-readers.trycloudflare.com";
