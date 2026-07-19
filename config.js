@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://tee-dry-diego-shine.trycloudflare.com";
+window.KOTOSHI_API = "https://sorted-orleans-margin-piano.trycloudflare.com";
