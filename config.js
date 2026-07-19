@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://separation-flyer-mutual-quality.trycloudflare.com";
+window.KOTOSHI_API = "https://probability-mega-posing-occasional.trycloudflare.com";
