@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://sale-finger-registrar-follow.trycloudflare.com";
+window.KOTOSHI_API = "https://consent-bell-phones-movement.trycloudflare.com";
