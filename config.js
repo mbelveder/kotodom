@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://tourist-activists-issues-surge.trycloudflare.com";
+window.KOTOSHI_API = "https://tee-dry-diego-shine.trycloudflare.com";
