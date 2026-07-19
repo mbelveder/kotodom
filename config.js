@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://figured-parameters-punch-hormone.trycloudflare.com";
+window.KOTOSHI_API = "https://first-zealand-structures-partners.trycloudflare.com";
