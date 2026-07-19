@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://load-capabilities-calculators-positioning.trycloudflare.com";
+window.KOTOSHI_API = "https://separation-flyer-mutual-quality.trycloudflare.com";
