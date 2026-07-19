@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://gui-tutorial-narrow-captain.trycloudflare.com";
+window.KOTOSHI_API = "https://sale-finger-registrar-follow.trycloudflare.com";
