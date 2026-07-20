@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://enters-tiffany-twice-considerations.trycloudflare.com";
+window.KOTOSHI_API = "https://protein-governance-relevant-nat.trycloudflare.com";
