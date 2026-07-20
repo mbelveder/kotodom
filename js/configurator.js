@@ -165,6 +165,7 @@ function place(i, type, opts){
   const below = i >= COLS ? grid[i - COLS] : null;
   const sceneOpts = { below };
   if (w > 1) sceneOpts.below2 = i >= COLS ? grid[i - COLS + 1] : null;
+  if (opts && opts.entryShape) sceneOpts.entryShape = opts.entryShape; // форма лаза едет с кубом
   if (type === "tunnel"){
     tunnelAxes[i] = tunnelAxis(i);
     sceneOpts.tunnelAxis = tunnelAxes[i];
@@ -187,6 +188,7 @@ function removeAt(i){
   refresh();
 }
 function clearAll(silent){
+  closeEntryMenu();
   for (let i = 0; i < N; i++){ if (grid[i]){ grid[i] = null; KD.scene.remove(i); } }
   if (!silent) say(pick(SAY.empty));
   refresh();
@@ -211,41 +213,69 @@ function buildTray(){
   });
 }
 
-/* ---------- форма лаза ----------
-   Отделка на весь домик: меняет только отрисовку кубов, состав сборки и цену
-   не трогает (в undo не пишем — отменять тут нечего). Выбор переживает
-   перезагрузку, а иконка куба в лотке перерисовывается под новую форму. */
-const entryPick = $("#entryPick");
-const ENTRY_KEY = "kd_entryShape";
+/* ---------- форма лаза: меню у куба ----------
+   Лаз выбирается на каждый куб отдельно. Наведение на куб подсвечивает его лаз
+   (KD.scene.setEntryHover), клик по кубу открывает у него меню: три формы +
+   кнопка «убрать» (см. index.html #entryMenu). Форма — отделка (в undo не пишем,
+   состав и цену не трогает); в сцене живёт по индексу ячейки. */
+const entryMenu = $("#entryMenu");
 const ENTRY_SAY = {
   pentagon: "Лаз-домик — как у настоящего Котоши. Захожу по-хозяйски.",
   circle:  "Круглый лаз — классика. Влезаю боком, вылезаю с достоинством.",
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
-function setEntryShape(s, quiet){
-  if (!KD.scene.setEntryShape(s)) return;
-  entryPick && entryPick.querySelectorAll(".ep-b").forEach(b => {
-    const on = b.dataset.shape === s;
+let menuCell = null;   // ячейка открытого меню (или null)
+
+function positionMenu(i){
+  const p = KD.scene.cellClientPos(i);
+  const r = sceneWrap.getBoundingClientRect();
+  entryMenu.style.left = (p.x - r.left) + "px";
+  entryMenu.style.top  = (p.y - r.top)  + "px";
+}
+function markMenuShape(i){
+  const cur = KD.scene.getEntryShapeAt(i);
+  entryMenu.querySelectorAll(".ep-b").forEach(b => {
+    const on = b.dataset.shape === cur;
     b.classList.toggle("is-on", on);
     b.setAttribute("aria-checked", on ? "true" : "false");
   });
-  try{ localStorage.setItem(ENTRY_KEY, s); }catch(_){}
-  refreshBaseIcon();
-  if (!quiet){ popSound(); say(ENTRY_SAY[s] || "Готово."); }
 }
-/* иконка куба в лотке — снимок настоящего модуля, после смены формы он устарел */
-function refreshBaseIcon(){
-  try{
-    ICON_SRC.base = KD.scene.moduleIcon("base");
-    const img = tray.querySelector('.chip[data-type="base"] img.ico');
-    if (img && ICON_SRC.base) img.src = ICON_SRC.base;
-  }catch(_){ /* иконка не критична — форма в сцене уже сменилась */ }
+function openEntryMenu(i){
+  menuCell = i;
+  markMenuShape(i);
+  positionMenu(i);
+  entryMenu.classList.add("show");
 }
-if (entryPick){
-  entryPick.addEventListener("click", e => {
+function closeEntryMenu(){
+  if (menuCell === null) return;
+  menuCell = null;
+  entryMenu.classList.remove("show");
+}
+KD.closeEntryMenu = closeEntryMenu;
+
+if (entryMenu){
+  entryMenu.addEventListener("click", e => {
+    if (menuCell === null || animating) return;
+    if (e.target.closest(".em-rm")){          // «убрать» — единственный необратимый пункт меню
+      const i = menuCell; closeEntryMenu();
+      if (!canRemove(i)){ say(pick(SAY.blocked)); KD.scene.pulse(i); return; }
+      snapshot(); notifyEdit(); removeAt(i);
+      return;
+    }
     const b = e.target.closest(".ep-b");
-    if (b && !animating) setEntryShape(b.dataset.shape);
+    if (b){
+      const s = b.dataset.shape;
+      if (KD.scene.setEntryShapeAt(menuCell, s)){
+        markMenuShape(menuCell);
+        popSound(); say(ENTRY_SAY[s] || "Готово.");
+      }
+    }
   });
+  /* клик мимо меню закрывает его; клик по самому холсту разрулит его pointerup
+     (тот же куб — закроет, другой — переоткроет, пустое место — закроет) */
+  document.addEventListener("pointerdown", e => {
+    if (menuCell !== null && !entryMenu.contains(e.target) && e.target !== canvas) closeEntryMenu();
+  }, true);
 }
 
 /* ---------- drag-and-drop ---------- */
@@ -282,9 +312,9 @@ function cellPositions(valid, w){
 }
 /* общий драг: из лотка (origin=null) или перенос модуля из сцены (origin={from, prevGrid}) */
 function beginDrag(e, type, el, origin, valid){
-  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true }); return; }
+  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape }); return; }
   valid = valid || validCells(type);
-  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true }); return; }
+  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape }); return; }
   const w = wOf(type);
   const pos = cellPositions(valid, w);
   const a = KD.scene.cellClientPos(0), b = KD.scene.cellClientPos(1);
@@ -342,19 +372,19 @@ function onDragUp(e){
   endDrag();
   if (d.hot !== null && d.hot !== undefined){
     if (d.origin && d.hot === d.origin.from){
-      place(d.hot, d.type, { silent: true, instant: true });  // вернул на прежнее место
+      place(d.hot, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });  // вернул на прежнее место
       return;
     }
     /* пока шёл драг, ячейку могла занять отложенная сборка пресета */
     if (!validCells(d.type).includes(d.hot)){
-      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true });
+      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });
       return;
     }
     if (d.origin) undoStack.push(d.origin.prevGrid); else snapshot();
     notifyEdit();
-    place(d.hot, d.type, d.origin ? { moved: true } : undefined);
+    place(d.hot, d.type, d.origin ? { moved: true, entryShape: d.origin.entryShape } : undefined);
   } else if (d.origin){
-    place(d.origin.from, d.type, { silent: true, instant: true }); // не донёс — вернуть
+    place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape }); // не донёс — вернуть
   }
 }
 function onDragCancel(e){
@@ -364,7 +394,7 @@ function onDragCancel(e){
 function cancelDrag(){
   const d = drag;
   endDrag();
-  if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true });
+  if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });
 }
 /* сцена пересобирается при смене темы — драг со ссылками на старую сцену не жилец */
 KD.cancelDrag = cancelDrag;
@@ -417,30 +447,48 @@ canvas.addEventListener("pointermove", e => {
   if (Math.hypot(e.clientX - pickPending.x, e.clientY - pickPending.y) <= 8) return;
   const i = mainOf(pickPending.i);
   pickPending = null; downPt = null;
+  closeEntryMenu();
   if (!canRemove(i)){ say(pick(SAY.blocked)); KD.scene.pulse(i); return; }
   const type = grid[i];
   const prevGrid = grid.slice();
+  const entryShape = KD.scene.hasEntry(i) ? KD.scene.getEntryShapeAt(i) : null; // лаз едет с кубом
   for (let k = 0; k < wOf(type); k++) grid[i + k] = null;
   KD.scene.remove(i);
   blip(500, 560, 0.08, 0.04);
-  beginDrag(e, type, canvas, { from: i, prevGrid });
+  beginDrag(e, type, canvas, { from: i, prevGrid, entryShape });
 });
 canvas.addEventListener("pointerup", e => {
   pickPending = null;
   if (animating || !downPt || drag) return;
   if (Math.hypot(e.clientX - downPt.x, e.clientY - downPt.y) > 8) return;
   let best = cellAt(e.clientX, e.clientY);
-  if (best === null) return;
+  if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
+  /* куб: клик открывает меню лаза (форма + «убрать»), а не удаляет сразу —
+     удаление куба теперь живёт в меню. Остальные модули убираются как прежде */
+  if (KD.scene.hasEntry(best)){
+    if (menuCell === best) closeEntryMenu(); else openEntryMenu(best);
+    return;
+  }
+  closeEntryMenu();
   if (!canRemove(best)){ say(pick(SAY.blocked)); KD.scene.pulse(best); return; }
   snapshot();
   notifyEdit();
   removeAt(best);
 });
 
+/* наведение на куб слегка подсвечивает его лаз — подсказка, что по нему кликают */
+canvas.addEventListener("pointermove", e => {
+  if (drag || animating) return;
+  const i = cellAt(e.clientX, e.clientY);
+  KD.scene.setEntryHover(i !== null && KD.scene.hasEntry(mainOf(i)) ? mainOf(i) : null);
+});
+canvas.addEventListener("pointerleave", () => KD.scene.setEntryHover(null));
+
 /* ---------- кнопки ---------- */
 btnUndo.addEventListener("click", () => {
   if (!undoStack.length || animating) return;
+  closeEntryMenu();
   buildGen++; // отменяем «хвост» отложенной сборки
   const prev = undoStack.pop();
   notifyEdit();
@@ -558,12 +606,12 @@ KD.configurator = {
 /* ---------- init ---------- */
 KD.scene.init();
 buildTray();
-/* сохранённая форма лаза — до автосборки, чтобы кубы сразу встали нужными */
-try{
-  const saved = localStorage.getItem(ENTRY_KEY);
-  if (saved) setEntryShape(saved, true);
-}catch(_){}
 refresh();
+
+/* меню лаза привязано к экранной точке куба — при прокрутке/ресайзе/смене темы
+   оно «уплывёт» от куба, поэтому просто закрываем его */
+["scroll", "resize"].forEach(ev => window.addEventListener(ev, closeEntryMenu, true));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", closeEntryMenu);
 
 /* конструктор домиков оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
    но МОЛЧА — первая реплика Момо ждёт, пока посетитель сам возьмётся за сборку
