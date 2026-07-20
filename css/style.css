@@ -416,6 +416,55 @@ button{font-family:inherit}
   padding:2px 16px 12px;
 }
 
+/* меню лаза одного куба — всплывает у куба (position:absolute внутри .scene-wrap);
+   left/top задаёт js по экранной точке куба, transform поднимает меню НАД точкой */
+.entry-menu{
+  position:absolute;left:0;top:0;z-index:7;
+  display:flex;align-items:center;gap:6px;
+  padding:6px;border-radius:14px;
+  background:var(--panel);border:1.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--aka);
+  transform:translate(-50%,-138%) scale(.94);
+  opacity:0;pointer-events:none;
+  transition:opacity .14s ease, transform .14s ease;
+}
+.entry-menu.show{opacity:1;pointer-events:auto;transform:translate(-50%,-138%) scale(1)}
+/* «носик» вниз, к кубу */
+.entry-menu::after{
+  content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
+  border:7px solid transparent;border-top-color:var(--ink);
+}
+/* кнопка-форма лаза: компактная, только иконка */
+.ep-b{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;padding:0;
+  font:inherit;color:var(--muted);
+  background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
+  cursor:pointer;transition:border-color .16s,color .16s,background .16s;
+}
+.ep-b svg{width:17px;height:17px;flex:none}
+/* заливка иконки = цвет текста: активная кнопка «зажигает» фигуру */
+.ep-b svg :is(circle,rect,path){fill:currentColor}
+.ep-b:hover{border-color:var(--aka)}
+.ep-b.is-on{
+  color:var(--aka);border-color:var(--aka);
+  background:color-mix(in srgb, var(--aka) 12%, var(--panel));
+}
+/* разделитель — отделяет необратимое «убрать» от выбора формы */
+.em-sep{width:1px;height:22px;background:var(--line);margin:0 1px}
+/* «убрать куб» — НАМЕРЕННО отличается от кнопок-форм: красная, крест-иконка */
+.em-rm{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;padding:0;cursor:pointer;
+  background:color-mix(in srgb, var(--aka) 12%, var(--panel));
+  border:1.5px solid color-mix(in srgb, var(--aka) 45%, var(--line));
+  border-radius:10px;color:var(--aka);
+  transition:background .16s,border-color .16s,color .16s;
+}
+.em-rm svg{width:16px;height:16px}
+.em-rm svg path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.em-rm:hover{background:var(--aka);border-color:var(--aka);color:#FFFBF3}
+
 /* полка модулей: все 9 видны сразу, без прокрутки */
 .tray{
   display:grid;grid-template-columns:repeat(9,1fr);gap:8px;

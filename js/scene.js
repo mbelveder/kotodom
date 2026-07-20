@@ -11,6 +11,13 @@ const PALETTES = {
     wall:"#EFE4CE", wallSide:"#E5D7BC", floor:"#E3CBA2", floorSide:"#C9AC80",
     rug:"#D96A55", rugIn:"#F0DFC8",
     wood:"#DCB683", wood2:"#C09263", woodTop:"#EBCB97", hole:"#4A3C50",
+    /* лаз — отдельный тон, светлее нутра тоннеля (hole): раскрой фанеры, а не
+       глухая дыра; entryLit — подсветка куба под курсором */
+    entry:"#63506A", entryLit:"#856F8E",
+    edge:"#4A3728", carpet:"#4A4547", carpetDeep:"#3B3739", canvas:"#E9DCC0",
+    /* полотно гамака: тёплый терракотово-розовый, отдельный тон — canvas (#E9DCC0)
+       сливался с задней стеной (#EFE4CE), гамак «пропадал» на её фоне */
+    sling:"#D9806E", slingDeep:"#BE6553",
     aka:"#C7423A", akaDeep:"#A93129", sakura:"#F3CDC6", cushion:"#EFB9AF",
     jute:"#C89B6C", juteDark:"#AB8050",
     matcha:"#6E8F63", matchaDark:"#57744E", pot:"#B0705A",
@@ -23,6 +30,9 @@ const PALETTES = {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
     rug:"#A34A3C", rugIn:"#5A4E62",
     wood:"#C9A26C", wood2:"#A87F52", woodTop:"#DDB87E", hole:"#1E1A26",
+    edge:"#5F4A37", carpet:"#5B5661", carpetDeep:"#49444E", canvas:"#D8C8A8",
+    entry:"#3B333F", entryLit:"#544A5C",
+    sling:"#E08A76", slingDeep:"#C56F5B",
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
     jute:"#B98F5C", juteDark:"#97713F",
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
@@ -63,6 +73,45 @@ let dimLabels = [];        // подписи размеров ковра: {m, e,
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
 
+/* лаз и прорези сидят в нижней части фронта: после наклона сцены их средняя
+   глубина оказывается ЗА фронтальной гранью куба и сортировка красила бы их
+   под ней — поэтому sortValue смещаем вручную (тот же приём, что у roomG) */
+function decoSort(sh){
+  sh.updateSortValue = function(){
+    this.constructor.prototype.updateSortValue.call(this); this.sortValue += 4;
+  };
+  return sh;
+}
+
+/* ---------- форма лаза ----------
+   Выбор на каждый куб отдельно (см. клик по кубу в configurator.js): у каждого
+   свой раскрой фанеры. Форма живёт здесь по индексу ячейки (entryShapes), а не в
+   grid — смена формы не трогает состав сборки и цену, только перерисовку куба.
+   Пятиугольная арка-«домик» — как у реального прототипа — форма по умолчанию;
+   круг и квадрат-скруглённый — альтернативы. Все три сидят дверным проёмом на
+   одной линии пола фронта (низ на dy), чтобы читались как один и тот же вход. */
+const ENTRY_SHAPES = {
+  pentagon: (a, g, col) => new Zdog.Shape({ addTo:a, fill:true, stroke:2, color:col,
+    translate:{ z:g.z },
+    path:[ { x:g.dx-g.dw/2, y:g.dy }, { x:g.dx-g.dw/2, y:g.dy-g.dh*0.62 }, { x:g.dx, y:g.dy-g.dh },
+           { x:g.dx+g.dw/2, y:g.dy-g.dh*0.62 }, { x:g.dx+g.dw/2, y:g.dy } ] }),
+  circle: (a, g, col) => new Zdog.Ellipse({ addTo:a, diameter:g.dw*1.12, fill:true, stroke:2,
+    color:col, translate:{ x:g.dx, y:g.dy - g.dw*0.56, z:g.z } }),
+  square: (a, g, col) => new Zdog.RoundedRect({ addTo:a, width:g.dw, height:g.dh*0.84,
+    cornerRadius:g.dw*0.18, fill:true, stroke:2, color:col,
+    translate:{ x:g.dx, y:g.dy - g.dh*0.42, z:g.z } }),
+};
+const DEFAULT_ENTRY = "pentagon";
+let entryShapes = {};   // cellIndex -> форма лаза этого куба
+let entryObjs = {};     // cellIndex -> Zdog-объект лаза (для подсветки и замены на лету)
+let hoverEntry = null;  // куб под курсором — его лаз подсвечен (entryLit)
+function entryColor(i){ return hoverEntry === i ? P.entryLit : P.entry; }
+function makeEntry(a, S, H, B, shape, col){
+  const g = { dw:S*0.46, dh:H*0.52, dx:-4, dy:B-3, z:S/2+1.1 };
+  const draw = ENTRY_SHAPES[shape] || ENTRY_SHAPES[DEFAULT_ENTRY];
+  return decoSort(draw(a, g, col));
+}
+
 function makeModule(type, parent, opts){
   const a = new Zdog.Anchor({ addTo: parent });
   const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
@@ -76,15 +125,22 @@ function makeModule(type, parent, opts){
     frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
     woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
-    new Zdog.Ellipse({ addTo:a, diameter:S*0.52, translate:{ y: B - H/2, z:S/2+0.8 },
-      fill:true, stroke:1, color:P.hole });
+    /* лаз своей формы для этого куба (см. ENTRY_SHAPES и клик по кубу в
+       configurator.js); объект запоминаем — чтобы подсвечивать и менять на лету */
+    const ci = opts ? opts.cellIndex : undefined;
+    const shape = (ci != null && entryShapes[ci]) || DEFAULT_ENTRY;
+    const eo = makeEntry(a, S, H, B, shape, ci != null ? entryColor(ci) : P.entry);
+    if (ci != null) entryObjs[ci] = eo;
+    /* ковролиновая площадка-когтеточка на крыше куба */
+    new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
+      color:P.carpet, rotate:{ x:TAU/4 }, translate:{ y: B - H - 1.5 } });
   }
   else if (type === "lounge"){
     const h = 30;
     woodBox({ width:S, height:SB-(B-h), depth:S, translate:{ y: (B-h+SB)/2 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.74, height:S*0.6,
       rotate:{ x:TAU/4 }, translate:{ y: B - h - 1 },
-      stroke:10, fill:true, color:P.cushion });
+      stroke:10, fill:true, color:P.canvas });
   }
   else if (type === "tunnel"){
     // ось: "x" — соединяет соседние модули, "z" — одиночный, входом к зрителю
@@ -94,9 +150,9 @@ function makeModule(type, parent, opts){
     new Zdog.Cylinder({ addTo:t, diameter:D, length:S+2,
       rotate:{ y:TAU/4 }, color:P.wood, frontFace:P.hole, backface:P.hole, stroke:false });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:(S+2)/2 },
-      stroke:4, color:P.wood2 });
+      stroke:4, color:P.edge });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:-(S+2)/2 },
-      stroke:4, color:P.wood2 });
+      stroke:4, color:P.edge });
   }
   else if (type === "tower"){
     box(a, { width:14, height:SB-(B-(H-9)), depth:14, translate:{ y: (B-(H-9)+SB)/2 },
@@ -104,14 +160,14 @@ function makeModule(type, parent, opts){
       frontFace:P.wood2, rearFace:P.juteDark });
     woodBox({ width:S+4, height:9, depth:S-4, translate:{ y: -B + 5.5 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.6, height:S*0.44,
-      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.cushion });
+      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.canvas });
   }
   else if (type === "hammock"){
     [-1,1].forEach(s => box(a, { width:6, height:SB-(B-H), depth:6,
       translate:{ x:s*(S/2-4), y: (B-H+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
   }
@@ -124,16 +180,17 @@ function makeModule(type, parent, opts){
       translate:{ x:p.x, y:(B-H+p.s)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
   else if (type === "roof"){
     // крыша прижата к низу своей ячейки — сидит на модуле снизу
+    /* скаты обиты ковролином — наклонная когтеточка, как у реального домика */
     const W = S+8, slope = S*0.72;
-    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.aka,
+    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.carpet,
       rotate:{ x:TAU/8 }, translate:{ y:16, z: S/4+2 } });
-    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.akaDeep,
+    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.carpetDeep,
       rotate:{ x:-TAU/8 }, translate:{ y:16, z:-S/4-2 } });
     // фронтоны
     [-1,1].forEach(s => new Zdog.Shape({ addTo:a, fill:true, stroke:1, color:P.wood,
@@ -375,9 +432,40 @@ api.restore = function(grid){
   });
 };
 
+/* лаз — свойство отдельного куба: circle | square | pentagon.
+   setEntryHover подсвечивает лаз куба под курсором (entryLit), setEntryShapeAt
+   меняет форму одного куба на лету — перестраиваем только его объект-лаз, не
+   трогая ни модуль, ни состав сборки. */
+api.setEntryHover = function(i){
+  if (i != null && grid_base(i) === false) i = null; // подсветка только у кубов
+  if (hoverEntry === i) return;
+  const prev = hoverEntry; hoverEntry = i;
+  [prev, i].forEach(k => { if (k != null && entryObjs[k]) entryObjs[k].color = entryColor(k); });
+  dirty = true;
+};
+/* есть ли лаз у модуля в ячейке i (куб) — по наличию записанного объекта-лаза */
+function grid_base(i){ return !!entryObjs[i]; }
+api.setEntryShapeAt = function(i, s){
+  if (!ENTRY_SHAPES[s]) return false;
+  entryShapes[i] = s;
+  const a = moduleAnchors[i], old = entryObjs[i];
+  if (a && old){
+    a.removeChild(old);
+    const S = CELL - 10, B = CELL / 2, H = CELL - 2;   // те же размеры, что в makeModule
+    entryObjs[i] = makeEntry(a, S, H, B, s, entryColor(i));
+    dirty = true;
+  }
+  return true;
+};
+api.getEntryShapeAt = i => entryShapes[i] || DEFAULT_ENTRY;
+api.hasEntry = i => !!entryObjs[i];
+
 api.place = function(i, type, instant, opts){
   if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту
   opts = Object.assign({}, opts);
+  opts.cellIndex = i;
+  /* форма лаза «переезжает» с кубом: конструктор передаёт её при переносе */
+  if (opts.entryShape) entryShapes[i] = opts.entryShape;
   /* до какой высоты тянутся опоры: верх модуля снизу (или граница ячейки/пол) */
   const supOf = b => b && MODULES[b] ? CELL + (TOP_Y[b] ?? -CELL/2) : CELL/2;
   opts.supY = supOf(opts.below);
@@ -402,6 +490,9 @@ api.remove = function(i){
   houseA.removeChild(a);
   delete moduleAnchors[i];
   delete moduleDy[i];
+  delete entryObjs[i];
+  delete entryShapes[i];
+  if (hoverEntry === i) hoverEntry = null;
   dirty = true;
 };
 
