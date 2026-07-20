@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://cst-peripheral-radiation-developed.trycloudflare.com";
+window.KOTOSHI_API = "https://reward-feels-comparisons-designated.trycloudflare.com";
