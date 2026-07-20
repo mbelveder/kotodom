@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://seekers-england-hispanic-port.trycloudflare.com";
+window.KOTOSHI_API = "https://acquire-pledge-earl-missed.trycloudflare.com";
