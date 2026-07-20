@@ -12,6 +12,9 @@ const PALETTES = {
     rug:"#D96A55", rugIn:"#F0DFC8",
     wood:"#DCB683", wood2:"#C09263", woodTop:"#EBCB97", hole:"#4A3C50",
     aka:"#C7423A", akaDeep:"#A93129", sakura:"#F3CDC6", cushion:"#EFB9AF",
+    /* полотно гамака: отдельный тон, а не sakura — бледно-розовое полотно
+       висит на фоне стены и сливалось с ней (#F3CDC6 против #EFE4CE) */
+    sling:"#D9806E", slingDeep:"#BE6553",
     jute:"#C89B6C", juteDark:"#AB8050",
     matcha:"#6E8F63", matchaDark:"#57744E", pot:"#B0705A",
     lamp:"#F7E5B5", lampGlow:"rgba(247,224,172,0.18)", lampRib:"#D9BE8A", stand:"#6B5F52",
@@ -24,6 +27,7 @@ const PALETTES = {
     rug:"#A34A3C", rugIn:"#5A4E62",
     wood:"#C9A26C", wood2:"#A87F52", woodTop:"#DDB87E", hole:"#1E1A26",
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
+    sling:"#E08A76", slingDeep:"#C56F5B",
     jute:"#B98F5C", juteDark:"#97713F",
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
     lamp:"#F3D992", lampGlow:"rgba(243,217,146,0.12)", lampRib:"#C7A860", stand:"#8A7E6E",
@@ -63,6 +67,28 @@ let dimLabels = [];        // подписи размеров ковра: {m, e,
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
 
+/* ---------- форма лаза ----------
+   Выбор на весь домик (не на модуль): лаз — это раскрой фанеры, и в одной
+   постройке он одинаковый у всех кубов. Значение живёт здесь, а не в grid,
+   поэтому смена формы не трогает состав сборки — только перерисовку. */
+const ENTRY_SHAPES = {
+  circle: (a, o) => new Zdog.Ellipse(Object.assign({ addTo:a, diameter:o.d }, o.base)),
+  /* сторона квадрата меньше диаметра круга: равные — и квадрат выглядит крупнее
+     (площадь больше на 4/π), оптически они уравниваются примерно на 0.92 */
+  square: (a, o) => new Zdog.RoundedRect(Object.assign({
+    addTo:a, width:o.d*0.92, height:o.d*0.92, cornerRadius:o.d*0.16 }, o.base)),
+  /* пятиугольник вершиной вверх: Zdog.Polygon начинает обход сверху,
+     radius — по описанной окружности, поэтому чуть крупнее круга */
+  penta: (a, o) => new Zdog.Polygon(Object.assign({
+    addTo:a, sides:5, radius:o.d*0.56 }, o.base))
+};
+let entryShape = "circle";
+
+function makeEntry(a, S, y, z){
+  const draw = ENTRY_SHAPES[entryShape] || ENTRY_SHAPES.circle;
+  return draw(a, { d: S*0.52, base: { translate:{ y, z }, fill:true, stroke:1, color:P.hole } });
+}
+
 function makeModule(type, parent, opts){
   const a = new Zdog.Anchor({ addTo: parent });
   const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
@@ -76,8 +102,7 @@ function makeModule(type, parent, opts){
     frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
     woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
-    new Zdog.Ellipse({ addTo:a, diameter:S*0.52, translate:{ y: B - H/2, z:S/2+0.8 },
-      fill:true, stroke:1, color:P.hole });
+    makeEntry(a, S, B - H/2, S/2 + 0.8);
   }
   else if (type === "lounge"){
     const h = 30;
@@ -111,7 +136,7 @@ function makeModule(type, parent, opts){
       translate:{ x:s*(S/2-4), y: (B-H+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
   }
@@ -124,7 +149,7 @@ function makeModule(type, parent, opts){
       translate:{ x:p.x, y:(B-H+p.s)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sakura,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
@@ -374,6 +399,19 @@ api.restore = function(grid){
     api.place(i, t, true, opts);
   });
 };
+
+/* форма лаза кубов: circle | square | penta.
+   Перестраиваем уже стоящие модули из АКТУАЛЬНОЙ сетки конструктора — форма
+   читается в makeModule, поэтому достаточно переставить их (мгновенно, без «поп»-анимации) */
+api.setEntryShape = function(s){
+  if (!ENTRY_SHAPES[s] || s === entryShape) return false;
+  entryShape = s;
+  const grid = KD.configurator ? KD.configurator.getGrid() : api._snapshot;
+  if (grid) api.restore(grid);
+  dirty = true;
+  return true;
+};
+api.getEntryShape = () => entryShape;
 
 api.place = function(i, type, instant, opts){
   if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту

@@ -416,6 +416,33 @@ button{font-family:inherit}
   padding:2px 16px 12px;
 }
 
+/* выбор формы лаза — одна строка над полкой модулей */
+.entry-pick{
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  padding:0 16px 12px;
+}
+.entry-pick .ep-lbl{
+  font-size:13px;font-weight:700;color:var(--muted);margin-right:2px;
+}
+.ep-b{
+  display:inline-flex;align-items:center;gap:6px;
+  font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);
+  background:var(--panel);border:1.5px solid var(--line);border-radius:999px;
+  padding:5px 12px 5px 9px;cursor:pointer;
+  transition:border-color .16s,color .16s,background .16s;
+}
+.ep-b svg{width:15px;height:15px;flex:none}
+/* заливка иконки = цвет текста: активная кнопка «зажигает» и подпись, и фигуру */
+.ep-b svg :is(circle,rect,path){fill:currentColor}
+.ep-b:hover{border-color:var(--aka)}
+.ep-b.is-on{
+  color:var(--aka);border-color:var(--aka);
+  background:color-mix(in srgb, var(--aka) 9%, var(--panel));
+}
+@media (max-width:560px){
+  .entry-pick .ep-lbl{width:100%;text-align:center;margin:0 0 2px}
+}
+
 /* полка модулей: все 9 видны сразу, без прокрутки */
 .tray{
   display:grid;grid-template-columns:repeat(9,1fr);gap:8px;
