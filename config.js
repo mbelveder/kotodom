@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://dispatched-versus-newsletters-associates.trycloudflare.com";
+window.KOTOSHI_API = "https://jerusalem-nation-segments-pioneer.trycloudflare.com";
