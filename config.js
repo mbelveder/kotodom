@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://springfield-wall-moore-accommodations.trycloudflare.com";
+window.KOTOSHI_API = "https://method-mls-rebates-minnesota.trycloudflare.com";
