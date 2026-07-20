@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://tagged-leasing-automation-put.trycloudflare.com";
+window.KOTOSHI_API = "https://leg-kijiji-reprint-click.trycloudflare.com";
