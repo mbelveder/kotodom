@@ -219,6 +219,20 @@
     <div class="hint-bar" id="hintBar">
       <span>Можно добавлять модули на свой вкус — они внизу. Один клик по модулю в конструкторе домиков — убрать его.</span>
     </div>
+    <!-- форма лаза — выбор на весь домик: раскрой фанеры один на все кубы,
+         поэтому это не свойство модуля, а отделка постройки (см. js/configurator.js) -->
+    <div class="entry-pick" id="entryPick" role="radiogroup" aria-label="Форма лаза">
+      <span class="ep-lbl">Форма лаза</span>
+      <button type="button" class="ep-b" data-shape="circle" role="radio" aria-checked="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg>круглый
+      </button>
+      <button type="button" class="ep-b" data-shape="square" role="radio" aria-checked="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/></svg>квадратный
+      </button>
+      <button type="button" class="ep-b is-on" data-shape="pentagon" role="radio" aria-checked="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V10l8-6.4 8 6.4v11Z"/></svg>домик
+      </button>
+    </div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>

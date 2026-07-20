@@ -12,6 +12,9 @@ const PALETTES = {
     rug:"#D96A55", rugIn:"#F0DFC8",
     wood:"#DCB683", wood2:"#C09263", woodTop:"#EBCB97", hole:"#4A3C50",
     edge:"#4A3728", carpet:"#4A4547", carpetDeep:"#3B3739", canvas:"#E9DCC0",
+    /* полотно гамака: тёплый терракотово-розовый, отдельный тон — canvas (#E9DCC0)
+       сливался с задней стеной (#EFE4CE), гамак «пропадал» на её фоне */
+    sling:"#D9806E", slingDeep:"#BE6553",
     aka:"#C7423A", akaDeep:"#A93129", sakura:"#F3CDC6", cushion:"#EFB9AF",
     jute:"#C89B6C", juteDark:"#AB8050",
     matcha:"#6E8F63", matchaDark:"#57744E", pot:"#B0705A",
@@ -25,6 +28,7 @@ const PALETTES = {
     rug:"#A34A3C", rugIn:"#5A4E62",
     wood:"#C9A26C", wood2:"#A87F52", woodTop:"#DDB87E", hole:"#1E1A26",
     edge:"#5F4A37", carpet:"#5B5661", carpetDeep:"#49444E", canvas:"#D8C8A8",
+    sling:"#E08A76", slingDeep:"#C56F5B",
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
     jute:"#B98F5C", juteDark:"#97713F",
     matcha:"#7FA271", matchaDark:"#5F7E54", pot:"#9A6350",
@@ -65,6 +69,41 @@ let dimLabels = [];        // подписи размеров ковра: {m, e,
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
 
+/* лаз и прорези сидят в нижней части фронта: после наклона сцены их средняя
+   глубина оказывается ЗА фронтальной гранью куба и сортировка красила бы их
+   под ней — поэтому sortValue смещаем вручную (тот же приём, что у roomG) */
+function decoSort(sh){
+  sh.updateSortValue = function(){
+    this.constructor.prototype.updateSortValue.call(this); this.sortValue += 4;
+  };
+  return sh;
+}
+
+/* ---------- форма лаза ----------
+   Выбор на весь домик (не на модуль): лаз — это раскрой фанеры, в одной
+   постройке он одинаковый у всех кубов. Значение живёт здесь, а не в grid,
+   поэтому смена формы не трогает состав сборки — только перерисовку.
+   Пятиугольная арка-«домик» — как у реального прототипа — форма по умолчанию;
+   круг и квадрат-скруглённый — альтернативы. Все три сидят дверным проёмом на
+   одной линии пола фронта (низ на dy), чтобы читались как один и тот же вход. */
+const ENTRY_SHAPES = {
+  pentagon: (a, g) => new Zdog.Shape({ addTo:a, fill:true, stroke:2, color:P.hole,
+    translate:{ z:g.z },
+    path:[ { x:g.dx-g.dw/2, y:g.dy }, { x:g.dx-g.dw/2, y:g.dy-g.dh*0.62 }, { x:g.dx, y:g.dy-g.dh },
+           { x:g.dx+g.dw/2, y:g.dy-g.dh*0.62 }, { x:g.dx+g.dw/2, y:g.dy } ] }),
+  circle: (a, g) => new Zdog.Ellipse({ addTo:a, diameter:g.dw*1.12, fill:true, stroke:2,
+    color:P.hole, translate:{ x:g.dx, y:g.dy - g.dw*0.56, z:g.z } }),
+  square: (a, g) => new Zdog.RoundedRect({ addTo:a, width:g.dw, height:g.dh*0.84,
+    cornerRadius:g.dw*0.18, fill:true, stroke:2, color:P.hole,
+    translate:{ x:g.dx, y:g.dy - g.dh*0.42, z:g.z } }),
+};
+let entryShape = "pentagon";
+function makeEntry(a, S, H, B){
+  const g = { dw:S*0.46, dh:H*0.52, dx:-4, dy:B-3, z:S/2+1.1 };
+  const draw = ENTRY_SHAPES[entryShape] || ENTRY_SHAPES.pentagon;
+  return decoSort(draw(a, g));
+}
+
 function makeModule(type, parent, opts){
   const a = new Zdog.Anchor({ addTo: parent });
   const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
@@ -73,32 +112,15 @@ function makeModule(type, parent, opts){
   const SB = (opts && opts.supY) || B;   // фактическая опора: верх модуля снизу (или пол)
   /* видимый бок темнее фронта — иначе куб и лежанка читаются плоскими:
      при повороте сцены (rotate.y > 0) зритель видит фронт и правую грань */
-  const woodBox = extra => {
-    const b = box(a, Object.assign({
-      topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood2,
-      frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
-    /* тёмная кромка фанеры по канту фронтальной панели — как у реального
-       прототипа (торцы фанеры затемнены под венге) */
-    new Zdog.Rect({ addTo:a, width:extra.width-3, height:extra.height-3,
-      translate:{ x:(extra.translate && extra.translate.x) || 0,
-                  y:extra.translate.y, z:extra.depth/2+0.9 },
-      stroke:1.8, color:P.edge });
-    return b;
-  };
+  const woodBox = extra => box(a, Object.assign({
+    topFace:P.woodTop, bottomFace:P.wood2, leftFace:P.wood2, rightFace:P.wood2,
+    frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
     woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
-    /* лаз-«домик» с пятиугольной аркой — как у реального куба.
-       Лаз и прорези сидят в нижней части фронта: после наклона сцены их средняя
-       глубина оказывается ЗА фронтальной гранью куба и сортировка красила бы их
-       под ней — поэтому sortValue смещаем вручную (тот же приём, что у roomG) */
-    const deco = sh => { sh.updateSortValue = function(){
-      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 4; }; return sh; };
-    const dw = S*0.46, dh = H*0.52, dx = -4, dy = B - 3;
-    deco(new Zdog.Shape({ addTo:a, fill:true, stroke:2, color:P.hole, translate:{ z:S/2+1.1 },
-      path:[ { x:dx-dw/2, y:dy }, { x:dx-dw/2, y:dy-dh*0.62 }, { x:dx, y:dy-dh },
-             { x:dx+dw/2, y:dy-dh*0.62 }, { x:dx+dw/2, y:dy } ] }));
+    /* лаз выбранной формы (см. ENTRY_SHAPES) — на весь домик один раскрой */
+    makeEntry(a, S, H, B);
     /* вентиляционные прорези справа от лаза */
-    [0,1,2].forEach(k => deco(new Zdog.Rect({ addTo:a, width:2.4, height:13, fill:true,
+    [0,1,2].forEach(k => decoSort(new Zdog.Rect({ addTo:a, width:2.4, height:13, fill:true,
       stroke:1.4, color:P.hole, translate:{ x:S/2-5-k*5.5, y:B-15, z:S/2+1.1 } })));
     /* ковролиновая площадка-когтеточка на крыше куба */
     new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
@@ -136,7 +158,7 @@ function makeModule(type, parent, opts){
       translate:{ x:s*(S/2-4), y: (B-H+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.canvas,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
   }
@@ -149,7 +171,7 @@ function makeModule(type, parent, opts){
       translate:{ x:p.x, y:(B-H+p.s)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.canvas,
+    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
       path:[ { x:-S/2+6, y: B - H + 8 },
              { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
@@ -400,6 +422,19 @@ api.restore = function(grid){
     api.place(i, t, true, opts);
   });
 };
+
+/* форма лаза кубов: circle | square | pentagon.
+   Перестраиваем уже стоящие модули из АКТУАЛЬНОЙ сетки конструктора — форма
+   читается в makeModule, поэтому достаточно переставить их (мгновенно) */
+api.setEntryShape = function(s){
+  if (!ENTRY_SHAPES[s] || s === entryShape) return false;
+  entryShape = s;
+  const grid = KD.configurator ? KD.configurator.getGrid() : api._snapshot;
+  if (grid) api.restore(grid);
+  dirty = true;
+  return true;
+};
+api.getEntryShape = () => entryShape;
 
 api.place = function(i, type, instant, opts){
   if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту

@@ -211,6 +211,43 @@ function buildTray(){
   });
 }
 
+/* ---------- форма лаза ----------
+   Отделка на весь домик: меняет только отрисовку кубов, состав сборки и цену
+   не трогает (в undo не пишем — отменять тут нечего). Выбор переживает
+   перезагрузку, а иконка куба в лотке перерисовывается под новую форму. */
+const entryPick = $("#entryPick");
+const ENTRY_KEY = "kd_entryShape";
+const ENTRY_SAY = {
+  pentagon: "Лаз-домик — как у настоящего Котоши. Захожу по-хозяйски.",
+  circle:  "Круглый лаз — классика. Влезаю боком, вылезаю с достоинством.",
+  square:  "Квадратный лаз! Строго. По-самурайски."
+};
+function setEntryShape(s, quiet){
+  if (!KD.scene.setEntryShape(s)) return;
+  entryPick && entryPick.querySelectorAll(".ep-b").forEach(b => {
+    const on = b.dataset.shape === s;
+    b.classList.toggle("is-on", on);
+    b.setAttribute("aria-checked", on ? "true" : "false");
+  });
+  try{ localStorage.setItem(ENTRY_KEY, s); }catch(_){}
+  refreshBaseIcon();
+  if (!quiet){ popSound(); say(ENTRY_SAY[s] || "Готово."); }
+}
+/* иконка куба в лотке — снимок настоящего модуля, после смены формы он устарел */
+function refreshBaseIcon(){
+  try{
+    ICON_SRC.base = KD.scene.moduleIcon("base");
+    const img = tray.querySelector('.chip[data-type="base"] img.ico');
+    if (img && ICON_SRC.base) img.src = ICON_SRC.base;
+  }catch(_){ /* иконка не критична — форма в сцене уже сменилась */ }
+}
+if (entryPick){
+  entryPick.addEventListener("click", e => {
+    const b = e.target.closest(".ep-b");
+    if (b && !animating) setEntryShape(b.dataset.shape);
+  });
+}
+
 /* ---------- drag-and-drop ---------- */
 const ghostEl = $("#dragGhost");
 let drag = null;
@@ -521,6 +558,11 @@ KD.configurator = {
 /* ---------- init ---------- */
 KD.scene.init();
 buildTray();
+/* сохранённая форма лаза — до автосборки, чтобы кубы сразу встали нужными */
+try{
+  const saved = localStorage.getItem(ENTRY_KEY);
+  if (saved) setEntryShape(saved, true);
+}catch(_){}
 refresh();
 
 /* конструктор домиков оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
