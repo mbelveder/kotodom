@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://leg-kijiji-reprint-click.trycloudflare.com";
+window.KOTOSHI_API = "https://measured-descriptions-regulations-supposed.trycloudflare.com";
