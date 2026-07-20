@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://analyze-customs-pages-cooperation.trycloudflare.com";
+window.KOTOSHI_API = "https://seriously-monitor-amsterdam-partly.trycloudflare.com";
