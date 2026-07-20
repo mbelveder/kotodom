@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://cassette-conducting-scenario-clinton.trycloudflare.com";
+window.KOTOSHI_API = "https://analyze-customs-pages-cooperation.trycloudflare.com";
