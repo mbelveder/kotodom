@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://leadership-shepherd-irc-san.trycloudflare.com";
+window.KOTOSHI_API = "https://cst-peripheral-radiation-developed.trycloudflare.com";
