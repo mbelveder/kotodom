@@ -1,1 +1,1 @@
-window.KOTOSHI_API = "https://measured-descriptions-regulations-supposed.trycloudflare.com";
+window.KOTOSHI_API = "https://complexity-stolen-samuel-driven.trycloudflare.com";
