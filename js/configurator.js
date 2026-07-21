@@ -41,7 +41,10 @@ function blip(f0, f1, dur, vol){
     o.start(); o.stop(actx.currentTime + dur);
   }catch(e){ /* без звука */ }
 }
-const popSound  = () => blip(420, 640, 0.12, 0.06);
+/* короткий «тик» при перетаскивании модуля между валидными ячейками — единственный
+   оставленный звук (см. blip на drag hot-change); остальные сигналы отключены как
+   слишком «игрушечные». popSound теперь молчит, чтобы не трогать все места вызова */
+const popSound  = () => {};
 
 /* ---------- Момо говорит ---------- */
 let sayTimer = null;
@@ -184,7 +187,6 @@ function removeAt(i){
   for (let k = 0; k < w; k++) grid[i + k] = null;
   KD.scene.remove(i);
   say(pick(SAY.removed));
-  blip(340, 200, 0.14, 0.05);
   refresh();
 }
 function clearAll(silent){
@@ -454,7 +456,6 @@ canvas.addEventListener("pointermove", e => {
   const entryShape = KD.scene.hasEntry(i) ? KD.scene.getEntryShapeAt(i) : null; // лаз едет с кубом
   for (let k = 0; k < wOf(type); k++) grid[i + k] = null;
   KD.scene.remove(i);
-  blip(500, 560, 0.08, 0.04);
   beginDrag(e, type, canvas, { from: i, prevGrid, entryShape });
 });
 canvas.addEventListener("pointerup", e => {
