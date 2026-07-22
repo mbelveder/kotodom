@@ -24,7 +24,7 @@ const PALETTES = {
     lamp:"#F7E5B5", lampGlow:"rgba(247,224,172,0.18)", lampRib:"#D9BE8A", stand:"#6B5F52",
     cat:"#FFFDF8", ink:"#2E2A33", ghost:"rgba(199,66,58,0.16)", ghostHot:"rgba(199,66,58,0.42)",
     windowGlow:"#FBF3DC", shoji:"#C9B48E", note:"#847B69",
-    glass:"rgba(235,203,151,0.30)", glassDeep:"rgba(192,146,99,0.34)"
+    glass:"rgba(235,203,151,0.30)", glassDeep:"rgba(192,146,99,0.34)", bowlRim:"#C7423A"
   },
   dark: {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
@@ -39,7 +39,7 @@ const PALETTES = {
     lamp:"#F3D992", lampGlow:"rgba(243,217,146,0.12)", lampRib:"#C7A860", stand:"#8A7E6E",
     cat:"#FBF7EC", ink:"#221F2B", ghost:"rgba(224,90,78,0.20)", ghostHot:"rgba(224,90,78,0.5)",
     windowGlow:"#6B604B", shoji:"#6E6478", note:"#A79F8F",
-    glass:"rgba(221,184,126,0.26)", glassDeep:"rgba(168,127,82,0.32)"
+    glass:"rgba(221,184,126,0.26)", glassDeep:"rgba(168,127,82,0.32)", bowlRim:"#E05A4E"
   }
 };
 let P = PALETTES.light;
@@ -47,6 +47,46 @@ const darkMq = matchMedia("(prefers-color-scheme: dark)");
 /* ?theme=light|dark — override для проверки обеих тем */
 const themeOverride = new URLSearchParams(location.search).get("theme");
 const isDark = () => themeOverride ? themeOverride === "dark" : darkMq.matches;
+
+/* ---------- коллекции цвета когтеточки/ковра ----------
+   Одна глобальная коллекция задаёт цвет когтеточки (carpet/carpetDeep) И ковра
+   (rug/rugIn) — по правилу брендворлда «когтеточка = ковёр в кадре». Четыре
+   природных тона; переключение пересобирает сцену (как смена темы). */
+/* каждая коллекция задаёт цвет ковролина/ковра, а также полотна гамака (sling)
+   и ободка чаши-лежанки (bowlRim) — чтобы весь текстиль/акценты сборки были в тон */
+const COLLECTIONS = {
+  terracotta: {
+    light:{ rug:"#D96A55", rugIn:"#F0DFC8", carpet:"#BF5A47", carpetDeep:"#9F472F",
+            sling:"#D9806E", slingDeep:"#BE6553", bowlRim:"#C7423A" },
+    dark: { rug:"#A34A3C", rugIn:"#6E5147", carpet:"#8E4436", carpetDeep:"#6C3327",
+            sling:"#E08A76", slingDeep:"#C56F5B", bowlRim:"#E05A4E" } },
+  sage: {
+    light:{ rug:"#93A97F", rugIn:"#E9E6D2", carpet:"#6E8F63", carpetDeep:"#55744C",
+            sling:"#8FAE7C", slingDeep:"#6E8F63", bowlRim:"#6E8F63" },
+    dark: { rug:"#6E8560", rugIn:"#59634F", carpet:"#5F7E54", carpetDeep:"#48603F",
+            sling:"#86A277", slingDeep:"#6E8560", bowlRim:"#7FA271" } },
+  charcoal: {
+    light:{ rug:"#6E686A", rugIn:"#DED8D2", carpet:"#4A4547", carpetDeep:"#3A3639",
+            sling:"#8A8285", slingDeep:"#6E686A", bowlRim:"#6E686A" },
+    dark: { rug:"#514D50", rugIn:"#565056", carpet:"#5B5661", carpetDeep:"#49444E",
+            sling:"#7A747C", slingDeep:"#5B5661", bowlRim:"#8A8285" } },
+  natural: {
+    /* тона глубже, чем прежде: светлый ковёр (#CBAE82) сливался с песочным полом
+       (floor #E3CBA2) — «ковёр пропадал». Тёплый дуб заметно темнее пола. */
+    light:{ rug:"#C29A5F", rugIn:"#EFE3CB", carpet:"#A9814B", carpetDeep:"#886237",
+            sling:"#C29A5F", slingDeep:"#A9814B", bowlRim:"#A9814B" },
+    dark: { rug:"#9A7E56", rugIn:"#6B5B42", carpet:"#8A6E44", carpetDeep:"#6B5333",
+            sling:"#B49468", slingDeep:"#9A7E56", bowlRim:"#B49468" } },
+};
+let collection = "terracotta";   // по умолчанию — как «Новичок» в брендворлде
+/* палитра активной темы, поверх неё — цвета выбранной коллекции. Копия, а не
+   ссылка на PALETTES: коллекция не должна мутировать базовые палитры. */
+function activePalette(theme){
+  const dark = theme ? theme === "dark" : isDark();
+  const base = dark ? PALETTES.dark : PALETTES.light;
+  const col = COLLECTIONS[collection] && COLLECTIONS[collection][dark ? "dark" : "light"];
+  return Object.assign({}, base, col || {});
+}
 
 /* ---------- геометрия сетки ---------- */
 const GROUND = 118;                       // y пола (вниз положительно)
@@ -103,6 +143,8 @@ const ENTRY_SHAPES = {
 };
 const DEFAULT_ENTRY = "pentagon";
 let entryShapes = {};   // cellIndex -> форма лаза этого куба
+let roofOn = {};        // cellIndex -> у куба включена крыша
+let roofStyle = {};     // cellIndex -> стиль крыши куба: "asym" | "sym"
 let entryObjs = {};     // cellIndex -> Zdog-объект лаза (для подсветки и замены на лету)
 let hoverEntry = null;  // куб под курсором — его лаз подсвечен (entryLit)
 function entryColor(i){ return hoverEntry === i ? P.entryLit : P.entry; }
@@ -110,6 +152,35 @@ function makeEntry(a, S, H, B, shape, col){
   const g = { dw:S*0.46, dh:H*0.52, dx:0, dy:B-3, z:S/2+1.1 };
   const draw = ENTRY_SHAPES[shape] || ENTRY_SHAPES[DEFAULT_ENTRY];
   return decoSort(draw(a, g, col));
+}
+
+/* ---------- крыша (симметричная / асимметричная) ----------
+   Скаты обиты ковролином (наклонная когтеточка). Рисуется плоскими полигонами от
+   базы (локальный y=0, линия карниза) вверх; повёрнута на 90° (ось Y) — конёк идёт
+   по глубине. Единственное отличие стилей — положение конька (zR):
+   - "asym": конёк смещён к задней грани — односкатный «saltbox» силуэт прототипа;
+   - "sym":  конёк по центру — классическая двускатная крыша.
+   Общая для крыши-модуля и для куба с включённой крышей. */
+const ROOF_STYLES = { asym: -0.30, sym: 0 };
+const DEFAULT_ROOF = "asym";
+function makeRoof(a, S, style){
+  const xr = S/2 + 2;          // полуширина с небольшим свесом по бокам
+  const zF = S/2 + 2;          // передний карниз
+  const zB = -S/2 - 2;         // задний карниз
+  const rH = S*0.56;           // высота конька над карнизом
+  const zR = S * (ROOF_STYLES[style] ?? ROOF_STYLES[DEFAULT_ROOF]); // сдвиг конька по стилю
+  const g = new Zdog.Anchor({ addTo:a, rotate:{ y: -TAU/4 } });
+  // передний скат — ковролин-когтеточка
+  new Zdog.Shape({ addTo:g, fill:true, stroke:2, color:P.carpet, path:[
+    { x:-xr, y:0, z:zF }, { x:xr, y:0, z:zF },
+    { x:xr, y:-rH, z:zR }, { x:-xr, y:-rH, z:zR } ] });
+  // задний скат — теневой ковролин
+  new Zdog.Shape({ addTo:g, fill:true, stroke:2, color:P.carpetDeep, path:[
+    { x:-xr, y:-rH, z:zR }, { x:xr, y:-rH, z:zR },
+    { x:xr, y:0, z:zB }, { x:-xr, y:0, z:zB } ] });
+  // фронтоны-боковины — фанерные треугольники (силуэт «домика»)
+  [-1,1].forEach(s => new Zdog.Shape({ addTo:g, fill:true, stroke:1, color:P.wood, path:[
+    { x:s*xr, y:0, z:zF }, { x:s*xr, y:-rH, z:zR }, { x:s*xr, y:0, z:zB } ] }));
 }
 
 function makeModule(type, parent, opts){
@@ -131,9 +202,16 @@ function makeModule(type, parent, opts){
     const shape = (ci != null && entryShapes[ci]) || DEFAULT_ENTRY;
     const eo = makeEntry(a, S, H, B, shape, ci != null ? entryColor(ci) : P.entry);
     if (ci != null) entryObjs[ci] = eo;
-    /* ковролиновая площадка-когтеточка на крыше куба */
-    new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
-      color:P.carpet, rotate:{ x:TAU/4 }, translate:{ y: B - H - 1.5 } });
+    /* верх куба: либо асимметричная крыша-«домик» (когтеточка на скате), либо
+       плоская ковролиновая площадка-когтеточка — по переключателю крыши куба */
+    const roofed = opts ? (opts.roof != null ? opts.roof : roofOn[ci]) : false;
+    if (roofed){
+      const st = (opts && opts.roofStyle) || roofStyle[ci] || DEFAULT_ROOF;
+      makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - H - 1.5 } }), S, st);
+    } else {
+      new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
+        color:P.carpet, rotate:{ x:TAU/4 }, translate:{ y: B - H - 1.5 } });
+    }
   }
   else if (type === "lounge"){
     const h = 30;
@@ -185,16 +263,11 @@ function makeModule(type, parent, opts){
              { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
   else if (type === "roof"){
-    // крыша прижата к низу своей ячейки — сидит на модуле снизу
-    /* скаты обиты ковролином — наклонная когтеточка, как у реального домика */
-    const W = S+8, slope = S*0.72;
-    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.carpet,
-      rotate:{ x:TAU/8 }, translate:{ y:16, z: S/4+2 } });
-    new Zdog.Rect({ addTo:a, width:W, height:slope, fill:true, stroke:4, color:P.carpetDeep,
-      rotate:{ x:-TAU/8 }, translate:{ y:16, z:-S/4-2 } });
-    // фронтоны
-    [-1,1].forEach(s => new Zdog.Shape({ addTo:a, fill:true, stroke:1, color:P.wood,
-      path:[ { x:s*(W/2-2), y:B-2, z:S/2-4 }, { x:s*(W/2-2), y:3, z:0 }, { x:s*(W/2-2), y:B-2, z:-S/2+4 } ] }));
+    // крыша прижата к низу своей ячейки — сидит на модуле снизу.
+    // стиль — свойство самой крыши (per-roof): asym по умолчанию, sym по выбору
+    const ci = opts ? opts.cellIndex : undefined;
+    const st = (opts && opts.roofStyle) || (ci != null && roofStyle[ci]) || DEFAULT_ROOF;
+    makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - 2 } }), S, st);
   }
   else if (type === "scratch"){
     const L = 50;
@@ -223,9 +296,9 @@ function makeModule(type, parent, opts){
     const bowl = new Zdog.Anchor({ addTo:a, translate:{ y: B - 74 }, scale:{ y:0.72 } });
     new Zdog.Hemisphere({ addTo:bowl, diameter:58, rotate:{ x:-TAU/4 },
       color:P.glass, backface:P.glassDeep, stroke:false });
-    // непрозрачный ободок по верхнему краю чаши
+    // непрозрачный ободок по верхнему краю чаши — в тон коллекции
     new Zdog.Ellipse({ addTo:bowl, diameter:58, rotate:{ x:TAU/4 },
-      translate:{ y:-1 }, stroke:5, color:P.aka });
+      translate:{ y:-1 }, stroke:5, color:P.bowlRim });
   }
   return a;
 }
@@ -365,7 +438,13 @@ function makeRoom(parent){
 /* ---------- инициализация ---------- */
 function build(){
   canvas = document.getElementById("scene");
-  P = isDark() ? PALETTES.dark : PALETTES.light;
+  P = activePalette();
+  /* Zdog при создании Illustration домножает backing store холста на pixelRatio
+     (element.width *= pixelRatio). На повторной пересборке (смена темы/цвета) он
+     прочитал бы уже увеличенный размер и домножил ещё раз — сцена «отъезжала».
+     Возвращаем исходные атрибуты холста перед созданием новой Illustration. */
+  if (canvas._baseW == null){ canvas._baseW = canvas.width; canvas._baseH = canvas.height; }
+  canvas.width = canvas._baseW; canvas.height = canvas._baseH;
   if (illo){ illo.children = []; illo = null; }
   illo = new Zdog.Illustration({
     element: canvas, zoom: 1.18, dragRotate: false,
@@ -397,23 +476,39 @@ function build(){
   parkCat();
   moduleAnchors = {};
   moduleDy = {};
+  moduleSupY = {};
   dirty = true;
 }
 
 /* ---------- публичное API ---------- */
 const api = KD.scene = {};
 
+/* пересобрать сцену и восстановить текущий дом. Карты формы лаза (entryShapes) и
+   крыши (roofOn) переживают build() — он их не трогает, — поэтому отделка кубов
+   сохраняется. Используется и сменой темы, и сменой цветовой коллекции. */
+function rebuildAndRestore(){
+  if (KD.cancelDrag) KD.cancelDrag(); // драг держит якоря старой сцены
+  build();
+  const grid = KD.configurator ? KD.configurator.getGrid() : api._snapshot;
+  if (grid) api.restore(grid);
+}
+
 api.init = function(){
   build();
   /* смена темы: пересобрать сцену и восстановить дом из АКТУАЛЬНОЙ сетки конструктора домиков
      (раньше брали _snapshot, который никто не наполнял, — дом исчезал) */
-  darkMq.addEventListener("change", () => {
-    if (KD.cancelDrag) KD.cancelDrag(); // драг держит якоря старой сцены
-    build();
-    const grid = KD.configurator ? KD.configurator.getGrid() : api._snapshot;
-    if (grid) api.restore(grid);
-  });
+  darkMq.addEventListener("change", rebuildAndRestore);
   animate();
+};
+
+/* цветовая коллекция (когтеточка = ковёр): terracotta | sage | charcoal | natural */
+api.getCollection = () => collection;
+api.listCollections = () => Object.keys(COLLECTIONS);
+api.setCollection = function(name){
+  if (!COLLECTIONS[name] || name === collection) return false;
+  collection = name;
+  rebuildAndRestore();
+  return true;
 };
 
 api._snapshot = null;
@@ -460,15 +555,53 @@ api.setEntryShapeAt = function(i, s){
 api.getEntryShapeAt = i => entryShapes[i] || DEFAULT_ENTRY;
 api.hasEntry = i => !!entryObjs[i];
 
+/* крыша — свойство отдельного куба (вкл/выкл + стиль "asym"|"sym").
+   Меняет силуэт куба целиком, поэтому пересобираем сам модуль на месте, сохраняя
+   форму лаза и высоту опоры (moduleSupY, запомненную при постановке). */
+let moduleSupY = {};    // cellIndex -> supY, с которой куб был поставлен
+api.hasRoof = i => !!roofOn[i];
+api.getRoofAt = i => !!roofOn[i];
+api.getRoofStyleAt = i => roofStyle[i] || DEFAULT_ROOF;
+api.setRoofAt = function(i, on, style){
+  if (!entryObjs[i]) return false;   // крыша только у кубов (по наличию лаза)
+  roofOn[i] = !!on;
+  if (style && style in ROOF_STYLES) roofStyle[i] = style;   // 'sym' даёт 0 — проверяем ключ, не значение
+  const es = entryShapes[i] || DEFAULT_ENTRY;
+  const a = makeModule("base", houseA, { cellIndex:i, roof:!!on,
+    roofStyle: roofStyle[i] || DEFAULT_ROOF, entryShape:es, supY:moduleSupY[i] });
+  a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
+  a.translate.y += moduleDy[i] || 0;
+  if (moduleAnchors[i]) houseA.removeChild(moduleAnchors[i]);
+  moduleAnchors[i] = a;
+  dirty = true;
+  return true;
+};
+/* стиль отдельно стоящего модуля-крыши (per-roof): пересобрать её на месте,
+   сохранив опору (moduleSupY) и опускание на опору (moduleDy) */
+api.setRoofModuleStyle = function(i, style){
+  if (!moduleAnchors[i]) return false;
+  roofStyle[i] = (style in ROOF_STYLES) ? style : DEFAULT_ROOF;
+  const a = makeModule("roof", houseA, { cellIndex:i, roofStyle:roofStyle[i], supY:moduleSupY[i] });
+  a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
+  a.translate.y += moduleDy[i] || 0;
+  houseA.removeChild(moduleAnchors[i]);
+  moduleAnchors[i] = a;
+  dirty = true;
+  return true;
+};
+
 api.place = function(i, type, instant, opts){
   if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту
   opts = Object.assign({}, opts);
   opts.cellIndex = i;
-  /* форма лаза «переезжает» с кубом: конструктор передаёт её при переносе */
+  /* форма лаза и крыша «переезжают» с кубом: конструктор передаёт их при переносе */
   if (opts.entryShape) entryShapes[i] = opts.entryShape;
+  if (opts.roof != null) roofOn[i] = !!opts.roof;
+  if (opts.roofStyle && opts.roofStyle in ROOF_STYLES) roofStyle[i] = opts.roofStyle;
   /* до какой высоты тянутся опоры: верх модуля снизу (или граница ячейки/пол) */
   const supOf = b => b && MODULES[b] ? CELL + (TOP_Y[b] ?? -CELL/2) : CELL/2;
   opts.supY = supOf(opts.below);
+  moduleSupY[i] = opts.supY;   // запомнить опору — для пересборки куба (setRoofAt)
   if (MODULES[type].w > 1) opts.supY2 = supOf(opts.below2);
   const a = makeModule(type, houseA, opts);
   a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
@@ -490,8 +623,11 @@ api.remove = function(i){
   houseA.removeChild(a);
   delete moduleAnchors[i];
   delete moduleDy[i];
+  delete moduleSupY[i];
   delete entryObjs[i];
   delete entryShapes[i];
+  delete roofOn[i];
+  delete roofStyle[i];
   if (hoverEntry === i) hoverEntry = null;
   dirty = true;
 };
@@ -538,7 +674,7 @@ api.moduleIcon = function(type){
   try{
   const big = document.createElement("canvas");
   big.width = 420; big.height = 320;
-  P = PALETTES.light; // чипы лотка всегда светлые (в тёмной теме — кремовые)
+  P = activePalette("light"); // чипы лотка всегда светлые (в тёмной теме — кремовые), цвет коллекции учтён
   const mini = new Zdog.Illustration({ element: big, zoom: 2 });
   const wld = new Zdog.Anchor({ addTo: mini, rotate: { x: -0.24, y: 0.30 } });
   makeModule(type, wld, {});

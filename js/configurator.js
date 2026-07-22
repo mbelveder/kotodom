@@ -169,6 +169,8 @@ function place(i, type, opts){
   const sceneOpts = { below };
   if (w > 1) sceneOpts.below2 = i >= COLS ? grid[i - COLS + 1] : null;
   if (opts && opts.entryShape) sceneOpts.entryShape = opts.entryShape; // форма лаза едет с кубом
+  if (opts && opts.roof != null) sceneOpts.roof = opts.roof;           // крыша едет с кубом
+  if (opts && opts.roofStyle) sceneOpts.roofStyle = opts.roofStyle;    // стиль крыши тоже
   if (type === "tunnel"){
     tunnelAxes[i] = tunnelAxis(i);
     sceneOpts.tunnelAxis = tunnelAxes[i];
@@ -214,6 +216,18 @@ function buildTray(){
     el.addEventListener("pointerdown", e => startDrag(e, key, el));
   });
 }
+/* цвет коллекции сменился — перерисовать иконки лотка (когтеточка/крыша в чипах
+   теперь другого цвета), не пересобирая сам лоток: обновляем только src картинок */
+function refreshTrayIcons(){
+  Object.keys(ICON_SRC).forEach(key => {
+    try{ ICON_SRC[key] = KD.scene.moduleIcon(key); }catch(_){}
+  });
+  tray.querySelectorAll(".chip").forEach(el => {
+    const img = el.querySelector("img.ico");
+    const src = ICON_SRC[el.dataset.type];
+    if (img && src) img.src = src;
+  });
+}
 
 /* ---------- форма лаза: меню у куба ----------
    Лаз выбирается на каждый куб отдельно. Наведение на куб подсвечивает его лаз
@@ -226,7 +240,13 @@ const ENTRY_SAY = {
   circle:  "Круглый лаз — классика. Влезаю боком, вылезаю с достоинством.",
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
+const ROOF_SAY = {
+  asym: ["Асимметричная крыша! Как у настоящего Котоши.", "Скат набок — так стильнее. По-японски.", "Односкатная — длинный скат под когти. Одобряю."],
+  sym:  ["Двускатная крыша! Классический домик.", "Ровный конёк по центру — сама гармония.", "Симметрично. Люблю порядок."],
+  off:  ["Сняли крышу — люблю панораму.", "Открытый верх: можно валяться прямо на когтеточке.", "Без крыши — больше света. Тоже вариант."]
+};
 let menuCell = null;   // ячейка открытого меню (или null)
+let menuKind = "cube"; // "cube" — меню куба (лаз + крыша + убрать); "roof" — модуль-крыша (стиль + убрать)
 
 function positionMenu(i){
   const p = KD.scene.cellClientPos(i);
@@ -235,15 +255,35 @@ function positionMenu(i){
   entryMenu.style.top  = (p.y - r.top)  + "px";
 }
 function markMenuShape(i){
+  if (menuKind === "roof"){
+    // модуль-крыша: две кнопки стиля работают как радио — всегда одна активна
+    const cur = KD.scene.getRoofStyleAt(i);
+    entryMenu.querySelectorAll(".em-roof").forEach(b => {
+      const active = b.dataset.roof === cur;
+      b.classList.toggle("is-on", active);
+      b.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    return;
+  }
   const cur = KD.scene.getEntryShapeAt(i);
   entryMenu.querySelectorAll(".ep-b").forEach(b => {
     const on = b.dataset.shape === cur;
     b.classList.toggle("is-on", on);
     b.setAttribute("aria-checked", on ? "true" : "false");
   });
+  const on = KD.scene.hasRoof(i);
+  const curRoof = on ? KD.scene.getRoofStyleAt(i) : null;
+  entryMenu.querySelectorAll(".em-roof").forEach(b => {
+    const active = on && b.dataset.roof === curRoof;
+    b.classList.toggle("is-on", active);
+    b.setAttribute("aria-pressed", active ? "true" : "false");
+  });
 }
-function openEntryMenu(i){
+function openEntryMenu(i, kind){
   menuCell = i;
+  menuKind = kind || "cube";
+  entryMenu.classList.toggle("roof-only", menuKind === "roof");  // прячет кнопки формы лаза
+  entryMenu.setAttribute("aria-label", menuKind === "roof" ? "Стиль крыши" : "Форма лаза этого куба");
   markMenuShape(i);
   positionMenu(i);
   entryMenu.classList.add("show");
@@ -264,8 +304,33 @@ if (entryMenu){
       snapshot(); notifyEdit(); removeAt(i);
       return;
     }
+    const rf = e.target.closest(".em-roof");   // крыша: выбор стиля (отделка, не в undo)
+    if (rf){
+      const style = rf.dataset.roof;           // "asym" | "sym"
+      if (menuKind === "roof"){                 // модуль-крыша: радио, стиль всегда задан
+        if (KD.scene.setRoofModuleStyle(menuCell, style)){
+          markMenuShape(menuCell);
+          popSound(); say(pick(ROOF_SAY[style]));
+        }
+        return;
+      }
+      // куб: стиль-тумблер — тот же стиль ещё раз снимает крышу
+      const cur = KD.scene.hasRoof(menuCell) ? KD.scene.getRoofStyleAt(menuCell) : null;
+      const on = cur !== style;
+      const above = menuCell + COLS;           // ячейка сверху: крыше нужен свободный верх
+      if (on && above < N && grid[above] && MODULES[grid[above]]){
+        say("Сверху стоит модуль — крыше нужен свободный верх. Сначала уберите его.");
+        KD.scene.pulse(menuCell);
+        return;
+      }
+      if (KD.scene.setRoofAt(menuCell, on, style)){
+        markMenuShape(menuCell);
+        popSound(); say(on ? pick(ROOF_SAY[style]) : pick(ROOF_SAY.off));
+      }
+      return;
+    }
     const b = e.target.closest(".ep-b");
-    if (b){
+    if (b && menuKind === "cube"){
       const s = b.dataset.shape;
       if (KD.scene.setEntryShapeAt(menuCell, s)){
         markMenuShape(menuCell);
@@ -314,9 +379,9 @@ function cellPositions(valid, w){
 }
 /* общий драг: из лотка (origin=null) или перенос модуля из сцены (origin={from, prevGrid}) */
 function beginDrag(e, type, el, origin, valid){
-  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape }); return; }
+  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape, roof: origin.roof, roofStyle: origin.roofStyle }); return; }
   valid = valid || validCells(type);
-  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape }); return; }
+  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape, roof: origin.roof, roofStyle: origin.roofStyle }); return; }
   const w = wOf(type);
   const pos = cellPositions(valid, w);
   const a = KD.scene.cellClientPos(0), b = KD.scene.cellClientPos(1);
@@ -374,19 +439,19 @@ function onDragUp(e){
   endDrag();
   if (d.hot !== null && d.hot !== undefined){
     if (d.origin && d.hot === d.origin.from){
-      place(d.hot, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });  // вернул на прежнее место
+      place(d.hot, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle });  // вернул на прежнее место
       return;
     }
     /* пока шёл драг, ячейку могла занять отложенная сборка пресета */
     if (!validCells(d.type).includes(d.hot)){
-      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });
+      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle });
       return;
     }
     if (d.origin) undoStack.push(d.origin.prevGrid); else snapshot();
     notifyEdit();
-    place(d.hot, d.type, d.origin ? { moved: true, entryShape: d.origin.entryShape } : undefined);
+    place(d.hot, d.type, d.origin ? { moved: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle } : undefined);
   } else if (d.origin){
-    place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape }); // не донёс — вернуть
+    place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle }); // не донёс — вернуть
   }
 }
 function onDragCancel(e){
@@ -396,7 +461,7 @@ function onDragCancel(e){
 function cancelDrag(){
   const d = drag;
   endDrag();
-  if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });
+  if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle });
 }
 /* сцена пересобирается при смене темы — драг со ссылками на старую сцену не жилец */
 KD.cancelDrag = cancelDrag;
@@ -454,9 +519,11 @@ canvas.addEventListener("pointermove", e => {
   const type = grid[i];
   const prevGrid = grid.slice();
   const entryShape = KD.scene.hasEntry(i) ? KD.scene.getEntryShapeAt(i) : null; // лаз едет с кубом
+  const roof = KD.scene.hasEntry(i) ? KD.scene.getRoofAt(i) : null;             // крыша едет с кубом
+  const roofStyle = roof ? KD.scene.getRoofStyleAt(i) : null;                   // и её стиль
   for (let k = 0; k < wOf(type); k++) grid[i + k] = null;
   KD.scene.remove(i);
-  beginDrag(e, type, canvas, { from: i, prevGrid, entryShape });
+  beginDrag(e, type, canvas, { from: i, prevGrid, entryShape, roof, roofStyle });
 });
 canvas.addEventListener("pointerup", e => {
   pickPending = null;
@@ -465,10 +532,15 @@ canvas.addEventListener("pointerup", e => {
   let best = cellAt(e.clientX, e.clientY);
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
-  /* куб: клик открывает меню лаза (форма + «убрать»), а не удаляет сразу —
-     удаление куба теперь живёт в меню. Остальные модули убираются как прежде */
+  /* куб: клик открывает меню (лаз + крыша + убрать), а не удаляет сразу —
+     удаление куба живёт в меню. Модуль-крыша: клик открывает меню стиля крыши
+     (asym/sym + убрать). Остальные модули убираются как прежде */
   if (KD.scene.hasEntry(best)){
-    if (menuCell === best) closeEntryMenu(); else openEntryMenu(best);
+    if (menuCell === best && menuKind === "cube") closeEntryMenu(); else openEntryMenu(best, "cube");
+    return;
+  }
+  if (grid[best] === "roof"){
+    if (menuCell === best && menuKind === "roof") closeEntryMenu(); else openEntryMenu(best, "roof");
     return;
   }
   closeEntryMenu();
@@ -534,7 +606,7 @@ btnClear.addEventListener("click", () => {
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return false;
-  return applyCells(p.cells, p.say);
+  return applyCells(p.cells, p.say, p.roofs, p.roofStyles, p.entries);
 }
 KD.loadPreset = loadPreset;
 
@@ -544,12 +616,15 @@ KD.loadPreset = loadPreset;
    и скидки мигали одна за другой. buildGen отменяет «хвост» отложенных
    постановок, если пользователь успел очистить сцену, отменить ход или
    запустить другую сборку — раньше два быстрых клика по планам смешивали их */
-function applyCells(cells, doneSay){
+function applyCells(cells, doneSay, roofs, roofStyles, entrySh){
   if (animating) return false;
   KD.studioBooted = true;
   const gen = ++buildGen;
   snapshot();
   clearAll(true);
+  const roofSet = new Set((roofs || []).map(Number)); // кубы с включённой крышей
+  const styleAt = i => roofStyles && roofStyles[i];   // стиль крыши ячейки (куб или модуль-крыша)
+  const shapeAt = i => entrySh && entrySh[i];         // форма лаза ячейки (для планов с 3+ кубами)
   const entries = Object.entries(cells)
     .map(([i, t]) => [+i, t])
     .filter(([i, t]) => Number.isInteger(i) && i >= 0 && i < N && MODULES[t])
@@ -560,7 +635,9 @@ function applyCells(cells, doneSay){
     setTimeout(() => {
       if (gen !== buildGen) return;               // сборку перебили
       const ok = validCells(t).includes(i);        // нет опоры/занято — пропускаем, но запоминаем
-      if (ok) place(i, t, { silent: true }); else skipped.push(t);
+      if (ok) place(i, t, { silent: true, roof: t === "base" ? roofSet.has(i) : undefined,
+                            roofStyle: (t === "base" || t === "roof") ? styleAt(i) : undefined,
+                            entryShape: t === "base" ? shapeAt(i) : undefined }); else skipped.push(t);
       if (step === entries.length - 1){
         popSound();
         if (skipped.length){
@@ -609,6 +686,36 @@ KD.scene.init();
 buildTray();
 refresh();
 
+/* ---------- выбор цвета когтеточки/ковра (глобальная коллекция) ----------
+   Одна коллекция задаёт цвет и когтеточки, и ковра — по правилу брендворлда.
+   ?collection=sage|charcoal|natural — применить сразу (для соло-съёмки рендеров). */
+const collectionPick = $("#collectionPick");
+function markCollection(){
+  if (!collectionPick) return;
+  const cur = KD.scene.getCollection();
+  collectionPick.querySelectorAll(".cp-sw").forEach(b => {
+    const on = b.dataset.col === cur;
+    b.classList.toggle("is-on", on);
+    b.setAttribute("aria-checked", on ? "true" : "false");
+  });
+}
+if (collectionPick){
+  collectionPick.addEventListener("click", e => {
+    const b = e.target.closest(".cp-sw");
+    if (!b || animating) return;
+    if (KD.scene.setCollection(b.dataset.col)){
+      markCollection();
+      refreshTrayIcons();
+      popSound();
+    }
+  });
+}
+(function(){
+  const c = new URLSearchParams(location.search).get("collection");
+  if (c && KD.scene.setCollection(c)) refreshTrayIcons();
+  markCollection();
+})();
+
 /* меню лаза привязано к экранной точке куба — при прокрутке/ресайзе/смене темы
    оно «уплывёт» от куба, поэтому просто закрываем его */
 ["scroll", "resize"].forEach(ev => window.addEventListener(ev, closeEntryMenu, true));
@@ -651,6 +758,8 @@ io.observe(sceneWrap);
     // и оверлеи ВНУТРИ sceneWrap (они — соседи холста, цикл выше их не трогает)
     ["#builderHead", "#momoSay", "#momoFab", "#buildGuide", ".price-tag", "#presetTab"]
       .forEach(s => { const e = document.querySelector(s); if (e) e.style.display = "none"; });
+    // подсказки-ярлыки (.bg-tip: «Размеры модулей…», чат) — оверлеи поверх сцены
+    document.querySelectorAll(".bg-tip").forEach(e => { e.style.display = "none"; });
     document.body.style.background = "#F2ECDD";
     window.scrollTo(0, 0);
   };

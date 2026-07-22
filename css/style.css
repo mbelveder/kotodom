@@ -461,15 +461,55 @@ button{font-family:inherit}
   border-radius:10px;color:var(--aka);
   transition:background .16s,border-color .16s,color .16s;
 }
-.em-rm svg{width:16px;height:16px}
-.em-rm svg path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.em-rm svg{width:17px;height:17px}
+.em-rm svg path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .em-rm:hover{background:var(--aka);border-color:var(--aka);color:#FFFBF3}
+/* меню модуля-крыши: только выбор стиля + «убрать» — прячем кнопки формы лаза и их разделитель */
+.entry-menu.roof-only .ep-b,
+.entry-menu.roof-only .em-sep-entry{ display:none }
+/* крыша куба — кнопка-переключатель, оформлена как кнопки-формы лаза */
+.em-roof{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;padding:0;
+  color:var(--muted);background:var(--panel);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  transition:border-color .16s,color .16s,background .16s;
+}
+.em-roof svg{width:18px;height:18px;flex:none}
+.em-roof svg path{fill:currentColor}
+.em-roof:hover{border-color:var(--aka)}
+.em-roof.is-on{
+  color:var(--aka);border-color:var(--aka);
+  background:color-mix(in srgb, var(--aka) 12%, var(--panel));
+}
 
-/* полка модулей: все 9 видны сразу, без прокрутки */
+/* выбор цвета когтеточки и ковра — одна глобальная коллекция (когтеточка = ковёр);
+   визуально примыкает к лотку (общий фон и верхняя граница — одна панель) */
+.collection-pick{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:12px 14px 8px;
+  border-top:1px solid var(--line);
+  background:color-mix(in srgb, var(--paper) 55%, var(--panel));
+}
+.cp-label{font-size:13px;font-weight:700;color:var(--muted);margin-right:2px}
+.cp-sw{
+  width:26px;height:26px;padding:0;border-radius:50%;cursor:pointer;
+  border:2px solid var(--line);
+  box-shadow:inset 0 0 0 2px var(--panel);
+  transition:transform .14s, border-color .16s, box-shadow .16s;
+}
+.cp-sw:hover{transform:scale(1.08);border-color:var(--ink)}
+.cp-sw.is-on{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--panel),0 0 0 2px var(--aka)}
+.cp-terracotta{background:#D96A55}
+.cp-sage{background:#93A97F}
+.cp-charcoal{background:#6E686A}
+.cp-natural{background:#CBAE82}
+
+/* полка модулей: все 9 видны сразу, без прокрутки. Верхнюю границу даёт
+   .collection-pick над лотком (одна панель) — здесь border-top не нужен */
 .tray{
   display:grid;grid-template-columns:repeat(9,1fr);gap:8px;
-  padding:12px 14px 14px;
-  border-top:1px solid var(--line);
+  padding:4px 14px 14px;
   background:color-mix(in srgb, var(--paper) 55%, var(--panel));
 }
 @media (max-width:900px){ .tray{grid-template-columns:repeat(5,1fr)} }
