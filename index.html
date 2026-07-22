@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=36">
-<link rel="stylesheet" href="css/style.css?v=36">
-<script defer src="config.js?v=36"></script>
-<script defer src="js/zdog.dist.min.js?v=36"></script>
-<script defer src="js/catalog.js?v=36"></script>
-<script defer src="js/scene.js?v=36"></script>
-<script defer src="js/configurator.js?v=36"></script>
-<script defer src="js/chat.js?v=36"></script>
-<script defer src="js/app.js?v=36"></script>
+<link rel="stylesheet" href="css/fonts.css?v=43">
+<link rel="stylesheet" href="css/style.css?v=43">
+<script defer src="config.js?v=43"></script>
+<script defer src="js/zdog.dist.min.js?v=43"></script>
+<script defer src="js/catalog.js?v=43"></script>
+<script defer src="js/scene.js?v=43"></script>
+<script defer src="js/configurator.js?v=43"></script>
+<script defer src="js/chat.js?v=43"></script>
+<script defer src="js/app.js?v=43"></script>
 </head>
 <body>
 
@@ -117,9 +117,20 @@
           <button type="button" class="ep-b" data-shape="pentagon" role="menuitemradio" aria-checked="false" title="Лаз-домик" aria-label="Лаз-домик">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V10l8-6.4 8 6.4v11Z"/></svg>
           </button>
+          <span class="em-sep em-sep-entry" aria-hidden="true"></span>
+          <!-- крыша: два стиля — асимметричная / симметричная (js/configurator.js).
+               У куба это тумблеры (повторный клик снимает крышу); у модуля-крыши —
+               выбор стиля (радио). Кнопки формы лаза скрыты для модуля-крыши (.roof-only) -->
+          <button type="button" class="em-roof" data-roof="asym" role="button" aria-pressed="false" title="Асимметричная крыша" aria-label="Асимметричная крыша">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7 21 14v2.4L4 9.4Z"/></svg>
+          </button>
+          <button type="button" class="em-roof" data-roof="sym" role="button" aria-pressed="false" title="Симметричная крыша" aria-label="Симметричная крыша">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5 3 13v2.2l9-8 9 8V13Z"/></svg>
+          </button>
           <span class="em-sep" aria-hidden="true"></span>
-          <button type="button" class="em-rm" title="Убрать куб" aria-label="Убрать куб">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          <!-- «убрать» — корзина (не крест: крест путали с закрытием попапа) -->
+          <button type="button" class="em-rm" title="Убрать" aria-label="Убрать модуль">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.7 7V4.7h4.6V7M6.6 7l.9 12.3h9l.9-12.3M10 10.5v6M14 10.5v6"/></svg>
           </button>
         </div>
         <!-- заголовок конструктора домиков — оверлей в левом верхнем углу сцены, стоит поверх
@@ -235,6 +246,13 @@
     </div>
     <div class="hint-bar" id="hintBar">
       <span>Можно добавлять модули на свой вкус — они внизу. Клик по кубу — выбрать форму лаза или убрать его; по другим модулям — убрать.</span>
+    </div>
+    <div class="collection-pick" id="collectionPick" role="radiogroup" aria-label="Цвет когтеточки и ковра">
+      <span class="cp-label">Цвет когтеточки и ковра</span>
+      <button type="button" class="cp-sw cp-terracotta" data-col="terracotta" role="radio" aria-checked="false" title="Терракота" aria-label="Терракота"></button>
+      <button type="button" class="cp-sw cp-sage" data-col="sage" role="radio" aria-checked="false" title="Шалфейный" aria-label="Шалфейный"></button>
+      <button type="button" class="cp-sw cp-charcoal" data-col="charcoal" role="radio" aria-checked="false" title="Угольный" aria-label="Угольный"></button>
+      <button type="button" class="cp-sw cp-natural" data-col="natural" role="radio" aria-checked="false" title="Натуральный" aria-label="Натуральный"></button>
     </div>
     <div class="tray" id="tray"></div>
     <div class="studio-actions">
