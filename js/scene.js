@@ -103,6 +103,7 @@ let illo, world, houseA, ghostA, catA, peekA;
 let canvas;
 let cellAnchors = [];      // якоря центров ячеек (для проекции)
 let moduleAnchors = {};    // cellIndex -> anchor модуля
+let moduleKind = {};       // cellIndex -> тип модуля (для проекции верхушки под меню)
 let moduleDy = {};         // cellIndex -> смещение вниз (крыша/тоннель на низкой опоре)
 let ghostShapes = [];
 let dirty = true;
@@ -145,6 +146,7 @@ const DEFAULT_ENTRY = "pentagon";
 let entryShapes = {};   // cellIndex -> форма лаза этого куба
 let roofOn = {};        // cellIndex -> у куба включена крыша
 let roofStyle = {};     // cellIndex -> стиль крыши куба: "asym" | "sym"
+let scratchDir = {};    // cellIndex -> поворот когтеточки-пандуса: 0..3 (шаг 90° по оси Y)
 let entryObjs = {};     // cellIndex -> Zdog-объект лаза (для подсветки и замены на лету)
 let hoverEntry = null;  // куб под курсором — его лаз подсвечен (entryLit)
 function entryColor(i){ return hoverEntry === i ? P.entryLit : P.entry; }
@@ -163,7 +165,7 @@ function makeEntry(a, S, H, B, shape, col){
    Общая для крыши-модуля и для куба с включённой крышей. */
 const ROOF_STYLES = { asym: -0.30, sym: 0 };
 const DEFAULT_ROOF = "asym";
-function makeRoof(a, S, style){
+function makeRoof(a, S, style, ridge){
   const xr = S/2 + 2;          // полуширина с небольшим свесом по бокам
   const zF = S/2 + 2;          // передний карниз
   const zB = -S/2 - 2;         // задний карниз
@@ -181,6 +183,9 @@ function makeRoof(a, S, style){
   // фронтоны-боковины — фанерные треугольники (силуэт «домика»)
   [-1,1].forEach(s => new Zdog.Shape({ addTo:g, fill:true, stroke:1, color:P.wood, path:[
     { x:s*xr, y:0, z:zF }, { x:s*xr, y:-rH, z:zR }, { x:s*xr, y:0, z:zB } ] }));
+  // сизаль-обёрнутый конёк вдоль гребня (для домика-модуля крыши)
+  if (ridge) new Zdog.Cylinder({ addTo:g, diameter:8, length:2*xr, rotate:{ y:TAU/4 },
+    translate:{ y:-rH, z:zR }, color:P.jute, frontFace:P.juteDark, backface:P.juteDark, stroke:false });
 }
 
 function makeModule(type, parent, opts){
@@ -263,23 +268,49 @@ function makeModule(type, parent, opts){
              { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
   }
   else if (type === "roof"){
-    // крыша прижата к низу своей ячейки — сидит на модуле снизу.
-    // стиль — свойство самой крыши (per-roof): asym по умолчанию, sym по выбору
+    // крыша — самостоятельный домик-модуль со своим лазом (а не голая крышка):
+    // короткий фанерный корпус + фронтальный лаз-домик + вент-отверстия сбоку,
+    // сверху — ковролиновые скаты-когтеточка с сизалевым коньком. Прижат к низу
+    // своей ячейки — сидит на модуле снизу. Стиль конька: asym (по умолч.) | sym.
     const ci = opts ? opts.cellIndex : undefined;
     const st = (opts && opts.roofStyle) || (ci != null && roofStyle[ci]) || DEFAULT_ROOF;
-    makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - 2 } }), S, st);
+    const bodyH = 30;                       // высота стен корпуса (низ на полу ячейки)
+    woodBox({ width:S, height:bodyH, depth:S, translate:{ y: B - bodyH/2 } });
+    // фронтальный лаз-домик (как у куба, но по высоте корпуса)
+    decoSort(ENTRY_SHAPES.pentagon(a,
+      { dw:S*0.44, dh:bodyH*0.86, dx:0, dy:B-3, z:S/2+1.1 }, P.entry));
+    // три круглых вент-отверстия на правой грани
+    for (let k=-1;k<=1;k++) decoSort(new Zdog.Ellipse({ addTo:a, diameter:bodyH*0.24,
+      fill:true, stroke:2, color:P.hole, rotate:{ y:TAU/4 },
+      translate:{ x:S/2+0.8, y:B-bodyH*0.44, z:k*S*0.26 } }));
+    // скаты + сизалевый конёк поверх корпуса
+    makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - bodyH } }), S, st, true);
   }
   else if (type === "scratch"){
-    const L = 50;
-    new Zdog.Cylinder({ addTo:a, diameter:17, length:L, rotate:{ x:TAU/4 },
-      translate:{ y: B - 7 - L/2 }, color:P.jute, frontFace:P.juteDark, backface:P.juteDark, stroke:false });
-    for (let k=0;k<5;k++){
-      new Zdog.Ellipse({ addTo:a, diameter:17.5, rotate:{ x:TAU/4 },
-        translate:{ y: B - 7 - k*(L/4) - 1 }, stroke:1.4, color:P.juteDark });
-    }
-    new Zdog.Cylinder({ addTo:a, diameter:40, length:7, rotate:{ x:TAU/4 },
-      translate:{ y: B - 3.5 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
-    new Zdog.Shape({ addTo:a, stroke:9, color:P.sakura, path:[{ y: B - 7 - L - 3 }] }); // помпон
+    // наклонный пандус-когтеточка: клин из двух берёзовых боковин-треугольников
+    // (слева/справа, в плоскости Z–Y), скат-гипотенуза обит ковролином и обращён
+    // к зрителю — точит когти И помогает коту забраться на модуль выше.
+    // Профиль: перёд-низ A(z+), зад-низ Bp(z−), зад-верх C(z−, высокая кромка).
+    // Обёртка w крутит пандус на 0/90/180/270° (opts.scratchDir) — по умолчанию
+    // конструктор ставит высокую кромку к ближнему кубу («подиум»), см. configurator.
+    const dir = (opts && opts.scratchDir) || 0;
+    const w = new Zdog.Anchor({ addTo:a, rotate:{ y: dir*TAU/4 } });
+    const HH = 46;               // высота у высокой (задней) кромки
+    const xc = S/2;              // полуширина клина (боковины на x=±xc)
+    const side = [ {z:S/2,y:B}, {z:-S/2,y:B}, {z:-S/2,y:B-HH} ];
+    [-1,1].forEach(s => {
+      new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
+      // тёмная скорчённая кромка по контуру боковины
+      new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+    });
+    // скат — ковролиновая когтеточка (гипотенуза перёд-низ → зад-верх, в рамке боковин)
+    new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
+      {x:-(xc-3), z:S/2, y:B}, {x:(xc-3), z:S/2, y:B},
+      {x:(xc-3), z:-S/2, y:B-HH}, {x:-(xc-3), z:-S/2, y:B-HH} ] });
+    // берёзовые дюбель-рейки по нижней (перёд) и верхней (зад) кромкам ската
+    [{z:S/2,y:B},{z:-S/2,y:B-HH}].forEach(p =>
+      new Zdog.Cylinder({ addTo:w, diameter:8, length:2*xc+8, rotate:{ y:TAU/4 },
+        translate:{ z:p.z, y:p.y }, color:P.wood, frontFace:P.woodTop, backface:P.wood2, stroke:false }));
   }
   else if (type === "play"){
     // чаша-лежанка: приплюснутая полусфера-гнездо на высокой опоре-колонне —
@@ -475,6 +506,7 @@ function build(){
   catA = makeCat(world);
   parkCat();
   moduleAnchors = {};
+  moduleKind = {};
   moduleDy = {};
   moduleSupY = {};
   dirty = true;
@@ -589,6 +621,20 @@ api.setRoofModuleStyle = function(i, style){
   dirty = true;
   return true;
 };
+/* поворот когтеточки-пандуса (0..3, шаг 90°): пересобрать на месте, сохранив
+   опору и опускание. Конструктор задаёт дефолт по соседу, кнопка меню крутит */
+api.getScratchDir = i => scratchDir[i] || 0;
+api.setScratchDir = function(i, dir){
+  if (moduleKind[i] !== "scratch") return false;
+  scratchDir[i] = ((dir % 4) + 4) % 4;
+  const a = makeModule("scratch", houseA, { cellIndex:i, scratchDir:scratchDir[i], supY:moduleSupY[i] });
+  a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
+  a.translate.y += moduleDy[i] || 0;
+  houseA.removeChild(moduleAnchors[i]);
+  moduleAnchors[i] = a;
+  dirty = true;
+  return true;
+};
 
 api.place = function(i, type, instant, opts){
   if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту
@@ -598,6 +644,8 @@ api.place = function(i, type, instant, opts){
   if (opts.entryShape) entryShapes[i] = opts.entryShape;
   if (opts.roof != null) roofOn[i] = !!opts.roof;
   if (opts.roofStyle && opts.roofStyle in ROOF_STYLES) roofStyle[i] = opts.roofStyle;
+  if (opts.scratchDir != null) scratchDir[i] = ((opts.scratchDir % 4) + 4) % 4;
+  moduleKind[i] = type;
   /* до какой высоты тянутся опоры: верх модуля снизу (или граница ячейки/пол) */
   const supOf = b => b && MODULES[b] ? CELL + (TOP_Y[b] ?? -CELL/2) : CELL/2;
   opts.supY = supOf(opts.below);
@@ -622,12 +670,14 @@ api.remove = function(i){
   if (!a) return;
   houseA.removeChild(a);
   delete moduleAnchors[i];
+  delete moduleKind[i];
   delete moduleDy[i];
   delete moduleSupY[i];
   delete entryObjs[i];
   delete entryShapes[i];
   delete roofOn[i];
   delete roofStyle[i];
+  delete scratchDir[i];
   if (hoverEntry === i) hoverEntry = null;
   dirty = true;
 };
@@ -664,6 +714,33 @@ api.cellClientPos = function(i){
   const k = illo.zoom * (r.width / illo.width);
   return { x: r.left + r.width/2 + a.renderOrigin.x * k,
            y: r.top + r.height/2 + a.renderOrigin.y * k };
+};
+
+/* локальная высота верхушки модуля над центром его ячейки (y вверх отрицателен) —
+   чтобы всплывающее меню вставало НАД модулем, а не поверх него */
+function moduleTopY(i){
+  const B = CELL/2, H = CELL - 2, rH = (CELL-10)*0.56;
+  switch (moduleKind[i]){
+    case "base":    return roofOn[i] ? (B - H - 1.5 - rH - 6) : (B - H - 5);
+    case "roof":    return (B - 30) - rH - 6;   // верх корпуса домика-крыши минус скат
+    case "tower":   return -B - 6;
+    case "scratch": return B - 46 - 6;          // конёк пандуса (HH=46)
+    case "play":    return -B - 12;
+    default:        return -6;                    // невысокие модули: чуть выше центра
+  }
+}
+/* клиентская точка ВЕРХУШКИ модуля — якорь для меню (см. positionMenu) */
+api.moduleTopClientPos = function(i){
+  const a = moduleAnchors[i] || cellAnchors[i];
+  const probe = new Zdog.Anchor({ addTo:a, translate:{ y: moduleTopY(i) } });
+  illo.updateRenderGraph();   // renderOrigin проставляется только рендер-проходом (updateGraph не хватает для нового узла)
+  const r = canvas.getBoundingClientRect();
+  const k = illo.zoom * (r.width / illo.width);
+  const pt = { x: r.left + r.width/2 + probe.renderOrigin.x * k,
+               y: r.top + r.height/2 + probe.renderOrigin.y * k };
+  a.removeChild(probe);
+  dirty = true;   // вернуть нормальную отрисовку в следующем кадре
+  return pt;
 };
 
 /* иконка модуля для лотка: рендерим НАСТОЯЩИЙ Zdog-модуль в offscreen-канвас,
@@ -741,7 +818,7 @@ async function tween(dur, step){
 }
 
 /* высота «пола для лап» каждого модуля: смещение от центра ячейки */
-const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, hammock2:8, roof:2, scratch:-27, play:8 };
+const SIT_Y = { base:-29, lounge:-1, tunnel:-11, tower:-30, hammock:3, hammock2:8, roof:-12, scratch:-2, play:8 };
 
 /* прыжок кота в точку (x,y) мировых координат */
 async function hopTo(tx, ty, dur){
