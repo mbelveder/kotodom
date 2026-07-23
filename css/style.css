@@ -424,11 +424,11 @@ button{font-family:inherit}
   padding:6px;border-radius:14px;
   background:var(--panel);border:1.5px solid var(--ink);
   box-shadow:3px 3px 0 var(--aka);
-  transform:translate(-50%,-138%) scale(.94);
+  transform:translate(-50%,-116%) scale(.94);
   opacity:0;pointer-events:none;
   transition:opacity .14s ease, transform .14s ease;
 }
-.entry-menu.show{opacity:1;pointer-events:auto;transform:translate(-50%,-138%) scale(1)}
+.entry-menu.show{opacity:1;pointer-events:auto;transform:translate(-50%,-116%) scale(1)}
 /* «носик» вниз, к кубу */
 .entry-menu::after{
   content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
@@ -467,6 +467,22 @@ button{font-family:inherit}
 /* меню модуля-крыши: только выбор стиля + «убрать» — прячем кнопки формы лаза и их разделитель */
 .entry-menu.roof-only .ep-b,
 .entry-menu.roof-only .em-sep-entry{ display:none }
+/* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
+.em-rot{
+  display:none;align-items:center;justify-content:center;
+  width:34px;height:34px;padding:0;
+  color:var(--muted);
+  background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
+  cursor:pointer;transition:border-color .16s,color .16s,background .16s;
+}
+.em-rot svg{width:17px;height:17px}
+.em-rot svg path{fill:currentColor}
+.em-rot:hover{border-color:var(--aka);color:var(--aka)}
+/* меню когтеточки: только поворот + «убрать» — прячем формы лаза, стили крыши и разделитель форм */
+.entry-menu.scratch-only .ep-b,
+.entry-menu.scratch-only .em-roof,
+.entry-menu.scratch-only .em-sep-entry{ display:none }
+.entry-menu.scratch-only .em-rot{ display:inline-flex }
 /* крыша куба — кнопка-переключатель, оформлена как кнопки-формы лаза */
 .em-roof{
   display:inline-flex;align-items:center;justify-content:center;
