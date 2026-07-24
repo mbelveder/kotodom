@@ -79,10 +79,11 @@ KD.MODULES = {
    чередуем — так ряд домиков-нор выглядит живее (подобрано вручную под каждый
    план). Постройки с 1–2 кубами оставляем на дефолте. */
 KD.PRESETS = {
-  start: { name: "Новичок", cells: { 1: "base", 2: "scratch" }, roofs: [1],
-    say: "Куб-нора и когтеточка — самое то для первого знакомства." },
-  wide:  { name: "Проныра", cells: { 1: "base", 2: "tunnel", 3: "base", 8: "hammock" }, roofs: [1],
-    say: "Два куба, тоннель между ними и гамак сверху — маршрут для пробежек и засад." },
+  start: { name: "Новичок", cells: { 1: "base", 6: "roof", 2: "scratch" }, roofStyles: { 6: "asym" },
+    say: "Куб-нора с чердаком-крышей и когтеточка — самое то для первого знакомства." },
+  wide:  { name: "Проныра", cells: { 1: "base", 2: "tunnel", 3: "base", 6: "roof", 8: "hammock" },
+    entries: { 1: "square", 3: "square" }, roofStyles: { 6: "asym" },
+    say: "Куб с чердаком-крышей, тоннель к соседу и гамак сверху — маршрут для пробежек и засад." },
   tower: { name: "Вальяжный", cells: { 1: "base", 6: "tower", 11: "roof", 2: "scratch" },
     roofStyles: { 11: "sym" },
     say: "Куб, смотровая площадка и симметричная двускатная крыша — наблюдать за домом сверху." },
@@ -90,7 +91,8 @@ KD.PRESETS = {
     cells: { 0: "base", 1: "tunnel", 2: "base", 3: "scratch", 5: "tower", 7: "hammock", 10: "roof" },
     say: "Два куба с тоннелем, гамак, башня с крышей и когтеточка на сдачу — целая резиденция." },
   watch: { name: "Дозорный",
-    cells: { 0: "base", 1: "base", 2: "base", 3: "base", 4: "scratch", 5: "hammock", 7: "base", 8: "play", 12: "tower", 17: "roof" }, roofs: [1],
+    cells: { 0: "base", 1: "base", 2: "base", 3: "base", 4: "scratch", 5: "hammock", 6: "roof", 7: "base", 8: "play", 12: "tower", 17: "roof" },
+    roofStyles: { 6: "asym", 17: "asym" },
     entries: { 0: "pentagon", 1: "circle", 2: "square", 3: "pentagon", 7: "circle" },
     say: "Четыре куба-фундамента, башня-каланча с крышей, гамак, когтеточка и чаша-лежанка на возвышении — целый дозорный комплекс: видно всё, а вздремнуть можно где угодно." },
   zoomies: { name: "Непоседа",

@@ -223,49 +223,86 @@ function makeModule(type, parent, opts){
     woodBox({ width:S, height:SB-(B-h), depth:S, translate:{ y: (B-h+SB)/2 } });
     new Zdog.Ellipse({ addTo:a, width:S*0.74, height:S*0.6,
       rotate:{ x:TAU/4 }, translate:{ y: B - h - 1 },
-      stroke:10, fill:true, color:P.canvas });
+      stroke:10, fill:true, color:P.sling });   // подушка в цвет коллекции
   }
   else if (type === "tunnel"){
     // ось: "x" — соединяет соседние модули, "z" — одиночный, входом к зрителю
     const D = S*0.78;
+    const xax = !(opts && opts.tunnelAxis === "z");
+    // с соседом по горизонтали тоннель ДЛИННЕЕ ячейки — торцы утоплены в соседние
+    // кубы, чтобы тёмное нутро не зияло в зазоре (модули «слипаются» по горизонтали)
+    const L = xax ? CELL + 12 : S + 2;
     const t = new Zdog.Anchor({ addTo:a, translate:{ y: B - D/2 - 1 },
-      rotate:{ y: (opts && opts.tunnelAxis === "z") ? TAU/4 : 0 } });
-    new Zdog.Cylinder({ addTo:t, diameter:D, length:S+2,
-      rotate:{ y:TAU/4 }, color:P.wood, frontFace:P.hole, backface:P.hole, stroke:false });
-    new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:(S+2)/2 },
+      rotate:{ y: xax ? 0 : TAU/4 } });
+    new Zdog.Cylinder({ addTo:t, diameter:D, length:L,
+      rotate:{ y:TAU/4 }, color:P.carpet, frontFace:P.hole, backface:P.hole, stroke:false });
+    new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:L/2 },
       stroke:4, color:P.edge });
-    new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:-(S+2)/2 },
+    new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:-L/2 },
       stroke:4, color:P.edge });
   }
   else if (type === "tower"){
     box(a, { width:14, height:SB-(B-(H-9)), depth:14, translate:{ y: (B-(H-9)+SB)/2 },
       topFace:P.wood2, color:P.wood2, leftFace:P.juteDark, rightFace:P.wood2,
       frontFace:P.wood2, rearFace:P.juteDark });
-    woodBox({ width:S+4, height:9, depth:S-4, translate:{ y: -B + 5.5 } });
+    woodBox({ width:S, height:9, depth:S-4, translate:{ y: -B + 5.5 } });  // площадка вровень с модулем (не шире)
     new Zdog.Ellipse({ addTo:a, width:S*0.6, height:S*0.44,
-      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.canvas });
+      rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.sling });  // подушка в цвет коллекции
   }
   else if (type === "hammock"){
-    [-1,1].forEach(s => box(a, { width:6, height:SB-(B-H), depth:6,
-      translate:{ x:s*(S/2-4), y: (B-H+SB)/2 }, color:P.wood2,
+    // ЧЕТЫРЕ стойки по углам; полотно — пучок ОТКРЫТЫХ провисающих дуг по глубине.
+    // ВАЖНО: closed:false — иначе Zdog замыкает каждую дугу прямой линией конец→начало
+    // (обе точки на одной высоте), и это была та самая «горизонтальная перекладина».
+    const TY = B - H + 14, px = S/2 - 8, pz = S/2 - 10, sag = 30;
+    [-1,1].forEach(sx => [-1,1].forEach(sz => box(a, { width:5, height:SB-TY, depth:5,
+      translate:{ x:sx*px, z:sz*pz, y:(TY+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
-      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
-      path:[ { x:-S/2+6, y: B - H + 8 },
-             { bezier:[ { x:-10, y: B - H + 34 }, { x:10, y: B - H + 34 }, { x:S/2-6, y: B - H + 8 } ] } ] });
+      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark })));
+    // Полотно — сплошная залитая ткань от передней кромки до задней (закрывает
+    // зазор между ними, где торчат стойки). Рисуем ПОВЕРХ стоек (sortValue+),
+    // чтобы верхушки правых стоек ушли под ткань, как у левых.
+    const fSag = 20, bSag = 12;   // ближняя кромка провисает мягче (не так круто, как раньше)
+    const cloth = new Zdog.Shape({ addTo:a, fill:true, stroke:6, color:P.sling, closed:true, path:[
+      { x:-px, y:TY, z:pz },
+      { bezier:[ { x:-px*0.5, y:TY+fSag, z:pz }, { x:px*0.5, y:TY+fSag, z:pz }, { x:px, y:TY, z:pz } ] },
+      { x:px, y:TY, z:-pz },
+      { bezier:[ { x:px*0.5, y:TY+bSag, z:-pz }, { x:-px*0.5, y:TY+bSag, z:-pz }, { x:-px, y:TY, z:-pz } ] } ] });
+    cloth.updateSortValue = function(){
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 200; };
+    // кромка по БЛИЖНЕМУ краю — контур в цвет ткани, чуть темнее
+    const edge = new Zdog.Shape({ addTo:a, stroke:4, color:P.slingDeep, closed:false,
+      path:[ { x:-px, y:TY, z:pz },
+             { bezier:[ { x:-px*0.5, y:TY+fSag, z:pz }, { x:px*0.5, y:TY+fSag, z:pz }, { x:px, y:TY, z:pz } ] } ] });
+    edge.updateSortValue = function(){
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 250; };
   }
   else if (type === "hammock2"){
     // широкий гамак: якорь в левой ячейке, вторая стойка — в соседней справа
     const SB2 = (opts && opts.supY2) || B;
     const X2 = CELL; // центр правой ячейки
-    [{ x:-(S/2-4), s:SB }, { x:X2+(S/2-4), s:SB2 }].forEach(p => box(a, {
-      width:6, height:p.s-(B-H), depth:6,
-      translate:{ x:p.x, y:(B-H+p.s)/2 }, color:P.wood2,
+    const TY = B - H + 4, pz = S/2 - 10;   // верхушки стоек, вынос по глубине
+    const Lx = -(S/2-8), Rx = X2+(S/2-8);
+    // ЧЕТЫРЕ стойки: левый и правый край, перёд+зад
+    [{ x:Lx, s:SB }, { x:Rx, s:SB2 }].forEach(p => [-1,1].forEach(sz => box(a, {
+      width:5, height:p.s-TY, depth:5,
+      translate:{ x:p.x, z:sz*pz, y:(TY+p.s)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
-      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark }));
-    new Zdog.Shape({ addTo:a, stroke:11, color:P.sling,
-      path:[ { x:-S/2+6, y: B - H + 8 },
-             { bezier:[ { x:X2/2-16, y: B - H + 46 }, { x:X2/2+16, y: B - H + 46 }, { x:X2+S/2-6, y: B - H + 8 } ] } ] });
+      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark })));
+    // полотно — сплошная залитая ткань (перед→зад), поверх стоек: их верхушки уходят под ткань
+    const fSag = 24, bSag = 14, cx1 = X2/2-16, cx2 = X2/2+16;
+    const cloth = new Zdog.Shape({ addTo:a, fill:true, stroke:6, color:P.sling, closed:true, path:[
+      { x:Lx, y:TY, z:pz },
+      { bezier:[ { x:cx1, y:TY+fSag, z:pz }, { x:cx2, y:TY+fSag, z:pz }, { x:Rx, y:TY, z:pz } ] },
+      { x:Rx, y:TY, z:-pz },
+      { bezier:[ { x:cx2, y:TY+bSag, z:-pz }, { x:cx1, y:TY+bSag, z:-pz }, { x:Lx, y:TY, z:-pz } ] } ] });
+    cloth.updateSortValue = function(){
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 200; };
+    // кромка по БЛИЖНЕМУ краю — контур в цвет ткани, чуть темнее
+    const edge = new Zdog.Shape({ addTo:a, stroke:4, color:P.slingDeep, closed:false,
+      path:[ { x:Lx, y:TY, z:pz },
+             { bezier:[ { x:cx1, y:TY+fSag, z:pz }, { x:cx2, y:TY+fSag, z:pz }, { x:Rx, y:TY, z:pz } ] } ] });
+    edge.updateSortValue = function(){
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 250; };
   }
   else if (type === "roof"){
     // крыша — самостоятельный домик-модуль со своим лазом (а не голая крышка):
@@ -279,10 +316,6 @@ function makeModule(type, parent, opts){
     // фронтальный лаз-домик (как у куба, но по высоте корпуса)
     decoSort(ENTRY_SHAPES.pentagon(a,
       { dw:S*0.44, dh:bodyH*0.86, dx:0, dy:B-3, z:S/2+1.1 }, P.entry));
-    // три круглых вент-отверстия на правой грани
-    for (let k=-1;k<=1;k++) decoSort(new Zdog.Ellipse({ addTo:a, diameter:bodyH*0.24,
-      fill:true, stroke:2, color:P.hole, rotate:{ y:TAU/4 },
-      translate:{ x:S/2+0.8, y:B-bodyH*0.44, z:k*S*0.26 } }));
     // скаты + сизалевый конёк поверх корпуса
     makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - bodyH } }), S, st, true);
   }
