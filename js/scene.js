@@ -14,7 +14,8 @@ const PALETTES = {
     /* лаз — отдельный тон, светлее нутра тоннеля (hole): раскрой фанеры, а не
        глухая дыра; entryLit — подсветка куба под курсором */
     entry:"#63506A", entryLit:"#856F8E",
-    edge:"#4A3728", carpet:"#4A4547", carpetDeep:"#3B3739", canvas:"#E9DCC0",
+    edge:"#4A3728", seam:"#9A7B4E", carpet:"#C3BEB7", carpetDeep:"#A69F97", canvas:"#E9DCC0",
+    /* ковролин когтеточки — фиксированный светло-серый (не зависит от коллекции) */
     /* полотно гамака: тёплый терракотово-розовый, отдельный тон — canvas (#E9DCC0)
        сливался с задней стеной (#EFE4CE), гамак «пропадал» на её фоне */
     sling:"#D9806E", slingDeep:"#BE6553",
@@ -30,7 +31,7 @@ const PALETTES = {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
     rug:"#A34A3C", rugIn:"#5A4E62",
     wood:"#C9A26C", wood2:"#A87F52", woodTop:"#DDB87E", hole:"#1E1A26",
-    edge:"#5F4A37", carpet:"#5B5661", carpetDeep:"#49444E", canvas:"#D8C8A8",
+    edge:"#5F4A37", seam:"#8C6E48", carpet:"#AEA89F", carpetDeep:"#8A847B", canvas:"#D8C8A8",
     entry:"#3B333F", entryLit:"#544A5C",
     sling:"#E08A76", slingDeep:"#C56F5B",
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
@@ -48,35 +49,26 @@ const darkMq = matchMedia("(prefers-color-scheme: dark)");
 const themeOverride = new URLSearchParams(location.search).get("theme");
 const isDark = () => themeOverride ? themeOverride === "dark" : darkMq.matches;
 
-/* ---------- коллекции цвета когтеточки/ковра ----------
-   Одна глобальная коллекция задаёт цвет когтеточки (carpet/carpetDeep) И ковра
-   (rug/rugIn) — по правилу брендворлда «когтеточка = ковёр в кадре». Четыре
-   природных тона; переключение пересобирает сцену (как смена темы). */
-/* каждая коллекция задаёт цвет ковролина/ковра, а также полотна гамака (sling)
-   и ободка чаши-лежанки (bowlRim) — чтобы весь текстиль/акценты сборки были в тон */
+/* ---------- коллекции цвета акцентов ----------
+   Глобальная коллекция задаёт АКЦЕНТЫ сборки: ковёр в кадре (rug/rugIn), полотно
+   гамака/подушку (sling/slingDeep) и ободок чаши-лежанки (bowlRim). Четыре
+   природных тона; переключение пересобирает сцену (как смена темы).
+   ВАЖНО: ковролин когтеточки (carpet/carpetDeep) в коллекции НЕ участвует — он
+   фиксированно светло-серый (см. PALETTES), чтобы структурная обивка не меняла
+   цвет вслед за акцентом. */
 const COLLECTIONS = {
   terracotta: {
-    light:{ rug:"#D96A55", rugIn:"#F0DFC8", carpet:"#BF5A47", carpetDeep:"#9F472F",
-            sling:"#D9806E", slingDeep:"#BE6553", bowlRim:"#C7423A" },
-    dark: { rug:"#A34A3C", rugIn:"#6E5147", carpet:"#8E4436", carpetDeep:"#6C3327",
-            sling:"#E08A76", slingDeep:"#C56F5B", bowlRim:"#E05A4E" } },
+    light:{ rug:"#D96A55", rugIn:"#F0DFC8", sling:"#D9806E", slingDeep:"#BE6553", bowlRim:"#C7423A" },
+    dark: { rug:"#A34A3C", rugIn:"#6E5147", sling:"#E08A76", slingDeep:"#C56F5B", bowlRim:"#E05A4E" } },
   sage: {
-    light:{ rug:"#93A97F", rugIn:"#E9E6D2", carpet:"#6E8F63", carpetDeep:"#55744C",
-            sling:"#8FAE7C", slingDeep:"#6E8F63", bowlRim:"#6E8F63" },
-    dark: { rug:"#6E8560", rugIn:"#59634F", carpet:"#5F7E54", carpetDeep:"#48603F",
-            sling:"#86A277", slingDeep:"#6E8560", bowlRim:"#7FA271" } },
+    light:{ rug:"#93A97F", rugIn:"#E9E6D2", sling:"#8FAE7C", slingDeep:"#6E8F63", bowlRim:"#6E8F63" },
+    dark: { rug:"#6E8560", rugIn:"#59634F", sling:"#86A277", slingDeep:"#6E8560", bowlRim:"#7FA271" } },
   charcoal: {
-    light:{ rug:"#6E686A", rugIn:"#DED8D2", carpet:"#4A4547", carpetDeep:"#3A3639",
-            sling:"#8A8285", slingDeep:"#6E686A", bowlRim:"#6E686A" },
-    dark: { rug:"#514D50", rugIn:"#565056", carpet:"#5B5661", carpetDeep:"#49444E",
-            sling:"#7A747C", slingDeep:"#5B5661", bowlRim:"#8A8285" } },
+    light:{ rug:"#6E686A", rugIn:"#DED8D2", sling:"#8A8285", slingDeep:"#6E686A", bowlRim:"#6E686A" },
+    dark: { rug:"#514D50", rugIn:"#565056", sling:"#7A747C", slingDeep:"#5B5661", bowlRim:"#8A8285" } },
   natural: {
-    /* тона глубже, чем прежде: светлый ковёр (#CBAE82) сливался с песочным полом
-       (floor #E3CBA2) — «ковёр пропадал». Тёплый дуб заметно темнее пола. */
-    light:{ rug:"#C29A5F", rugIn:"#EFE3CB", carpet:"#A9814B", carpetDeep:"#886237",
-            sling:"#C29A5F", slingDeep:"#A9814B", bowlRim:"#A9814B" },
-    dark: { rug:"#9A7E56", rugIn:"#6B5B42", carpet:"#8A6E44", carpetDeep:"#6B5333",
-            sling:"#B49468", slingDeep:"#9A7E56", bowlRim:"#B49468" } },
+    light:{ rug:"#C29A5F", rugIn:"#EFE3CB", sling:"#C29A5F", slingDeep:"#A9814B", bowlRim:"#A9814B" },
+    dark: { rug:"#9A7E56", rugIn:"#6B5B42", sling:"#B49468", slingDeep:"#9A7E56", bowlRim:"#B49468" } },
 };
 let collection = "terracotta";   // по умолчанию — как «Новичок» в брендворлде
 /* палитра активной темы, поверх неё — цвета выбранной коллекции. Копия, а не
@@ -91,8 +83,10 @@ function activePalette(theme){
 /* ---------- геометрия сетки ---------- */
 const GROUND = 118;                       // y пола (вниз положительно)
 /* верхняя поверхность модуля (смещение от центра ЕГО ячейки):
-   опоры стоящего сверху тянутся до неё, а не до границы ячейки */
-const TOP_Y = { base:-27, lounge:1, tower:-30, tunnel:-12 };
+   опоры стоящего сверху тянутся до неё, а не до границы ячейки.
+   base = B-H = -CELL/2: верх куба теперь ровно на ребре ячейки (после того как
+   корпус куба стал во всю высоту CELL) — иначе опоры/ножки уходили ниже ребра. */
+const TOP_Y = { base:-CELL/2, lounge:1, tower:-30, tunnel:-12 };
 const cellX = c => (c - (COLS-1)/2) * CELL;
 const cellY = r => GROUND - CELL/2 - r*CELL;
 const colOf = i => i % COLS;
@@ -132,10 +126,15 @@ function decoSort(sh){
    круг и квадрат-скруглённый — альтернативы. Все три сидят дверным проёмом на
    одной линии пола фронта (низ на dy), чтобы читались как один и тот же вход. */
 const ENTRY_SHAPES = {
-  pentagon: (a, g, col) => new Zdog.Shape({ addTo:a, fill:true, stroke:2, color:col,
-    translate:{ z:g.z },
-    path:[ { x:g.dx-g.dw/2, y:g.dy }, { x:g.dx-g.dw/2, y:g.dy-g.dh*0.62 }, { x:g.dx, y:g.dy-g.dh },
-           { x:g.dx+g.dw/2, y:g.dy-g.dh*0.62 }, { x:g.dx+g.dw/2, y:g.dy } ] }),
+  /* «домик»: конёк поднят над плечами на долю ШИРИНЫ проёма (hw*0.7), а не высоты —
+     угол при вершине получается тупым и одинаковым у куба и у модуля-крыши, как в
+     форме крыши-домика, которая нравится больше (мягкие, скруглённые углы). */
+  pentagon: (a, g, col) => {
+    const hw = g.dw/2, sy = g.dy - g.dh*0.62, ay = sy - hw*0.7;
+    return new Zdog.Shape({ addTo:a, fill:true, stroke:2, color:col, translate:{ z:g.z },
+      path:[ { x:g.dx-hw, y:g.dy }, { x:g.dx-hw, y:sy }, { x:g.dx, y:ay },
+             { x:g.dx+hw, y:sy }, { x:g.dx+hw, y:g.dy } ] });
+  },
   circle: (a, g, col) => new Zdog.Ellipse({ addTo:a, diameter:g.dw*1.12, fill:true, stroke:2,
     color:col, translate:{ x:g.dx, y:g.dy - g.dw*0.56, z:g.z } }),
   square: (a, g, col) => new Zdog.RoundedRect({ addTo:a, width:g.dw, height:g.dh*0.84,
@@ -143,6 +142,10 @@ const ENTRY_SHAPES = {
     translate:{ x:g.dx, y:g.dy - g.dh*0.42, z:g.z } }),
 };
 const DEFAULT_ENTRY = "pentagon";
+/* высота проёма лаза — ОДНА для куба и модуля-крыши, чтобы «домик»-лаз был
+   идентичным у обоих. Подобрана под короткий корпус крыши (30): выше проёма конёк
+   вылез бы за корпус. Куб выше, но проём тот же — одинаковая форма важнее размера. */
+const ENTRY_H = 26;
 let entryShapes = {};   // cellIndex -> форма лаза этого куба
 let roofOn = {};        // cellIndex -> у куба включена крыша
 let roofStyle = {};     // cellIndex -> стиль крыши куба: "asym" | "sym"
@@ -150,10 +153,31 @@ let scratchDir = {};    // cellIndex -> поворот когтеточки-па
 let entryObjs = {};     // cellIndex -> Zdog-объект лаза (для подсветки и замены на лету)
 let hoverEntry = null;  // куб под курсором — его лаз подсвечен (entryLit)
 function entryColor(i){ return hoverEntry === i ? P.entryLit : P.entry; }
-function makeEntry(a, S, H, B, shape, col){
-  const g = { dw:S*0.46, dh:H*0.52, dx:0, dy:B-3, z:S/2+1.1 };
+/* oh — высота проёма лаза (передаётся явно): у куба ≈ H*0.52, у модуля-крыши —
+   от высоты его короткого корпуса; форма лаза общая для обоих (единая логика) */
+function makeEntry(a, S, oh, B, shape, col){
+  const g = { dw:S*0.46, dh:oh, dx:0, dy:B-3, z:S/2+1.1 };
   const draw = ENTRY_SHAPES[shape] || ENTRY_SHAPES[DEFAULT_ENTRY];
   return decoSort(draw(a, g, col));
+}
+
+/* тёмные швы-границы модуля-куба: тонкий кант по видимым рёбрам (фронт, верх,
+   правый бок). Соседи стоят вплотную (S=CELL) — кант показывает грань между двумя
+   модулями и по горизонтали (ряд, боковые рёбра), и по вертикали (стопка, верх/низ).
+   Цвет P.seam заметен, но не спорит с модулями; sortValue приподнят (+6), чтобы кант
+   не тонул под собственной гранью. yt/yb — верх/низ корпуса. Общий для куба и крыши. */
+function cubeSeams(a, S, yt, yb){
+  const mk = pts => {
+    const s = new Zdog.Shape({ addTo:a, closed:true, stroke:1.7, color:P.seam, path:pts });
+    s.updateSortValue = function(){
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 6; };
+  };
+  mk([ {x:-S/2,y:yt,z:S/2+0.3}, {x:S/2,y:yt,z:S/2+0.3},
+       {x:S/2,y:yb,z:S/2+0.3}, {x:-S/2,y:yb,z:S/2+0.3} ]);            // фронт
+  mk([ {x:-S/2,y:yt-0.3,z:-S/2}, {x:S/2,y:yt-0.3,z:-S/2},
+       {x:S/2,y:yt-0.3,z:S/2}, {x:-S/2,y:yt-0.3,z:S/2} ]);           // верх
+  mk([ {x:S/2+0.3,y:yt,z:-S/2}, {x:S/2+0.3,y:yt,z:S/2},
+       {x:S/2+0.3,y:yb,z:S/2}, {x:S/2+0.3,y:yb,z:-S/2} ]);          // правый бок
 }
 
 /* ---------- крыша (симметричная / асимметричная) ----------
@@ -190,9 +214,10 @@ function makeRoof(a, S, style, ridge){
 
 function makeModule(type, parent, opts){
   const a = new Zdog.Anchor({ addTo: parent });
-  const S = CELL - 10;   // ширина/глубина (шов между соседями по горизонтали)
+  const S = CELL;        // ширина/глубина = ячейке: соседи стоят ВПЛОТНУЮ (кот
+                         // ходит между модулями без зазора); границу рисуем швом
   const B = CELL / 2;    // низ ячейки
-  const H = CELL - 2;    // высота корпуса
+  const H = CELL;        // высота корпуса = ячейке: кубы в стопке тоже впритык
   const SB = (opts && opts.supY) || B;   // фактическая опора: верх модуля снизу (или пол)
   /* видимый бок темнее фронта — иначе куб и лежанка читаются плоскими:
      при повороте сцены (rotate.y > 0) зритель видит фронт и правую грань */
@@ -201,11 +226,12 @@ function makeModule(type, parent, opts){
     frontFace:P.wood, rearFace:P.wood2, color:P.wood }, extra));
   if (type === "base"){
     woodBox({ width:S, height:SB-(B-H), depth:S, translate:{ y: (B-H+SB)/2 } });
+    cubeSeams(a, S, B - H, SB);   // тёмные швы-границы куба (см. cubeSeams)
     /* лаз своей формы для этого куба (см. ENTRY_SHAPES и клик по кубу в
        configurator.js); объект запоминаем — чтобы подсвечивать и менять на лету */
     const ci = opts ? opts.cellIndex : undefined;
     const shape = (ci != null && entryShapes[ci]) || DEFAULT_ENTRY;
-    const eo = makeEntry(a, S, H, B, shape, ci != null ? entryColor(ci) : P.entry);
+    const eo = makeEntry(a, S, ENTRY_H, B, shape, ci != null ? entryColor(ci) : P.entry);
     if (ci != null) entryObjs[ci] = eo;
     /* верх куба: либо асимметричная крыша-«домик» (когтеточка на скате), либо
        плоская ковролиновая площадка-когтеточка — по переключателю крыши куба */
@@ -221,9 +247,13 @@ function makeModule(type, parent, opts){
   else if (type === "lounge"){
     const h = 30;
     woodBox({ width:S, height:SB-(B-h), depth:S, translate:{ y: (B-h+SB)/2 } });
-    new Zdog.Ellipse({ addTo:a, width:S*0.74, height:S*0.6,
-      rotate:{ x:TAU/4 }, translate:{ y: B - h - 1 },
-      stroke:10, fill:true, color:P.sling });   // подушка в цвет коллекции
+    cubeSeams(a, S, B - h, SB);   // тот же шов-контур, что у куба (низкий корпус)
+    // подушка — скруглённый КВАДРАТ, вписан в верхнюю грань с отступом от всех рёбер.
+    // z:+4 — сдвиг к зрителю: подушка приподнята над гранью, и из-за наклона сцены
+    // без сдвига её ДАЛЬНЯЯ кромка визуально упиралась в задний контур грани.
+    new Zdog.RoundedRect({ addTo:a, width:S*0.64, height:S*0.54, cornerRadius:S*0.08,
+      rotate:{ x:TAU/4 }, translate:{ y: B - h - 1, z: 4 },
+      stroke:6, fill:true, color:P.sling });   // подушка в цвет коллекции
   }
   else if (type === "tunnel"){
     // ось: "x" — соединяет соседние модули, "z" — одиночный, входом к зрителю
@@ -253,7 +283,9 @@ function makeModule(type, parent, opts){
     // ЧЕТЫРЕ стойки по углам; полотно — пучок ОТКРЫТЫХ провисающих дуг по глубине.
     // ВАЖНО: closed:false — иначе Zdog замыкает каждую дугу прямой линией конец→начало
     // (обе точки на одной высоте), и это была та самая «горизонтальная перекладина».
-    const TY = B - H + 14, px = S/2 - 8, pz = S/2 - 10, sag = 30;
+    // стойки — на УГЛАХ куба снизу: outer-грань стойки почти вровень с ребром куба
+    // (S/2), лёгкий отступ 3, чтобы не перекрывать угловой шов и не свисать с ребра
+    const TY = B - H + 14, px = S/2 - 3, pz = S/2 - 3, sag = 30;
     [-1,1].forEach(sx => [-1,1].forEach(sz => box(a, { width:5, height:SB-TY, depth:5,
       translate:{ x:sx*px, z:sz*pz, y:(TY+SB)/2 }, color:P.wood2,
       topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
@@ -280,8 +312,8 @@ function makeModule(type, parent, opts){
     // широкий гамак: якорь в левой ячейке, вторая стойка — в соседней справа
     const SB2 = (opts && opts.supY2) || B;
     const X2 = CELL; // центр правой ячейки
-    const TY = B - H + 4, pz = S/2 - 10;   // верхушки стоек, вынос по глубине
-    const Lx = -(S/2-8), Rx = X2+(S/2-8);
+    const TY = B - H + 4, pz = S/2 - 3;    // стойки на углах: вынос к рёбрам куба
+    const Lx = -(S/2-3), Rx = X2+(S/2-3);
     // ЧЕТЫРЕ стойки: левый и правый край, перёд+зад
     [{ x:Lx, s:SB }, { x:Rx, s:SB2 }].forEach(p => [-1,1].forEach(sz => box(a, {
       width:5, height:p.s-TY, depth:5,
@@ -313,9 +345,12 @@ function makeModule(type, parent, opts){
     const st = (opts && opts.roofStyle) || (ci != null && roofStyle[ci]) || DEFAULT_ROOF;
     const bodyH = 30;                       // высота стен корпуса (низ на полу ячейки)
     woodBox({ width:S, height:bodyH, depth:S, translate:{ y: B - bodyH/2 } });
-    // фронтальный лаз-домик (как у куба, но по высоте корпуса)
-    decoSort(ENTRY_SHAPES.pentagon(a,
-      { dw:S*0.44, dh:bodyH*0.86, dx:0, dy:B-3, z:S/2+1.1 }, P.entry));
+    cubeSeams(a, S, B - bodyH, B);          // те же тёмные швы, что у обычного куба
+    /* фронтальный лаз — ТА ЖЕ система, что у куба: форма выбирается кликом
+       (entryShapes[ci]), объект регистрируем в entryObjs для подсветки/замены */
+    const shape = (ci != null && entryShapes[ci]) || DEFAULT_ENTRY;
+    const eo = makeEntry(a, S, ENTRY_H, B, shape, ci != null ? entryColor(ci) : P.entry);
+    if (ci != null) entryObjs[ci] = eo;
     // скаты + сизалевый конёк поверх корпуса
     makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - bodyH } }), S, st, true);
   }
@@ -331,15 +366,33 @@ function makeModule(type, parent, opts){
     const HH = 46;               // высота у высокой (задней) кромки
     const xc = S/2;              // полуширина клина (боковины на x=±xc)
     const side = [ {z:S/2,y:B}, {z:-S/2,y:B}, {z:-S/2,y:B-HH} ];
+    // Боковины сортируем по БЛИЖНЕЙ точке (max z рёбер), а не по среднему z всех
+    // точек: у треугольной боковины среднее z уходит вглубь, и её перекрывает
+    // соседний куб, хотя пандус к зрителю ближе. По ближней точке боковина встаёт
+    // впереди соседа.
+    const nearestZ = function(){
+      let m = -Infinity;
+      this.pathCommands.forEach(c => { if (c.endRenderPoint.z > m) m = c.endRenderPoint.z; });
+      this.sortValue = m;
+    };
+    const wallFills = [];        // берёзовые боковины — по ним сортируем скат
     [-1,1].forEach(s => {
-      new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
-      // тёмная скорчённая кромка по контуру боковины
-      new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+      const pf = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
+      // контур боковины — тем же швом, что у куба (P.seam, 1.7)
+      const pe = new Zdog.Shape({ addTo:w, closed:true, stroke:1.7, color:P.seam, translate:{ x:s*xc }, path:side });
+      pf.updateSortValue = nearestZ; pe.updateSortValue = nearestZ;
+      wallFills.push(pf);
     });
     // скат — ковролиновая когтеточка (гипотенуза перёд-низ → зад-верх, в рамке боковин)
-    new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
+    const carpet = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
       {x:-(xc-3), z:S/2, y:B}, {x:(xc-3), z:S/2, y:B},
       {x:(xc-3), z:-S/2, y:B-HH}, {x:-(xc-3), z:-S/2, y:B-HH} ] });
+    // Скат по глубине — МЕЖДУ боковинами (среднее их ближних точек): дальняя позади
+    // ската, ближняя — перед ним, при любом повороте, и скат не проваливается в жёлоб.
+    // Боковины считаются раньше ската (добавлены выше), их sortValue за кадр готовы.
+    carpet.updateSortValue = function(){
+      this.sortValue = (wallFills[0].sortValue + wallFills[1].sortValue) / 2;
+    };
     // берёзовые дюбель-рейки по нижней (перёд) и верхней (зад) кромкам ската
     [{z:S/2,y:B},{z:-S/2,y:B-HH}].forEach(p =>
       new Zdog.Cylinder({ addTo:w, diameter:8, length:2*xc+8, rotate:{ y:TAU/4 },
@@ -579,6 +632,7 @@ api.setCollection = function(name){
 api._snapshot = null;
 api.restore = function(grid){
   api._snapshot = grid;
+  const savedScratch = Object.assign({}, scratchDir); // повороты пандусов переживают пересборку (напр. смену цвета коллекции)
   Object.keys(moduleAnchors).forEach(i => api.remove(+i, true));
   grid.forEach((t, i) => {
     if (!t || !MODULES[t]) return; // пусто или маркер широкого модуля
@@ -588,6 +642,7 @@ api.restore = function(grid){
       const col = i % COLS;
       opts.tunnelAxis = ((col > 0 && grid[i-1]) || (col < COLS-1 && grid[i+1])) ? "x" : "z";
     }
+    if (t === "scratch" && savedScratch[i] != null) opts.scratchDir = savedScratch[i];
     api.place(i, t, true, opts);
   });
 };
@@ -611,8 +666,8 @@ api.setEntryShapeAt = function(i, s){
   const a = moduleAnchors[i], old = entryObjs[i];
   if (a && old){
     a.removeChild(old);
-    const S = CELL - 10, B = CELL / 2, H = CELL - 2;   // те же размеры, что в makeModule
-    entryObjs[i] = makeEntry(a, S, H, B, s, entryColor(i));
+    const S = CELL, B = CELL / 2;
+    entryObjs[i] = makeEntry(a, S, ENTRY_H, B, s, entryColor(i));   // тот же проём, что в makeModule
     dirty = true;
   }
   return true;
@@ -752,7 +807,7 @@ api.cellClientPos = function(i){
 /* локальная высота верхушки модуля над центром его ячейки (y вверх отрицателен) —
    чтобы всплывающее меню вставало НАД модулем, а не поверх него */
 function moduleTopY(i){
-  const B = CELL/2, H = CELL - 2, rH = (CELL-10)*0.56;
+  const B = CELL/2, H = CELL, rH = CELL*0.56;
   switch (moduleKind[i]){
     case "base":    return roofOn[i] ? (B - H - 1.5 - rH - 6) : (B - H - 5);
     case "roof":    return (B - 30) - rH - 6;   // верх корпуса домика-крыши минус скат
