@@ -288,6 +288,13 @@ function positionMenu(i){
 }
 function markMenuShape(i){
   if (menuKind === "scratch") return;   // у когтеточки нет радио-состояния — только поворот
+  // форма лаза — общая для куба и модуля-крыши (у обоих единый выбор формы)
+  const cur = KD.scene.getEntryShapeAt(i);
+  entryMenu.querySelectorAll(".ep-b").forEach(b => {
+    const on = b.dataset.shape === cur;
+    b.classList.toggle("is-on", on);
+    b.setAttribute("aria-checked", on ? "true" : "false");
+  });
   if (menuKind === "roof"){
     // модуль-крыша: две кнопки стиля работают как радио — всегда одна активна
     const cur = KD.scene.getRoofStyleAt(i);
@@ -298,12 +305,6 @@ function markMenuShape(i){
     });
     return;
   }
-  const cur = KD.scene.getEntryShapeAt(i);
-  entryMenu.querySelectorAll(".ep-b").forEach(b => {
-    const on = b.dataset.shape === cur;
-    b.classList.toggle("is-on", on);
-    b.setAttribute("aria-checked", on ? "true" : "false");
-  });
   const on = KD.scene.hasRoof(i);
   const curRoof = on ? KD.scene.getRoofStyleAt(i) : null;
   entryMenu.querySelectorAll(".em-roof").forEach(b => {
@@ -315,10 +316,11 @@ function markMenuShape(i){
 function openEntryMenu(i, kind){
   menuCell = i;
   menuKind = kind || "cube";
-  entryMenu.classList.toggle("roof-only", menuKind === "roof");        // прячет кнопки формы лаза
+  entryMenu.classList.remove("roof-only");   // у модуля-крыши теперь тоже есть выбор формы лаза
+  entryMenu.classList.toggle("no-circle", menuKind === "roof");        // но круглый лаз крыше не предлагаем
   entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот + убрать
   entryMenu.setAttribute("aria-label",
-    menuKind === "roof" ? "Стиль крыши" : menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
+    menuKind === "roof" ? "Форма лаза и стиль крыши" : menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
   markMenuShape(i);
   positionMenu(i);
   entryMenu.classList.add("show");
@@ -374,7 +376,7 @@ if (entryMenu){
       return;
     }
     const b = e.target.closest(".ep-b");
-    if (b && menuKind === "cube"){
+    if (b && (menuKind === "cube" || menuKind === "roof")){   // форма лаза — и у куба, и у модуля-крыши
       const s = b.dataset.shape;
       if (KD.scene.setEntryShapeAt(menuCell, s)){
         markMenuShape(menuCell);
@@ -577,14 +579,15 @@ canvas.addEventListener("pointerup", e => {
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
   /* куб: клик открывает меню (лаз + крыша + убрать), а не удаляет сразу —
-     удаление куба живёт в меню. Модуль-крыша: клик открывает меню стиля крыши
-     (asym/sym + убрать). Остальные модули убираются как прежде */
-  if (KD.scene.hasEntry(best)){
-    if (menuCell === best && menuKind === "cube") closeEntryMenu(); else openEntryMenu(best, "cube");
-    return;
-  }
+     удаление куба живёт в меню. Модуль-крыша: то же меню формы лаза, плюс выбор
+     стиля крыши (asym/sym) — «roof» проверяем ПЕРВЫМ, т.к. у него теперь тоже есть
+     лаз (hasEntry === true). Остальные модули убираются как прежде */
   if (grid[best] === "roof"){
     if (menuCell === best && menuKind === "roof") closeEntryMenu(); else openEntryMenu(best, "roof");
+    return;
+  }
+  if (KD.scene.hasEntry(best)){
+    if (menuCell === best && menuKind === "cube") closeEntryMenu(); else openEntryMenu(best, "cube");
     return;
   }
   if (grid[best] === "scratch"){   // когтеточка: клик открывает меню поворота (+ убрать)

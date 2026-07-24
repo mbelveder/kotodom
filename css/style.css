@@ -467,6 +467,8 @@ button{font-family:inherit}
 /* меню модуля-крыши: только выбор стиля + «убрать» — прячем кнопки формы лаза и их разделитель */
 .entry-menu.roof-only .ep-b,
 .entry-menu.roof-only .em-sep-entry{ display:none }
+/* модуль-крыша: круглый лаз не предлагаем (только квадрат и домик) */
+.entry-menu.no-circle .ep-b[data-shape="circle"]{ display:none }
 /* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
 .em-rot{
   display:none;align-items:center;justify-content:center;
