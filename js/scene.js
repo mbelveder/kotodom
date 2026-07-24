@@ -331,10 +331,21 @@ function makeModule(type, parent, opts){
     const HH = 46;               // высота у высокой (задней) кромки
     const xc = S/2;              // полуширина клина (боковины на x=±xc)
     const side = [ {z:S/2,y:B}, {z:-S/2,y:B}, {z:-S/2,y:B-HH} ];
+    // боковины сортируем по БЛИЖНЕЙ точке (max z), а не по среднему z всех точек:
+    // иначе крупный наклонный ковролиновый скат имеет среднее z ближе, чем центр
+    // ближней боковины, и перекрывает её при развороте «подиум» (когтеточка слева
+    // от куба, dir 3). По ближней точке ближняя боковина всегда впереди ската, а
+    // дальняя — позади, независимо от поворота.
+    const nearSort = function(){
+      let m = -Infinity;
+      this.pathCommands.forEach(c => { if (c.endRenderPoint.z > m) m = c.endRenderPoint.z; });
+      this.sortValue = m;
+    };
     [-1,1].forEach(s => {
-      new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
+      const pf = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
       // тёмная скорчённая кромка по контуру боковины
-      new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+      const pe = new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+      pf.updateSortValue = nearSort; pe.updateSortValue = nearSort;
     });
     // скат — ковролиновая когтеточка (гипотенуза перёд-низ → зад-верх, в рамке боковин)
     new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
@@ -579,6 +590,7 @@ api.setCollection = function(name){
 api._snapshot = null;
 api.restore = function(grid){
   api._snapshot = grid;
+  const savedScratch = Object.assign({}, scratchDir); // повороты пандусов переживают пересборку (напр. смену цвета коллекции)
   Object.keys(moduleAnchors).forEach(i => api.remove(+i, true));
   grid.forEach((t, i) => {
     if (!t || !MODULES[t]) return; // пусто или маркер широкого модуля
@@ -588,6 +600,7 @@ api.restore = function(grid){
       const col = i % COLS;
       opts.tunnelAxis = ((col > 0 && grid[i-1]) || (col < COLS-1 && grid[i+1])) ? "x" : "z";
     }
+    if (t === "scratch" && savedScratch[i] != null) opts.scratchDir = savedScratch[i];
     api.place(i, t, true, opts);
   });
 };
