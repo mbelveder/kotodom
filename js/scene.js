@@ -331,26 +331,25 @@ function makeModule(type, parent, opts){
     const HH = 46;               // высота у высокой (задней) кромки
     const xc = S/2;              // полуширина клина (боковины на x=±xc)
     const side = [ {z:S/2,y:B}, {z:-S/2,y:B}, {z:-S/2,y:B-HH} ];
-    // боковины сортируем по БЛИЖНЕЙ точке (max z), а не по среднему z всех точек:
-    // иначе крупный наклонный ковролиновый скат имеет среднее z ближе, чем центр
-    // ближней боковины, и перекрывает её при развороте «подиум» (когтеточка слева
-    // от куба, dir 3). По ближней точке ближняя боковина всегда впереди ската, а
-    // дальняя — позади, независимо от поворота.
-    const nearSort = function(){
-      let m = -Infinity;
-      this.pathCommands.forEach(c => { if (c.endRenderPoint.z > m) m = c.endRenderPoint.z; });
-      this.sortValue = m;
-    };
+    const wallFills = [];        // берёзовые боковины — по ним сортируем скат
     [-1,1].forEach(s => {
       const pf = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
       // тёмная скорчённая кромка по контуру боковины
-      const pe = new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
-      pf.updateSortValue = nearSort; pe.updateSortValue = nearSort;
+      new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+      wallFills.push(pf);
     });
     // скат — ковролиновая когтеточка (гипотенуза перёд-низ → зад-верх, в рамке боковин)
-    new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
+    const carpet = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
       {x:-(xc-3), z:S/2, y:B}, {x:(xc-3), z:S/2, y:B},
       {x:(xc-3), z:-S/2, y:B-HH}, {x:-(xc-3), z:-S/2, y:B-HH} ] });
+    // Скат по глубине всегда МЕЖДУ боковинами: дальняя позади него, ближняя — перед
+    // (far < carpet < near), при любом повороте. Иначе либо скат перекрывает ближнюю
+    // боковину (разворот «подиум», dir 3), либо обе боковины лезут перед скатом и он
+    // «проваливается» внутрь при виде в лоб. Боковины считаются раньше ската (добавлены
+    // выше), поэтому их sortValue за этот кадр уже актуальны.
+    carpet.updateSortValue = function(){
+      this.sortValue = (wallFills[0].sortValue + wallFills[1].sortValue) / 2;
+    };
     // берёзовые дюбель-рейки по нижней (перёд) и верхней (зад) кромкам ската
     [{z:S/2,y:B},{z:-S/2,y:B-HH}].forEach(p =>
       new Zdog.Cylinder({ addTo:w, diameter:8, length:2*xc+8, rotate:{ y:TAU/4 },
