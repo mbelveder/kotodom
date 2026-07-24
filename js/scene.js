@@ -331,22 +331,30 @@ function makeModule(type, parent, opts){
     const HH = 46;               // высота у высокой (задней) кромки
     const xc = S/2;              // полуширина клина (боковины на x=±xc)
     const side = [ {z:S/2,y:B}, {z:-S/2,y:B}, {z:-S/2,y:B-HH} ];
+    // Боковины сортируем по БЛИЖНЕЙ точке (max z рёбер), а не по среднему z всех
+    // точек: у треугольной боковины среднее z уходит вглубь, и её перекрывает
+    // соседний куб, хотя пандус к зрителю ближе. По ближней точке боковина встаёт
+    // впереди соседа.
+    const nearestZ = function(){
+      let m = -Infinity;
+      this.pathCommands.forEach(c => { if (c.endRenderPoint.z > m) m = c.endRenderPoint.z; });
+      this.sortValue = m;
+    };
     const wallFills = [];        // берёзовые боковины — по ним сортируем скат
     [-1,1].forEach(s => {
       const pf = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.wood, translate:{ x:s*xc }, path:side });
       // тёмная скорчённая кромка по контуру боковины
-      new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+      const pe = new Zdog.Shape({ addTo:w, closed:true, stroke:1.6, color:P.edge, translate:{ x:s*xc }, path:side });
+      pf.updateSortValue = nearestZ; pe.updateSortValue = nearestZ;
       wallFills.push(pf);
     });
     // скат — ковролиновая когтеточка (гипотенуза перёд-низ → зад-верх, в рамке боковин)
     const carpet = new Zdog.Shape({ addTo:w, fill:true, stroke:2, color:P.carpet, path:[
       {x:-(xc-3), z:S/2, y:B}, {x:(xc-3), z:S/2, y:B},
       {x:(xc-3), z:-S/2, y:B-HH}, {x:-(xc-3), z:-S/2, y:B-HH} ] });
-    // Скат по глубине всегда МЕЖДУ боковинами: дальняя позади него, ближняя — перед
-    // (far < carpet < near), при любом повороте. Иначе либо скат перекрывает ближнюю
-    // боковину (разворот «подиум», dir 3), либо обе боковины лезут перед скатом и он
-    // «проваливается» внутрь при виде в лоб. Боковины считаются раньше ската (добавлены
-    // выше), поэтому их sortValue за этот кадр уже актуальны.
+    // Скат по глубине — МЕЖДУ боковинами (среднее их ближних точек): дальняя позади
+    // ската, ближняя — перед ним, при любом повороте, и скат не проваливается в жёлоб.
+    // Боковины считаются раньше ската (добавлены выше), их sortValue за кадр готовы.
     carpet.updateSortValue = function(){
       this.sortValue = (wallFills[0].sortValue + wallFills[1].sortValue) / 2;
     };
