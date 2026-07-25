@@ -9,13 +9,13 @@ const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const PALETTES = {
   light: {
     wall:"#EFE4CE", wallSide:"#E5D7BC", floor:"#E3CBA2", floorSide:"#C9AC80",
-    rug:"#D96A55", rugIn:"#F0DFC8",
+    /* ковёр ПОД модулями — фиксированный светло-серый (не зависит от коллекции) */
+    rug:"#C0BBB3", rugIn:"#DDD8D0",
     wood:"#DCB683", wood2:"#C09263", woodTop:"#EBCB97", hole:"#4A3C50",
     /* лаз — отдельный тон, светлее нутра тоннеля (hole): раскрой фанеры, а не
        глухая дыра; entryLit — подсветка куба под курсором */
     entry:"#63506A", entryLit:"#856F8E",
-    edge:"#4A3728", seam:"#9A7B4E", carpet:"#C3BEB7", carpetDeep:"#A69F97", canvas:"#E9DCC0",
-    /* ковролин когтеточки — фиксированный светло-серый (не зависит от коллекции) */
+    edge:"#4A3728", seam:"#9A7B4E", carpet:"#4A4547", carpetDeep:"#3B3739", canvas:"#E9DCC0",
     /* полотно гамака: тёплый терракотово-розовый, отдельный тон — canvas (#E9DCC0)
        сливался с задней стеной (#EFE4CE), гамак «пропадал» на её фоне */
     sling:"#D9806E", slingDeep:"#BE6553",
@@ -29,9 +29,10 @@ const PALETTES = {
   },
   dark: {
     wall:"#33303F", wallSide:"#2B2837", floor:"#4E4258", floorSide:"#3B3244",
-    rug:"#A34A3C", rugIn:"#5A4E62",
+    /* ковёр под модулями — фиксированный серый (не зависит от коллекции) */
+    rug:"#6C6862", rugIn:"#847E78",
     wood:"#C9A26C", wood2:"#A87F52", woodTop:"#DDB87E", hole:"#1E1A26",
-    edge:"#5F4A37", seam:"#8C6E48", carpet:"#AEA89F", carpetDeep:"#8A847B", canvas:"#D8C8A8",
+    edge:"#5F4A37", seam:"#8C6E48", carpet:"#5B5661", carpetDeep:"#49444E", canvas:"#D8C8A8",
     entry:"#3B333F", entryLit:"#544A5C",
     sling:"#E08A76", slingDeep:"#C56F5B",
     aka:"#E05A4E", akaDeep:"#C74338", sakura:"#B27A72", cushion:"#C08A80",
@@ -50,25 +51,24 @@ const themeOverride = new URLSearchParams(location.search).get("theme");
 const isDark = () => themeOverride ? themeOverride === "dark" : darkMq.matches;
 
 /* ---------- коллекции цвета акцентов ----------
-   Глобальная коллекция задаёт АКЦЕНТЫ сборки: ковёр в кадре (rug/rugIn), полотно
-   гамака/подушку (sling/slingDeep) и ободок чаши-лежанки (bowlRim). Четыре
-   природных тона; переключение пересобирает сцену (как смена темы).
-   ВАЖНО: ковролин когтеточки (carpet/carpetDeep) в коллекции НЕ участвует — он
-   фиксированно светло-серый (см. PALETTES), чтобы структурная обивка не меняла
-   цвет вслед за акцентом. */
+   Глобальная коллекция задаёт АКЦЕНТЫ сборки: ковролин когтеточки/крыш/скатов
+   (carpet/carpetDeep), полотно гамака/подушку (sling/slingDeep) и ободок
+   чаши-лежанки (bowlRim). Четыре природных тона; переключение пересобирает сцену.
+   ВАЖНО: ковёр ПОД модулями (rug/rugIn) в коллекции НЕ участвует — он фиксированно
+   светло-серый (см. PALETTES), чтобы «пол» сборки не менялся вслед за акцентом. */
 const COLLECTIONS = {
   terracotta: {
-    light:{ rug:"#D96A55", rugIn:"#F0DFC8", sling:"#D9806E", slingDeep:"#BE6553", bowlRim:"#C7423A" },
-    dark: { rug:"#A34A3C", rugIn:"#6E5147", sling:"#E08A76", slingDeep:"#C56F5B", bowlRim:"#E05A4E" } },
+    light:{ carpet:"#BF5A47", carpetDeep:"#9F472F", sling:"#D9806E", slingDeep:"#BE6553", bowlRim:"#C7423A" },
+    dark: { carpet:"#8E4436", carpetDeep:"#6C3327", sling:"#E08A76", slingDeep:"#C56F5B", bowlRim:"#E05A4E" } },
   sage: {
-    light:{ rug:"#93A97F", rugIn:"#E9E6D2", sling:"#8FAE7C", slingDeep:"#6E8F63", bowlRim:"#6E8F63" },
-    dark: { rug:"#6E8560", rugIn:"#59634F", sling:"#86A277", slingDeep:"#6E8560", bowlRim:"#7FA271" } },
+    light:{ carpet:"#6E8F63", carpetDeep:"#55744C", sling:"#8FAE7C", slingDeep:"#6E8F63", bowlRim:"#6E8F63" },
+    dark: { carpet:"#5F7E54", carpetDeep:"#48603F", sling:"#86A277", slingDeep:"#6E8560", bowlRim:"#7FA271" } },
   charcoal: {
-    light:{ rug:"#6E686A", rugIn:"#DED8D2", sling:"#8A8285", slingDeep:"#6E686A", bowlRim:"#6E686A" },
-    dark: { rug:"#514D50", rugIn:"#565056", sling:"#7A747C", slingDeep:"#5B5661", bowlRim:"#8A8285" } },
+    light:{ carpet:"#4A4547", carpetDeep:"#3A3639", sling:"#8A8285", slingDeep:"#6E686A", bowlRim:"#6E686A" },
+    dark: { carpet:"#5B5661", carpetDeep:"#49444E", sling:"#7A747C", slingDeep:"#5B5661", bowlRim:"#8A8285" } },
   natural: {
-    light:{ rug:"#C29A5F", rugIn:"#EFE3CB", sling:"#C29A5F", slingDeep:"#A9814B", bowlRim:"#A9814B" },
-    dark: { rug:"#9A7E56", rugIn:"#6B5B42", sling:"#B49468", slingDeep:"#9A7E56", bowlRim:"#B49468" } },
+    light:{ carpet:"#A9814B", carpetDeep:"#886237", sling:"#C29A5F", slingDeep:"#A9814B", bowlRim:"#A9814B" },
+    dark: { carpet:"#8A6E44", carpetDeep:"#6B5333", sling:"#B49468", slingDeep:"#9A7E56", bowlRim:"#B49468" } },
 };
 let collection = "terracotta";   // по умолчанию — как «Новичок» в брендворлде
 /* палитра активной темы, поверх неё — цвета выбранной коллекции. Копия, а не
@@ -178,6 +178,17 @@ function cubeSeams(a, S, yt, yb){
        {x:S/2,y:yt-0.3,z:S/2}, {x:-S/2,y:yt-0.3,z:S/2} ]);           // верх
   mk([ {x:S/2+0.3,y:yt,z:-S/2}, {x:S/2+0.3,y:yt,z:S/2},
        {x:S/2+0.3,y:yb,z:S/2}, {x:S/2+0.3,y:yb,z:-S/2} ]);          // правый бок
+}
+
+/* прибавить d к sortValue у ВСЕХ дочерних shape-ов узла. Нужно для Zdog.Cylinder:
+   это Anchor, реально рисуемые под-shape'ы (бока/крышки) лежат в children —
+   override updateSortValue на самом Cylinder порядок отрисовки НЕ меняет. */
+function boostSort(node, d){
+  if (typeof node.updateSortValue === "function"){
+    const orig = node.updateSortValue;
+    node.updateSortValue = function(){ orig.call(this); this.sortValue += d; };
+  }
+  (node.children || []).forEach(c => boostSort(c, d));
 }
 
 /* ---------- крыша (симметричная / асимметричная) ----------
@@ -300,13 +311,13 @@ function makeModule(type, parent, opts){
       { x:px, y:TY, z:-pz },
       { bezier:[ { x:px*0.5, y:TY+bSag, z:-pz }, { x:-px*0.5, y:TY+bSag, z:-pz }, { x:-px, y:TY, z:-pz } ] } ] });
     cloth.updateSortValue = function(){
-      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 200; };
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 16; };
     // кромка по БЛИЖНЕМУ краю — контур в цвет ткани, чуть темнее
     const edge = new Zdog.Shape({ addTo:a, stroke:4, color:P.slingDeep, closed:false,
       path:[ { x:-px, y:TY, z:pz },
              { bezier:[ { x:-px*0.5, y:TY+fSag, z:pz }, { x:px*0.5, y:TY+fSag, z:pz }, { x:px, y:TY, z:pz } ] } ] });
     edge.updateSortValue = function(){
-      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 250; };
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 18; };
   }
   else if (type === "hammock2"){
     // широкий гамак: якорь в левой ячейке, вторая стойка — в соседней справа
@@ -328,13 +339,13 @@ function makeModule(type, parent, opts){
       { x:Rx, y:TY, z:-pz },
       { bezier:[ { x:cx2, y:TY+bSag, z:-pz }, { x:cx1, y:TY+bSag, z:-pz }, { x:Lx, y:TY, z:-pz } ] } ] });
     cloth.updateSortValue = function(){
-      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 200; };
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 16; };
     // кромка по БЛИЖНЕМУ краю — контур в цвет ткани, чуть темнее
     const edge = new Zdog.Shape({ addTo:a, stroke:4, color:P.slingDeep, closed:false,
       path:[ { x:Lx, y:TY, z:pz },
              { bezier:[ { x:cx1, y:TY+fSag, z:pz }, { x:cx2, y:TY+fSag, z:pz }, { x:Rx, y:TY, z:pz } ] } ] });
     edge.updateSortValue = function(){
-      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 250; };
+      this.constructor.prototype.updateSortValue.call(this); this.sortValue += 18; };
   }
   else if (type === "roof"){
     // крыша — самостоятельный домик-модуль со своим лазом (а не голая крышка):
@@ -401,12 +412,14 @@ function makeModule(type, parent, opts){
   else if (type === "play"){
     // чаша-лежанка: приплюснутая полусфера-гнездо на высокой опоре-колонне —
     // чаша приподнята над полом, а не стоит прямо на нём
-    // нога-основание на полу
-    new Zdog.Cylinder({ addTo:a, diameter:34, length:8, rotate:{ x:TAU/4 },
+    // нога-основание на полу. sortValue приподнят выше шва куба-опоры (+6 в
+    // cubeSeams), иначе тёмный кант верхней грани куба рисуется ПОВЕРХ основания.
+    const foot = new Zdog.Cylinder({ addTo:a, diameter:34, length:8, rotate:{ x:TAU/4 },
       translate:{ y: B - 4 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
     // колонна-опора, высотой почти во весь модуль — как у когтеточки
-    new Zdog.Cylinder({ addTo:a, diameter:16, length:46, rotate:{ x:TAU/4 },
+    const col = new Zdog.Cylinder({ addTo:a, diameter:16, length:46, rotate:{ x:TAU/4 },
       translate:{ y: B - 31 }, color:P.wood, frontFace:P.wood, backface:P.wood2, stroke:false });
+    boostSort(foot, 14); boostSort(col, 14);   // над швом куба-опоры (+6 в cubeSeams)
     // чаша: полусфера куполом вниз, приплюснута по высоте — гнездо шире, чем глубже.
     // Тело чаши прозрачное (акрил) и пустое — единственное непрозрачное здесь — опора-колонна,
     // видимая сквозь стенки; никакой подушки внутри, чтобы не перекрывать прозрачность.
