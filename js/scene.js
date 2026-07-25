@@ -147,8 +147,6 @@ const DEFAULT_ENTRY = "pentagon";
    вылез бы за корпус. Куб выше, но проём тот же — одинаковая форма важнее размера. */
 const ENTRY_H = 26;
 let entryShapes = {};   // cellIndex -> форма лаза этого куба
-let roofOn = {};        // cellIndex -> у куба включена крыша
-let roofStyle = {};     // cellIndex -> стиль крыши куба: "asym" | "sym"
 let scratchDir = {};    // cellIndex -> поворот когтеточки-пандуса: 0..3 (шаг 90° по оси Y)
 let entryObjs = {};     // cellIndex -> Zdog-объект лаза (для подсветки и замены на лету)
 let hoverEntry = null;  // куб под курсором — его лаз подсвечен (entryLit)
@@ -191,21 +189,21 @@ function boostSort(node, d){
   (node.children || []).forEach(c => boostSort(c, d));
 }
 
-/* ---------- крыша (симметричная / асимметричная) ----------
-   Скаты обиты ковролином (наклонная когтеточка). Рисуется плоскими полигонами от
+/* ---------- крыша модуля-крыши ----------
+   Скат обит ковролином (наклонная когтеточка). Рисуется плоскими полигонами от
    базы (локальный y=0, линия карниза) вверх; повёрнута на 90° (ось Y) — конёк идёт
-   по глубине. Единственное отличие стилей — положение конька (zR):
-   - "asym": конёк смещён к задней грани — односкатный «saltbox» силуэт прототипа;
-   - "sym":  конёк по центру — классическая двускатная крыша.
-   Общая для крыши-модуля и для куба с включённой крышей. */
-const ROOF_STYLES = { asym: -0.30, sym: 0 };
-const DEFAULT_ROOF = "asym";
-function makeRoof(a, S, style, ridge){
-  const xr = S/2 + 2;          // полуширина с небольшим свесом по бокам
-  const zF = S/2 + 2;          // передний карниз
-  const zB = -S/2 - 2;         // задний карниз
-  const rH = S*0.56;           // высота конька над карнизом
-  const zR = S * (ROOF_STYLES[style] ?? ROOF_STYLES[DEFAULT_ROOF]); // сдвиг конька по стилю
+   по глубине. Конфигурация крыши фиксирована (не выбирается пользователем):
+   конёк смещён к задней грани — односкатный «saltbox» силуэт прототипа, как на
+   референсном фото. Свес карниза увеличен, чтобы крыша читалась как отдельная
+   деталь, накрывающая корпус, а не плоская крышка вровень со стенами; сизалевый
+   конёк чуть выступает за фронтоны — как выступающий рэйк-брус у прототипа. */
+const ROOF_RIDGE_SHIFT = -0.30;   // сдвиг конька по глубине (доля S) — задаёт асимметрию скатов
+function makeRoof(a, S){
+  const xr = S/2 + 7;           // полуширина с заметным свесом по бокам
+  const zF = S/2 + 7;           // передний карниз, со свесом над стеной
+  const zB = -S/2 - 7;          // задний карниз
+  const rH = S*0.56;            // высота конька над карнизом
+  const zR = S * ROOF_RIDGE_SHIFT; // сдвиг конька — фиксированная асимметрия
   const g = new Zdog.Anchor({ addTo:a, rotate:{ y: -TAU/4 } });
   // передний скат — ковролин-когтеточка
   new Zdog.Shape({ addTo:g, fill:true, stroke:2, color:P.carpet, path:[
@@ -218,8 +216,8 @@ function makeRoof(a, S, style, ridge){
   // фронтоны-боковины — фанерные треугольники (силуэт «домика»)
   [-1,1].forEach(s => new Zdog.Shape({ addTo:g, fill:true, stroke:1, color:P.wood, path:[
     { x:s*xr, y:0, z:zF }, { x:s*xr, y:-rH, z:zR }, { x:s*xr, y:0, z:zB } ] }));
-  // сизаль-обёрнутый конёк вдоль гребня (для домика-модуля крыши)
-  if (ridge) new Zdog.Cylinder({ addTo:g, diameter:8, length:2*xr, rotate:{ y:TAU/4 },
+  // сизаль-обёрнутый конёк вдоль гребня — чуть длиннее фронтонов, чтобы выступать по краям
+  new Zdog.Cylinder({ addTo:g, diameter:8, length:2*xr + 16, rotate:{ y:TAU/4 },
     translate:{ y:-rH, z:zR }, color:P.jute, frontFace:P.juteDark, backface:P.juteDark, stroke:false });
 }
 
@@ -244,16 +242,9 @@ function makeModule(type, parent, opts){
     const shape = (ci != null && entryShapes[ci]) || DEFAULT_ENTRY;
     const eo = makeEntry(a, S, ENTRY_H, B, shape, ci != null ? entryColor(ci) : P.entry);
     if (ci != null) entryObjs[ci] = eo;
-    /* верх куба: либо асимметричная крыша-«домик» (когтеточка на скате), либо
-       плоская ковролиновая площадка-когтеточка — по переключателю крыши куба */
-    const roofed = opts ? (opts.roof != null ? opts.roof : roofOn[ci]) : false;
-    if (roofed){
-      const st = (opts && opts.roofStyle) || roofStyle[ci] || DEFAULT_ROOF;
-      makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - H - 1.5 } }), S, st);
-    } else {
-      new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
-        color:P.carpet, rotate:{ x:TAU/4 }, translate:{ y: B - H - 1.5 } });
-    }
+    // верх куба — плоская ковролиновая площадка-когтеточка (крыша — отдельный модуль)
+    new Zdog.Rect({ addTo:a, width:S*0.84, height:S*0.84, fill:true, stroke:2.5,
+      color:P.carpet, rotate:{ x:TAU/4 }, translate:{ y: B - H - 1.5 } });
   }
   else if (type === "lounge"){
     const h = 30;
@@ -349,21 +340,20 @@ function makeModule(type, parent, opts){
   }
   else if (type === "roof"){
     // крыша — самостоятельный домик-модуль со своим лазом (а не голая крышка):
-    // короткий фанерный корпус + фронтальный лаз-домик + вент-отверстия сбоку,
-    // сверху — ковролиновые скаты-когтеточка с сизалевым коньком. Прижат к низу
-    // своей ячейки — сидит на модуле снизу. Стиль конька: asym (по умолч.) | sym.
+    // короткий фанерный корпус + фронтальный лаз-домик, сверху — ковролиновый
+    // скат-когтеточка с сизалевым коньком. Прижат к низу своей ячейки — сидит на
+    // модуле снизу. Конфигурация фиксирована (пятиугольный лаз, асимметричный
+    // конёк) — у этого модуля нет настроек, только форма и материал прототипа.
     const ci = opts ? opts.cellIndex : undefined;
-    const st = (opts && opts.roofStyle) || (ci != null && roofStyle[ci]) || DEFAULT_ROOF;
     const bodyH = 30;                       // высота стен корпуса (низ на полу ячейки)
     woodBox({ width:S, height:bodyH, depth:S, translate:{ y: B - bodyH/2 } });
     cubeSeams(a, S, B - bodyH, B);          // те же тёмные швы, что у обычного куба
-    /* фронтальный лаз — ТА ЖЕ система, что у куба: форма выбирается кликом
-       (entryShapes[ci]), объект регистрируем в entryObjs для подсветки/замены */
-    const shape = (ci != null && entryShapes[ci]) || DEFAULT_ENTRY;
-    const eo = makeEntry(a, S, ENTRY_H, B, shape, ci != null ? entryColor(ci) : P.entry);
+    /* фронтальный лаз — фиксированная форма-«домик» (та же геометрия, что у
+       куба), объект регистрируем в entryObjs для подсветки при наведении */
+    const eo = makeEntry(a, S, ENTRY_H, B, DEFAULT_ENTRY, ci != null ? entryColor(ci) : P.entry);
     if (ci != null) entryObjs[ci] = eo;
-    // скаты + сизалевый конёк поверх корпуса
-    makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - bodyH } }), S, st, true);
+    // скат + сизалевый конёк поверх корпуса
+    makeRoof(new Zdog.Anchor({ addTo:a, translate:{ y: B - bodyH } }), S);
   }
   else if (type === "scratch"){
     // наклонный пандус-когтеточка: клин из двух берёзовых боковин-треугольников
@@ -614,9 +604,9 @@ function build(){
 /* ---------- публичное API ---------- */
 const api = KD.scene = {};
 
-/* пересобрать сцену и восстановить текущий дом. Карты формы лаза (entryShapes) и
-   крыши (roofOn) переживают build() — он их не трогает, — поэтому отделка кубов
-   сохраняется. Используется и сменой темы, и сменой цветовой коллекции. */
+/* пересобрать сцену и восстановить текущий дом. Карта формы лаза (entryShapes)
+   переживает build() — он её не трогает, — поэтому отделка кубов сохраняется.
+   Используется и сменой темы, и сменой цветовой коллекции. */
 function rebuildAndRestore(){
   if (KD.cancelDrag) KD.cancelDrag(); // драг держит якоря старой сцены
   build();
@@ -688,40 +678,7 @@ api.setEntryShapeAt = function(i, s){
 api.getEntryShapeAt = i => entryShapes[i] || DEFAULT_ENTRY;
 api.hasEntry = i => !!entryObjs[i];
 
-/* крыша — свойство отдельного куба (вкл/выкл + стиль "asym"|"sym").
-   Меняет силуэт куба целиком, поэтому пересобираем сам модуль на месте, сохраняя
-   форму лаза и высоту опоры (moduleSupY, запомненную при постановке). */
 let moduleSupY = {};    // cellIndex -> supY, с которой куб был поставлен
-api.hasRoof = i => !!roofOn[i];
-api.getRoofAt = i => !!roofOn[i];
-api.getRoofStyleAt = i => roofStyle[i] || DEFAULT_ROOF;
-api.setRoofAt = function(i, on, style){
-  if (!entryObjs[i]) return false;   // крыша только у кубов (по наличию лаза)
-  roofOn[i] = !!on;
-  if (style && style in ROOF_STYLES) roofStyle[i] = style;   // 'sym' даёт 0 — проверяем ключ, не значение
-  const es = entryShapes[i] || DEFAULT_ENTRY;
-  const a = makeModule("base", houseA, { cellIndex:i, roof:!!on,
-    roofStyle: roofStyle[i] || DEFAULT_ROOF, entryShape:es, supY:moduleSupY[i] });
-  a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
-  a.translate.y += moduleDy[i] || 0;
-  if (moduleAnchors[i]) houseA.removeChild(moduleAnchors[i]);
-  moduleAnchors[i] = a;
-  dirty = true;
-  return true;
-};
-/* стиль отдельно стоящего модуля-крыши (per-roof): пересобрать её на месте,
-   сохранив опору (moduleSupY) и опускание на опору (moduleDy) */
-api.setRoofModuleStyle = function(i, style){
-  if (!moduleAnchors[i]) return false;
-  roofStyle[i] = (style in ROOF_STYLES) ? style : DEFAULT_ROOF;
-  const a = makeModule("roof", houseA, { cellIndex:i, roofStyle:roofStyle[i], supY:moduleSupY[i] });
-  a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
-  a.translate.y += moduleDy[i] || 0;
-  houseA.removeChild(moduleAnchors[i]);
-  moduleAnchors[i] = a;
-  dirty = true;
-  return true;
-};
 /* поворот когтеточки-пандуса (0..3, шаг 90°): пересобрать на месте, сохранив
    опору и опускание. Конструктор задаёт дефолт по соседу, кнопка меню крутит */
 api.getScratchDir = i => scratchDir[i] || 0;
@@ -741,16 +698,14 @@ api.place = function(i, type, instant, opts){
   if (moduleAnchors[i]) api.remove(i); // ячейка занята — не плодить якорь-сироту
   opts = Object.assign({}, opts);
   opts.cellIndex = i;
-  /* форма лаза и крыша «переезжают» с кубом: конструктор передаёт их при переносе */
+  /* форма лаза «переезжает» с кубом: конструктор передаёт её при переносе */
   if (opts.entryShape) entryShapes[i] = opts.entryShape;
-  if (opts.roof != null) roofOn[i] = !!opts.roof;
-  if (opts.roofStyle && opts.roofStyle in ROOF_STYLES) roofStyle[i] = opts.roofStyle;
   if (opts.scratchDir != null) scratchDir[i] = ((opts.scratchDir % 4) + 4) % 4;
   moduleKind[i] = type;
   /* до какой высоты тянутся опоры: верх модуля снизу (или граница ячейки/пол) */
   const supOf = b => b && MODULES[b] ? CELL + (TOP_Y[b] ?? -CELL/2) : CELL/2;
   opts.supY = supOf(opts.below);
-  moduleSupY[i] = opts.supY;   // запомнить опору — для пересборки куба (setRoofAt)
+  moduleSupY[i] = opts.supY;   // запомнить опору — для пересборки на месте (setScratchDir)
   if (MODULES[type].w > 1) opts.supY2 = supOf(opts.below2);
   const a = makeModule(type, houseA, opts);
   a.translate.set({ x: cellX(colOf(i)), y: cellY(rowOf(i)) });
@@ -776,8 +731,6 @@ api.remove = function(i){
   delete moduleSupY[i];
   delete entryObjs[i];
   delete entryShapes[i];
-  delete roofOn[i];
-  delete roofStyle[i];
   delete scratchDir[i];
   if (hoverEntry === i) hoverEntry = null;
   dirty = true;
@@ -822,7 +775,7 @@ api.cellClientPos = function(i){
 function moduleTopY(i){
   const B = CELL/2, H = CELL, rH = CELL*0.56;
   switch (moduleKind[i]){
-    case "base":    return roofOn[i] ? (B - H - 1.5 - rH - 6) : (B - H - 5);
+    case "base":    return B - H - 5;
     case "roof":    return (B - 30) - rH - 6;   // верх корпуса домика-крыши минус скат
     case "tower":   return -B - 6;
     case "scratch": return B - 46 - 6;          // конёк пандуса (HH=46)

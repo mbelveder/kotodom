@@ -464,11 +464,9 @@ button{font-family:inherit}
 .em-rm svg{width:17px;height:17px}
 .em-rm svg path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .em-rm:hover{background:var(--aka);border-color:var(--aka);color:#FFFBF3}
-/* меню модуля-крыши: только выбор стиля + «убрать» — прячем кнопки формы лаза и их разделитель */
+/* меню модуля-крыши: конфигурация фиксирована — прячем кнопки формы лаза и их разделитель, остаётся только «убрать» */
 .entry-menu.roof-only .ep-b,
 .entry-menu.roof-only .em-sep-entry{ display:none }
-/* модуль-крыша: круглый лаз не предлагаем (только квадрат и домик) */
-.entry-menu.no-circle .ep-b[data-shape="circle"]{ display:none }
 /* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
 .em-rot{
   display:none;align-items:center;justify-content:center;
@@ -480,26 +478,10 @@ button{font-family:inherit}
 .em-rot svg{width:17px;height:17px}
 .em-rot svg path{fill:currentColor}
 .em-rot:hover{border-color:var(--aka);color:var(--aka)}
-/* меню когтеточки: только поворот + «убрать» — прячем формы лаза, стили крыши и разделитель форм */
+/* меню когтеточки: только поворот + «убрать» — прячем формы лаза и разделитель форм */
 .entry-menu.scratch-only .ep-b,
-.entry-menu.scratch-only .em-roof,
 .entry-menu.scratch-only .em-sep-entry{ display:none }
 .entry-menu.scratch-only .em-rot{ display:inline-flex }
-/* крыша куба — кнопка-переключатель, оформлена как кнопки-формы лаза */
-.em-roof{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:34px;height:34px;padding:0;
-  color:var(--muted);background:var(--panel);
-  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
-  transition:border-color .16s,color .16s,background .16s;
-}
-.em-roof svg{width:18px;height:18px;flex:none}
-.em-roof svg path{fill:currentColor}
-.em-roof:hover{border-color:var(--aka)}
-.em-roof.is-on{
-  color:var(--aka);border-color:var(--aka);
-  background:color-mix(in srgb, var(--aka) 12%, var(--panel));
-}
 
 /* выбор цвета когтеточки и ковра — одна глобальная коллекция (когтеточка = ковёр);
    визуально примыкает к лотку (общий фон и верхняя граница — одна панель) */

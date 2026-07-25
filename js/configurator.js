@@ -198,8 +198,6 @@ function place(i, type, opts){
   const sceneOpts = { below };
   if (w > 1) sceneOpts.below2 = i >= COLS ? grid[i - COLS + 1] : null;
   if (opts && opts.entryShape) sceneOpts.entryShape = opts.entryShape; // форма лаза едет с кубом
-  if (opts && opts.roof != null) sceneOpts.roof = opts.roof;           // крыша едет с кубом
-  if (opts && opts.roofStyle) sceneOpts.roofStyle = opts.roofStyle;    // стиль крыши тоже
   if (type === "tunnel"){
     tunnelAxes[i] = tunnelAxis(i);
     sceneOpts.tunnelAxis = tunnelAxes[i];
@@ -271,13 +269,8 @@ const ENTRY_SAY = {
   circle:  "Круглый лаз — классика. Влезаю боком, вылезаю с достоинством.",
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
-const ROOF_SAY = {
-  asym: ["Асимметричная крыша! Как у настоящего Котоши.", "Скат набок — так стильнее. По-японски.", "Односкатная — длинный скат под когти. Одобряю."],
-  sym:  ["Двускатная крыша! Классический домик.", "Ровный конёк по центру — сама гармония.", "Симметрично. Люблю порядок."],
-  off:  ["Сняли крышу — люблю панораму.", "Открытый верх: можно валяться прямо на когтеточке.", "Без крыши — больше света. Тоже вариант."]
-};
 let menuCell = null;   // ячейка открытого меню (или null)
-let menuKind = "cube"; // "cube" — куб (лаз + крыша + убрать); "roof" — модуль-крыша (стиль + убрать); "scratch" — когтеточка (поворот + убрать)
+let menuKind = "cube"; // "cube" — куб (лаз + убрать); "roof" — модуль-крыша (только убрать, конфигурация фиксирована); "scratch" — когтеточка (поворот + убрать)
 const ROT_SAY = ["Развернул пандус. Так удобнее заходить.", "Крутанул когтеточку — новый угол атаки.", "Повернул. Подиум смотрит куда надо."];
 
 function positionMenu(i){
@@ -287,40 +280,21 @@ function positionMenu(i){
   entryMenu.style.top  = (p.y - r.top)  + "px";
 }
 function markMenuShape(i){
-  if (menuKind === "scratch") return;   // у когтеточки нет радио-состояния — только поворот
-  // форма лаза — общая для куба и модуля-крыши (у обоих единый выбор формы)
+  if (menuKind === "scratch" || menuKind === "roof") return;   // нет радио-состояния: только поворот / только «убрать»
   const cur = KD.scene.getEntryShapeAt(i);
   entryMenu.querySelectorAll(".ep-b").forEach(b => {
     const on = b.dataset.shape === cur;
     b.classList.toggle("is-on", on);
     b.setAttribute("aria-checked", on ? "true" : "false");
   });
-  if (menuKind === "roof"){
-    // модуль-крыша: две кнопки стиля работают как радио — всегда одна активна
-    const cur = KD.scene.getRoofStyleAt(i);
-    entryMenu.querySelectorAll(".em-roof").forEach(b => {
-      const active = b.dataset.roof === cur;
-      b.classList.toggle("is-on", active);
-      b.setAttribute("aria-pressed", active ? "true" : "false");
-    });
-    return;
-  }
-  const on = KD.scene.hasRoof(i);
-  const curRoof = on ? KD.scene.getRoofStyleAt(i) : null;
-  entryMenu.querySelectorAll(".em-roof").forEach(b => {
-    const active = on && b.dataset.roof === curRoof;
-    b.classList.toggle("is-on", active);
-    b.setAttribute("aria-pressed", active ? "true" : "false");
-  });
 }
 function openEntryMenu(i, kind){
   menuCell = i;
   menuKind = kind || "cube";
-  entryMenu.classList.remove("roof-only");   // у модуля-крыши теперь тоже есть выбор формы лаза
-  entryMenu.classList.toggle("no-circle", menuKind === "roof");        // но круглый лаз крыше не предлагаем
+  entryMenu.classList.toggle("roof-only", menuKind === "roof");        // у модуля-крыши конфигурация фиксирована — только «убрать»
   entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот + убрать
   entryMenu.setAttribute("aria-label",
-    menuKind === "roof" ? "Форма лаза и стиль крыши" : menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
+    menuKind === "roof" ? "Крыша: только удаление, форма фиксирована" : menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
   markMenuShape(i);
   positionMenu(i);
   entryMenu.classList.add("show");
@@ -350,33 +324,8 @@ if (entryMenu){
       }
       return;
     }
-    const rf = e.target.closest(".em-roof");   // крыша: выбор стиля (отделка, не в undo)
-    if (rf){
-      const style = rf.dataset.roof;           // "asym" | "sym"
-      if (menuKind === "roof"){                 // модуль-крыша: радио, стиль всегда задан
-        if (KD.scene.setRoofModuleStyle(menuCell, style)){
-          markMenuShape(menuCell);
-          popSound(); say(pick(ROOF_SAY[style]));
-        }
-        return;
-      }
-      // куб: стиль-тумблер — тот же стиль ещё раз снимает крышу
-      const cur = KD.scene.hasRoof(menuCell) ? KD.scene.getRoofStyleAt(menuCell) : null;
-      const on = cur !== style;
-      const above = menuCell + COLS;           // ячейка сверху: крыше нужен свободный верх
-      if (on && above < N && grid[above] && MODULES[grid[above]]){
-        say("Сверху стоит модуль — крыше нужен свободный верх. Сначала уберите его.");
-        KD.scene.pulse(menuCell);
-        return;
-      }
-      if (KD.scene.setRoofAt(menuCell, on, style)){
-        markMenuShape(menuCell);
-        popSound(); say(on ? pick(ROOF_SAY[style]) : pick(ROOF_SAY.off));
-      }
-      return;
-    }
     const b = e.target.closest(".ep-b");
-    if (b && (menuKind === "cube" || menuKind === "roof")){   // форма лаза — и у куба, и у модуля-крыши
+    if (b && menuKind === "cube"){   // форма лаза — только у куба; у модуля-крыши она фиксирована
       const s = b.dataset.shape;
       if (KD.scene.setEntryShapeAt(menuCell, s)){
         markMenuShape(menuCell);
@@ -425,9 +374,9 @@ function cellPositions(valid, w){
 }
 /* общий драг: из лотка (origin=null) или перенос модуля из сцены (origin={from, prevGrid}) */
 function beginDrag(e, type, el, origin, valid){
-  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape, roof: origin.roof, roofStyle: origin.roofStyle }); return; }
+  if (drag){ if (origin) place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape }); return; }
   valid = valid || validCells(type);
-  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape, roof: origin.roof, roofStyle: origin.roofStyle }); return; }
+  if (!valid.length && origin){ place(origin.from, type, { silent: true, instant: true, entryShape: origin.entryShape }); return; }
   const w = wOf(type);
   const pos = cellPositions(valid, w);
   const a = KD.scene.cellClientPos(0), b = KD.scene.cellClientPos(1);
@@ -485,19 +434,19 @@ function onDragUp(e){
   endDrag();
   if (d.hot !== null && d.hot !== undefined){
     if (d.origin && d.hot === d.origin.from){
-      place(d.hot, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle });  // вернул на прежнее место
+      place(d.hot, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });  // вернул на прежнее место
       return;
     }
     /* пока шёл драг, ячейку могла занять отложенная сборка пресета */
     if (!validCells(d.type).includes(d.hot)){
-      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle });
+      if (d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });
       return;
     }
     if (d.origin) undoStack.push(d.origin.prevGrid); else snapshot();
     notifyEdit();
-    place(d.hot, d.type, d.origin ? { moved: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle } : undefined);
+    place(d.hot, d.type, d.origin ? { moved: true, entryShape: d.origin.entryShape } : undefined);
   } else if (d.origin){
-    place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle }); // не донёс — вернуть
+    place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape }); // не донёс — вернуть
   }
 }
 function onDragCancel(e){
@@ -507,7 +456,7 @@ function onDragCancel(e){
 function cancelDrag(){
   const d = drag;
   endDrag();
-  if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape, roof: d.origin.roof, roofStyle: d.origin.roofStyle });
+  if (d && d.origin) place(d.origin.from, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });
 }
 /* сцена пересобирается при смене темы — драг со ссылками на старую сцену не жилец */
 KD.cancelDrag = cancelDrag;
@@ -565,11 +514,9 @@ canvas.addEventListener("pointermove", e => {
   const type = grid[i];
   const prevGrid = grid.slice();
   const entryShape = KD.scene.hasEntry(i) ? KD.scene.getEntryShapeAt(i) : null; // лаз едет с кубом
-  const roof = KD.scene.hasEntry(i) ? KD.scene.getRoofAt(i) : null;             // крыша едет с кубом
-  const roofStyle = roof ? KD.scene.getRoofStyleAt(i) : null;                   // и её стиль
   for (let k = 0; k < wOf(type); k++) grid[i + k] = null;
   KD.scene.remove(i);
-  beginDrag(e, type, canvas, { from: i, prevGrid, entryShape, roof, roofStyle });
+  beginDrag(e, type, canvas, { from: i, prevGrid, entryShape });
 });
 canvas.addEventListener("pointerup", e => {
   pickPending = null;
@@ -578,10 +525,10 @@ canvas.addEventListener("pointerup", e => {
   let best = cellAt(e.clientX, e.clientY);
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
-  /* куб: клик открывает меню (лаз + крыша + убрать), а не удаляет сразу —
-     удаление куба живёт в меню. Модуль-крыша: то же меню формы лаза, плюс выбор
-     стиля крыши (asym/sym) — «roof» проверяем ПЕРВЫМ, т.к. у него теперь тоже есть
-     лаз (hasEntry === true). Остальные модули убираются как прежде */
+  /* куб: клик открывает меню (лаз + убрать), а не удаляет сразу — удаление куба
+     живёт в меню. Модуль-крыша: своё меню (только «убрать», конфигурация
+     фиксирована) — «roof» проверяем ПЕРВЫМ, т.к. у него тоже есть лаз
+     (hasEntry === true), но там это не выбор, а фикс. Остальные модули убираются как прежде */
   if (grid[best] === "roof"){
     if (menuCell === best && menuKind === "roof") closeEntryMenu(); else openEntryMenu(best, "roof");
     return;
@@ -657,7 +604,7 @@ btnClear.addEventListener("click", () => {
 function loadPreset(key){
   const p = PRESETS[key];
   if (!p) return false;
-  return applyCells(p.cells, p.say, p.roofs, p.roofStyles, p.entries);
+  return applyCells(p.cells, p.say, p.entries);
 }
 KD.loadPreset = loadPreset;
 
@@ -667,14 +614,12 @@ KD.loadPreset = loadPreset;
    и скидки мигали одна за другой. buildGen отменяет «хвост» отложенных
    постановок, если пользователь успел очистить сцену, отменить ход или
    запустить другую сборку — раньше два быстрых клика по планам смешивали их */
-function applyCells(cells, doneSay, roofs, roofStyles, entrySh){
+function applyCells(cells, doneSay, entrySh){
   if (animating) return false;
   KD.studioBooted = true;
   const gen = ++buildGen;
   snapshot();
   clearAll(true);
-  const roofSet = new Set((roofs || []).map(Number)); // кубы с включённой крышей
-  const styleAt = i => roofStyles && roofStyles[i];   // стиль крыши ячейки (куб или модуль-крыша)
   const shapeAt = i => entrySh && entrySh[i];         // форма лаза ячейки (для планов с 3+ кубами)
   const entries = Object.entries(cells)
     .map(([i, t]) => [+i, t])
@@ -686,9 +631,7 @@ function applyCells(cells, doneSay, roofs, roofStyles, entrySh){
     setTimeout(() => {
       if (gen !== buildGen) return;               // сборку перебили
       const ok = validCells(t).includes(i);        // нет опоры/занято — пропускаем, но запоминаем
-      if (ok) place(i, t, { silent: true, roof: t === "base" ? roofSet.has(i) : undefined,
-                            roofStyle: (t === "base" || t === "roof") ? styleAt(i) : undefined,
-                            entryShape: t === "base" ? shapeAt(i) : undefined }); else skipped.push(t);
+      if (ok) place(i, t, { silent: true, entryShape: t === "base" ? shapeAt(i) : undefined }); else skipped.push(t);
       if (step === entries.length - 1){
         popSound();
         if (skipped.length){
