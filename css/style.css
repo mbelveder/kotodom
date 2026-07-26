@@ -464,9 +464,6 @@ button{font-family:inherit}
 .em-rm svg{width:17px;height:17px}
 .em-rm svg path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .em-rm:hover{background:var(--aka);border-color:var(--aka);color:#FFFBF3}
-/* меню модуля-крыши: конфигурация фиксирована — прячем кнопки формы лаза и их разделитель, остаётся только «убрать» */
-.entry-menu.roof-only .ep-b,
-.entry-menu.roof-only .em-sep-entry{ display:none }
 /* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
 .em-rot{
   display:none;align-items:center;justify-content:center;

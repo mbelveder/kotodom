@@ -270,7 +270,7 @@ const ENTRY_SAY = {
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
 let menuCell = null;   // ячейка открытого меню (или null)
-let menuKind = "cube"; // "cube" — куб (лаз + убрать); "roof" — модуль-крыша (только убрать, конфигурация фиксирована); "scratch" — когтеточка (поворот + убрать)
+let menuKind = "cube"; // "cube" — куб (лаз + убрать); "scratch" — когтеточка (поворот + убрать)
 const ROT_SAY = ["Развернул пандус. Так удобнее заходить.", "Крутанул когтеточку — новый угол атаки.", "Повернул. Подиум смотрит куда надо."];
 
 function positionMenu(i){
@@ -280,7 +280,7 @@ function positionMenu(i){
   entryMenu.style.top  = (p.y - r.top)  + "px";
 }
 function markMenuShape(i){
-  if (menuKind === "scratch" || menuKind === "roof") return;   // нет радио-состояния: только поворот / только «убрать»
+  if (menuKind === "scratch") return;   // нет радио-состояния: только поворот
   const cur = KD.scene.getEntryShapeAt(i);
   entryMenu.querySelectorAll(".ep-b").forEach(b => {
     const on = b.dataset.shape === cur;
@@ -291,10 +291,9 @@ function markMenuShape(i){
 function openEntryMenu(i, kind){
   menuCell = i;
   menuKind = kind || "cube";
-  entryMenu.classList.toggle("roof-only", menuKind === "roof");        // у модуля-крыши конфигурация фиксирована — только «убрать»
   entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот + убрать
   entryMenu.setAttribute("aria-label",
-    menuKind === "roof" ? "Крыша: только удаление, форма фиксирована" : menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
+    menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
   markMenuShape(i);
   positionMenu(i);
   entryMenu.classList.add("show");
@@ -526,11 +525,16 @@ canvas.addEventListener("pointerup", e => {
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
   /* куб: клик открывает меню (лаз + убрать), а не удаляет сразу — удаление куба
-     живёт в меню. Модуль-крыша: своё меню (только «убрать», конфигурация
-     фиксирована) — «roof» проверяем ПЕРВЫМ, т.к. у него тоже есть лаз
-     (hasEntry === true), но там это не выбор, а фикс. Остальные модули убираются как прежде */
+     живёт в меню. Модуль-крыша: конфигурация и так фиксирована, меню ей нечего
+     показать кроме «убрать» — так что клик убирает её сразу, без попапа.
+     «roof» проверяем ПЕРВЫМ, т.к. у него тоже есть лаз (hasEntry === true), но
+     там это не выбор. Остальные модули убираются как прежде */
   if (grid[best] === "roof"){
-    if (menuCell === best && menuKind === "roof") closeEntryMenu(); else openEntryMenu(best, "roof");
+    closeEntryMenu();
+    if (!canRemove(best)){ say(pick(SAY.blocked)); KD.scene.pulse(best); return; }
+    snapshot();
+    notifyEdit();
+    removeAt(best);
     return;
   }
   if (KD.scene.hasEntry(best)){
