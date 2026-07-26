@@ -161,8 +161,32 @@ button{font-family:inherit}
   overflow:hidden;box-shadow:var(--shadow);
   display:flex;flex-direction:column;
 }
-.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper)}
-.sc-media img{width:100%;height:100%;display:block;object-fit:cover}
+.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);--sc-zoom:1.34}
+/* Масштаб сборки в витрине.
+   Рендеры сняты «в размер кадра»: маленький «Новичок» (2 ячейки, 5 220 ₽) занимал
+   столько же места, сколько «Дозорный» (5 ячеек, 26 840 ₽), и в сетке дешёвые
+   сборки выглядели крупнее дорогих. Кадр 16:9 в окне 4:3 обрезается по бокам
+   (object-fit:cover), поэтому масштаб задаём явно: 1.34 — «cover» (обрезка по
+   бокам, максимальный размер), 1.0 — весь кадр целиком с полями сверху/снизу.
+   Значения подобраны по РЕАЛЬНОЙ ширине сборки в ячейках сетки.
+   Поля закрывает та же картинка, увеличенная и размытая, — без жёсткого стыка. */
+.sc-media::before{
+  content:"";position:absolute;inset:0;
+  background:var(--sc-img) center/cover no-repeat;
+  transform:scale(1.35);filter:blur(28px) saturate(.85) brightness(1.05);
+}
+.sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:contain;
+  transform:scale(var(--sc-zoom));transform-origin:center}
+.sc-card[data-key="watch"]   .sc-media{--sc-zoom:1.34}  /* 5 ячеек — эталон */
+.sc-card[data-key="manor"]   .sc-media{--sc-zoom:1.34}  /* 4 ячейки, запас снят в рендере */
+.sc-card[data-key="zoomies"] .sc-media{--sc-zoom:1.34}  /* блок 2×2, высокий */
+.sc-card[data-key="wide"]    .sc-media{--sc-zoom:1.34}  /* 3 ячейки, запас снят в рендере */
+/* «Вальяжный» — вертикальная сборка: кадрируем «в упор» (cover), чтобы домик
+   занял всю высоту карточки и читался высоким рядом с широкими сборками */
+.sc-card[data-key="tower"]   .sc-media{--sc-zoom:1.34}
+/* «Новичок» — запас воздуха уже заложен в самом рендере, поэтому в карточке
+   кадрируем «в упор» (cover): фото занимает всю высоту, без полей */
+.sc-card[data-key="start"]   .sc-media{--sc-zoom:1.34}
 /* три сборки ещё без фотосъёмки — вместо неё мокап с иероглифом темы, честно без притворства */
 /* иероглиф держим в верхней трети: нижняя часть карточки уходит под подпись-стекло */
 .sc-mock{width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;padding-top:16%;
@@ -704,8 +728,28 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 }
 /* aspect-ratio на самом media: три сборки без фото (см. SHOWCASE) кладут сюда
    .sc-mock вместо img, а он высоты не задаёт — контейнер иначе схлопнется */
-.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9}
-.preset-card img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover}
+.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9;--pc-zoom:1}
+/* Масштаб сборки в карточке.
+   Рендеры сняты «в размер кадра»: маленький «Новичок» (2 модуля) занимал столько
+   же места, сколько «Дозорный» (11 модулей), и в сетке дешёвые сборки выглядели
+   крупнее дорогих. Уменьшаем фото пропорционально РЕАЛЬНОМУ размеру сборки —
+   ширине в ячейках сетки: 5 ячеек («Дозорный») = 1, дальше по убыванию.
+   Освободившиеся поля закрывает та же картинка, увеличенная и размытая, —
+   без жёсткого стыка с фоном карточки. */
+.preset-card .pc-media::before{
+  content:"";position:absolute;inset:0;
+  background:var(--pc-img) center/cover no-repeat;
+  transform:scale(1.3);filter:blur(26px) saturate(.85) brightness(1.04);
+}
+.preset-card .pc-media.no-img::before{display:none}
+.preset-card img{position:relative;width:100%;height:auto;display:block;aspect-ratio:16/9;
+  object-fit:cover;transform:scale(var(--pc-zoom));transform-origin:center}
+.preset-card[data-key="start"]   .pc-media{--pc-zoom:.70}  /* 2 ячейки, 5 220 ₽ */
+.preset-card[data-key="tower"]   .pc-media{--pc-zoom:.82}  /* 2 ячейки, но высокая */
+.preset-card[data-key="wide"]    .pc-media{--pc-zoom:.80}  /* 3 ячейки */
+.preset-card[data-key="zoomies"] .pc-media{--pc-zoom:.88}  /* блок 2×2 */
+.preset-card[data-key="manor"]   .pc-media{--pc-zoom:.92}  /* 4 ячейки */
+.preset-card[data-key="watch"]   .pc-media{--pc-zoom:1}    /* 5 ячеек — эталон */
 /* описание поверх фото: «жидкое стекло» проявляется на ховере/фокусе —
    так карточка ниже, и в узкой панели помещается больше сборок */
 .preset-card .pc-hover{
