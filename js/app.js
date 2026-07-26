@@ -38,7 +38,7 @@ SHOWCASE.forEach(g => {
          onerror="this.closest('.pc-media').classList.add('no-img')">`
     : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
   el.innerHTML = `
-    <div class="pc-media">
+    <div class="pc-media"${g.img ? ` style="--pc-img:url('${g.img}')"` : ""}>
       ${pcMedia}
       <div class="pc-hover">${g.ds}</div>
     </div>
@@ -215,11 +215,12 @@ function buildFromShowcase(key){
 SHOWCASE.forEach(g => {
   const el = document.createElement("div");
   el.className = "sc-card";
+  el.dataset.key = g.preset;
   const media = g.img
     ? `<img src="${g.img}" alt="Сборка ${g.nm} в интерьере" loading="lazy">`
     : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
   el.innerHTML = `
-    <div class="sc-media">
+    <div class="sc-media"${g.img ? ` style="--sc-img:url('${g.img}')"` : ""}>
       ${media}
       <div class="sc-cap">${g.ds}</div>
     </div>
