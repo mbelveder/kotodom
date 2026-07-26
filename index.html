@@ -16,15 +16,29 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=68">
-<link rel="stylesheet" href="css/style.css?v=68">
-<script defer src="config.js?v=68"></script>
-<script defer src="js/zdog.dist.min.js?v=68"></script>
-<script defer src="js/catalog.js?v=68"></script>
-<script defer src="js/scene.js?v=68"></script>
-<script defer src="js/configurator.js?v=68"></script>
-<script defer src="js/chat.js?v=68"></script>
-<script defer src="js/app.js?v=68"></script>
+<link rel="stylesheet" href="css/fonts.css?v=69">
+<link rel="stylesheet" href="css/style.css?v=69">
+<script defer src="config.js?v=69"></script>
+<script defer src="js/zdog.dist.min.js?v=69"></script>
+<script defer src="js/catalog.js?v=69"></script>
+<script defer src="js/scene.js?v=69"></script>
+<script defer src="js/configurator.js?v=69"></script>
+<script defer src="js/chat.js?v=69"></script>
+<script defer src="js/app.js?v=69"></script>
+<!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
+     страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
+     Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
+     сохранённый выбор → системная тема (никакого data-theme, работает
+     @media prefers-color-scheme). -->
+<script>
+(function(){
+  try{
+    var p = new URLSearchParams(location.search).get("theme");
+    var t = (p === "light" || p === "dark") ? p : localStorage.getItem("kd_theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 
@@ -42,6 +56,23 @@
       <a href="#smart" class="hide-m">Умная игрушка</a>
       <a href="#info" class="hide-m">Доставка</a>
     </nav>
+    <!-- переключатель темы: «авто» следует за системой (тогда data-theme не
+         выставлен вовсе и работает @media prefers-color-scheme), светлая и
+         тёмная — принудительно. Выбор помнится в localStorage (kd_theme).
+         Сцена конструктора рисуется на canvas и на CSS-переменные не смотрит —
+         её пересборку дёргает KD.scene.refreshTheme() из js/app.js. -->
+    <div class="theme-pick" id="themePick" role="radiogroup" aria-label="Оформление">
+      <button type="button" data-theme-set="auto" role="radio" aria-checked="true"
+              title="Как в системе" aria-label="Тема как в системе"><span class="tp-a">A</span></button>
+      <button type="button" data-theme-set="light" role="radio" aria-checked="false"
+              title="Светлая тема" aria-label="Светлая тема">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      </button>
+      <button type="button" data-theme-set="dark" role="radio" aria-checked="false"
+              title="Тёмная тема" aria-label="Тёмная тема">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.4A8.5 8.5 0 0 1 9.6 4a8.5 8.5 0 1 0 10.4 10.4Z"/></svg>
+      </button>
+    </div>
   </div>
 </header>
 

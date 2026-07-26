@@ -101,6 +101,29 @@ button{font-family:inherit}
    в футере и в модалке заказа — в шапке он только шумел */
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
 
+/* переключатель темы: авто / светлая / тёмная. Сегментированный контрол в духе
+   .collection-pick — та же роль radiogroup и та же «печатная» пилюля */
+.theme-pick{
+  display:inline-flex;align-items:center;gap:2px;flex:none;
+  margin-left:14px;padding:3px;
+  border:1.5px solid var(--line);border-radius:99px;background:var(--panel);
+}
+.theme-pick button{
+  position:relative;
+  width:32px;height:32px;padding:0;flex:none;
+  border:none;border-radius:50%;background:transparent;color:var(--muted);
+  cursor:pointer;display:grid;place-items:center;
+  transition:background .15s ease, color .15s ease;
+}
+/* сама кнопка компактная — зону нажатия расширяем до 44px невидимой подложкой */
+.theme-pick button::before{content:"";position:absolute;inset:-6px}
+.theme-pick button:hover{color:var(--aka)}
+.theme-pick button.is-on{background:var(--aka);color:#FFFBF3}
+.theme-pick svg{width:16px;height:16px;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.theme-pick .tp-a{font-weight:800;font-size:13px;line-height:1}
+@media (max-width:520px){ .theme-pick{margin-left:8px} }
+
 /* ============ панорамная карусель (первый экран) ============ */
 /* Крупный масштаб продукта до всякого текста. Никаких тёмных градиентов
    поверх фото — подпись стоит на «морозном стекле», как .scene-head. */

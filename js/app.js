@@ -388,6 +388,62 @@ if (cartBar){
   $("#cartOrder").addEventListener("click", () => openCheckout());
 }
 
+/* ---------- переключатель темы: авто / светлая / тёмная ---------- */
+/* Атрибут data-theme на <html> уже мог быть выставлен инлайн-скриптом в <head>
+   (до первой отрисовки, чтобы не мигало). Здесь — только UI и реакция на клик.
+   «Авто» СНИМАЕТ атрибут: тогда снова работает @media prefers-color-scheme. */
+(function themePick(){
+  const box = $("#themePick");
+  if (!box) return;
+  const KEY = "kd_theme";
+  const btns = Array.from(box.querySelectorAll("button[data-theme-set]"));
+  /* ?theme= — служебный режим съёмки рендеров: переключатель в нём не врёт,
+     но и не перетирает сохранённый выбор пользователя */
+  const forced = new URLSearchParams(location.search).get("theme");
+
+  const current = () => {
+    const attr = document.documentElement.getAttribute("data-theme");
+    return attr === "light" || attr === "dark" ? attr : "auto";
+  };
+  const mark = () => {
+    const cur = current();
+    btns.forEach(b => {
+      const on = b.dataset.themeSet === cur;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+  };
+  mark();
+
+  box.addEventListener("click", e => {
+    const b = e.target.closest("button[data-theme-set]");
+    if (!b) return;
+    const v = b.dataset.themeSet;
+    if (v === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", v);
+    if (!forced){
+      try{
+        if (v === "auto") localStorage.removeItem(KEY);
+        else localStorage.setItem(KEY, v);
+      }catch(err){}
+    }
+    mark();
+    /* сцена конструктора живёт на canvas и CSS-переменных не видит —
+       пересобираем её палитру вручную; меню лаза привязано к экранной точке
+       и после пересборки «уплывёт», поэтому закрываем его */
+    if (KD.closeEntryMenu) KD.closeEntryMenu();
+    if (KD.scene && KD.scene.refreshTheme) KD.scene.refreshTheme();
+    /* иконки лотка обновлять НЕ нужно: KD.scene.moduleIcon намеренно рисует их
+       всегда светлой палитрой (в тёмной теме чипы остаются кремовыми, см. css) */
+  });
+
+  /* в режиме «авто» системная тема может смениться на лету — обновляем отметку
+     (саму сцену перерисовывает свой слушатель darkMq внутри js/scene.js) */
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (current() === "auto") mark();
+  });
+})();
+
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
 if (homeLink) homeLink.addEventListener("click", e => {

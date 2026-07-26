@@ -46,9 +46,15 @@ const PALETTES = {
 };
 let P = PALETTES.light;
 const darkMq = matchMedia("(prefers-color-scheme: dark)");
-/* ?theme=light|dark — override для проверки обеих тем */
-const themeOverride = new URLSearchParams(location.search).get("theme");
-const isDark = () => themeOverride ? themeOverride === "dark" : darkMq.matches;
+/* Тема сцены идёт за data-theme на <html> — его выставляет переключатель в шапке
+   (и служебный ?theme=light|dark, см. инлайн-скрипт в index.html). Атрибута нет —
+   значит режим «авто», следуем за системой. Раньше сцена смотрела только на
+   prefers-color-scheme и при ручном переключении оставалась в старой палитре. */
+const isDark = () => {
+  const attr = document.documentElement.getAttribute("data-theme");
+  if (attr === "dark" || attr === "light") return attr === "dark";
+  return darkMq.matches;
+};
 
 /* ---------- коллекции цвета акцентов ----------
    Глобальная коллекция задаёт АКЦЕНТЫ сборки: ковролин когтеточки/крыш/скатов
@@ -723,6 +729,10 @@ api.init = function(){
   darkMq.addEventListener("change", rebuildAndRestore);
   animate();
 };
+
+/* ручное переключение темы в шапке: canvas не знает про CSS-переменные,
+   поэтому палитру сцены пересобираем явно (см. js/app.js) */
+api.refreshTheme = rebuildAndRestore;
 
 /* цветовая коллекция (когтеточка = ковёр): terracotta | sage | charcoal | natural */
 api.getCollection = () => collection;
