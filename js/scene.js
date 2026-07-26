@@ -108,6 +108,23 @@ let dimLabels = [];        // подписи размеров ковра: {m, e,
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
 
+/* ОБЩЕЕ ПРАВИЛО: любая несущая опора — стойка, колонна, столб — обёрнута
+   когтеточным материалом (цвет следует за коллекцией, как у пандуса и крыш).
+   Кот должен иметь возможность точить когти о ЛЮБОЙ вертикальный столб.
+   Дерево остаётся только у оснований, площадок и горизонтальных реек.
+   ИСКЛЮЧЕНИЕ — стойки гамака: они тонкие, ковролин на них не читается, поэтому
+   оставлены берёзовыми. Но тогда они обязаны быть БЕЗОПАСНЫМИ: не брусок с
+   острыми рёбрами, а точёный КРУГЛЫЙ шкант — острых кромок нет в принципе
+   (тот же язык, что у дюбель-реек пандуса). См. woodPost(). */
+const pillarBox = () => ({ color:P.carpet, topFace:P.carpet, bottomFace:P.carpetDeep,
+  leftFace:P.carpetDeep, rightFace:P.carpet, frontFace:P.carpet, rearFace:P.carpetDeep });
+const pillarCyl = () => ({ color:P.carpet, frontFace:P.carpet, backface:P.carpetDeep });
+/* круглая берёзовая стойка-шкант: без острых рёбер, безопасна для кота */
+function woodPost(a, o){
+  return new Zdog.Cylinder(Object.assign({ addTo:a, rotate:{ x:TAU/4 }, stroke:false,
+    color:P.wood, frontFace:P.woodTop, backface:P.wood2 }, o));
+}
+
 /* лаз и прорези сидят в нижней части фронта: после наклона сцены их средняя
    глубина оказывается ЗА фронтальной гранью куба и сортировка красила бы их
    под ней — поэтому sortValue смещаем вручную (тот же приём, что у roomG) */
@@ -342,9 +359,8 @@ function makeModule(type, parent, opts){
       stroke:4, color:P.edge });
   }
   else if (type === "tower"){
-    box(a, { width:14, height:SB-(B-(H-9)), depth:14, translate:{ y: (B-(H-9)+SB)/2 },
-      topFace:P.wood2, color:P.wood2, leftFace:P.juteDark, rightFace:P.wood2,
-      frontFace:P.wood2, rearFace:P.juteDark });
+    box(a, Object.assign({ width:14, height:SB-(B-(H-9)), depth:14,
+      translate:{ y: (B-(H-9)+SB)/2 } }, pillarBox()));   // опора-столб → когтеточка
     woodBox({ width:S, height:9, depth:S-4, translate:{ y: -B + 5.5 } });  // площадка вровень с модулем (не шире)
     new Zdog.Ellipse({ addTo:a, width:S*0.6, height:S*0.44,
       rotate:{ x:TAU/4 }, translate:{ y: -B + 0.5 }, stroke:7, fill:true, color:P.sling });  // подушка в цвет коллекции
@@ -356,10 +372,8 @@ function makeModule(type, parent, opts){
     // стойки — на УГЛАХ куба снизу: outer-грань стойки почти вровень с ребром куба
     // (S/2), лёгкий отступ 3, чтобы не перекрывать угловой шов и не свисать с ребра
     const TY = B - H + 14, px = S/2 - 3, pz = S/2 - 3, sag = 30;
-    [-1,1].forEach(sx => [-1,1].forEach(sz => box(a, { width:5, height:SB-TY, depth:5,
-      translate:{ x:sx*px, z:sz*pz, y:(TY+SB)/2 }, color:P.wood2,
-      topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
-      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark })));
+    [-1,1].forEach(sx => [-1,1].forEach(sz => woodPost(a, { diameter:6, length:SB-TY,
+      translate:{ x:sx*px, z:sz*pz, y:(TY+SB)/2 } })));   // круглые берёзовые шканты
     // Полотно — сплошная залитая ткань от передней кромки до задней (закрывает
     // зазор между ними, где торчат стойки). Рисуем ПОВЕРХ стоек (sortValue+),
     // чтобы верхушки правых стоек ушли под ткань, как у левых.
@@ -385,11 +399,9 @@ function makeModule(type, parent, opts){
     const TY = B - H + 4, pz = S/2 - 3;    // стойки на углах: вынос к рёбрам куба
     const Lx = -(S/2-3), Rx = X2+(S/2-3);
     // ЧЕТЫРЕ стойки: левый и правый край, перёд+зад
-    [{ x:Lx, s:SB }, { x:Rx, s:SB2 }].forEach(p => [-1,1].forEach(sz => box(a, {
-      width:5, height:p.s-TY, depth:5,
-      translate:{ x:p.x, z:sz*pz, y:(TY+p.s)/2 }, color:P.wood2,
-      topFace:P.woodTop, leftFace:P.juteDark, rightFace:P.wood2,
-      frontFace:P.wood2, rearFace:P.juteDark, bottomFace:P.juteDark })));
+    [{ x:Lx, s:SB }, { x:Rx, s:SB2 }].forEach(p => [-1,1].forEach(sz =>
+      woodPost(a, { diameter:6, length:p.s-TY,
+        translate:{ x:p.x, z:sz*pz, y:(TY+p.s)/2 } })));   // круглые берёзовые шканты
     // полотно — сплошная залитая ткань (перед→зад), поверх стоек: их верхушки уходят под ткань
     const fSag = 24, bSag = 14, cx1 = X2/2-16, cx2 = X2/2+16;
     const cloth = new Zdog.Shape({ addTo:a, fill:true, stroke:6, color:P.sling, closed:true, path:[
@@ -497,8 +509,8 @@ function makeModule(type, parent, opts){
     const foot = new Zdog.Cylinder({ addTo:a, diameter:34, length:8, rotate:{ x:TAU/4 },
       translate:{ y: B - 4 }, color:P.wood2, frontFace:P.woodTop, backface:P.wood2, stroke:false });
     // колонна-опора, высотой почти во весь модуль — как у когтеточки
-    const col = new Zdog.Cylinder({ addTo:a, diameter:16, length:46, rotate:{ x:TAU/4 },
-      translate:{ y: B - 31 }, color:P.wood, frontFace:P.wood, backface:P.wood2, stroke:false });
+    const col = new Zdog.Cylinder(Object.assign({ addTo:a, diameter:16, length:46,
+      rotate:{ x:TAU/4 }, translate:{ y: B - 31 }, stroke:false }, pillarCyl()));  // опора → когтеточка
     boostSort(foot, 14); boostSort(col, 14);   // над швом куба-опоры (+6 в cubeSeams)
     // чаша: полусфера куполом вниз, приплюснута по высоте — гнездо шире, чем глубже.
     // Тело чаши прозрачное (акрил) и пустое — единственное непрозрачное здесь — опора-колонна,

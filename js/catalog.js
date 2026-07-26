@@ -77,11 +77,13 @@ KD.MODULES = {
    план). Постройки с 1–2 кубами оставляем на дефолте. */
 KD.PRESETS = {
   start: { name: "Новичок", cells: { 1: "base", 6: "roof", 2: "scratch" },
+    entries: { 1: "square" },
     say: "Куб-нора с чердаком-крышей и когтеточка — самое то для первого знакомства." },
   wide:  { name: "Проныра", cells: { 1: "base", 2: "tunnel", 3: "base", 6: "roof", 8: "hammock" },
     entries: { 1: "square", 3: "square" },
     say: "Куб с чердаком-крышей, тоннель к соседу и гамак сверху — маршрут для пробежек и засад." },
   tower: { name: "Вальяжный", cells: { 1: "base", 6: "tower", 11: "roof", 2: "scratch" },
+    entries: { 1: "circle" },
     say: "Куб, смотровая площадка и крыша над ней — наблюдать за домом сверху." },
   manor: { name: "Резиденция",
     cells: { 0: "base", 1: "tunnel", 2: "base", 3: "scratch", 5: "tower", 7: "hammock", 10: "roof" },
