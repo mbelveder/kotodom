@@ -215,4 +215,4 @@ dark tunnel interior».
 
 - `assets/brand-anchor.jpg` — настроение интерьера (японский минимализм,
   терракотовый ковёр, ветка сакуры), передаётся в каждый запрос генерации.
-  Общий видео-брендворлд Котоши — в `docs/video-brandworld.md`.
+  Общий брендворлд Котоши — в `docs/brandworld_description.md`.
