@@ -905,13 +905,8 @@ button{font-family:inherit}
 .chip .pr{font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .chip.disabled{opacity:.45;cursor:not-allowed}
 .chip.disabled:hover{transform:none;border-color:var(--line);box-shadow:none}
-/* умная игрушка мягко светится, пока посетитель не навёл курсор
-   и не открыл её описание — идею модуля сами пока не считывают */
-.chip.glow{border-color:var(--aka);animation:chip-glow 2.2s ease-in-out infinite}
-@keyframes chip-glow{
-  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--aka) 0%, transparent)}
-  50%{box-shadow:0 0 16px 3px color-mix(in srgb, var(--aka) 55%, transparent)}
-}
+/* .chip.glow и @keyframes chip-glow удалены: подсветка была нужна одному
+   модулю, которого на странице больше нет, и js её никому не выставлял */
 @media (prefers-reduced-motion: reduce){
   .chip.glow{animation:none;box-shadow:0 0 12px 2px color-mix(in srgb, var(--aka) 45%, transparent)}
 }
@@ -1443,8 +1438,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   100%{opacity:0;transform:translate(-50%,-70px) scale(.9)}
 }
 
-/* .film-frame / .smart-film / .modes-note удалены вместе с секцией «умная
-   игрушка»: последний видео-кадр на странице живёт в карусели (.reel-frame) */
+/* .film-frame / .smart-film / .modes-note удалены вместе с секцией про игровые
+   сценарии: последний видео-кадр на странице живёт в карусели (.reel-frame) */
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
