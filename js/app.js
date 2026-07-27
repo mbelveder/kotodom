@@ -222,9 +222,17 @@ SHOWCASE.forEach(g => {
   /* описание больше НЕ лежит «стеклом» поверх фото: оно выпадает под карточкой
      на обычном фоне (см. .sc-reveal). «Стекло» осталось за лентой модулей —
      две витрины намеренно раскрываются по-разному */
+  /* «развернуть» есть только у сборок с настоящим рендером: мокап с иероглифом
+     во весь экран показывать нечего */
+  const zoom = g.img
+    ? `<button class="sc-open" type="button" aria-label="Открыть сборку ${g.nm} во весь экран">
+         <span class="sc-open-i" aria-hidden="true">⤢</span>
+       </button>`
+    : "";
   el.innerHTML = `
     <div class="sc-media"${g.img ? ` style="--sc-img:url('${g.img}')"` : ""}>
       ${media}
+      ${zoom}
     </div>
     <div class="sc-ft">
       <div class="sc-nm">${g.nm}<span class="sc-pr">${fmt(presetPrice(g.preset))}</span></div>
@@ -232,8 +240,67 @@ SHOWCASE.forEach(g => {
     </div>
     <div class="sc-reveal"><div><p>${g.ds}</p></div></div>`;
   showcaseGrid.appendChild(el);
-  el.querySelector("button").addEventListener("click", () => buildFromShowcase(g.preset));
+  el.querySelector(".sc-ft button").addEventListener("click", () => buildFromShowcase(g.preset));
+  const zoomBtn = el.querySelector(".sc-open");
+  if (zoomBtn) zoomBtn.addEventListener("click", () => lightbox.open(g, zoomBtn));
 });
+
+/* ---------- полноэкранный просмотр сборки ---------- */
+/* Раскрытие карточки на странице — «одним глазком»: обрезанный кадр и пара
+   строк. Отсюда видно рендер целиком, полное описание и кнопку сборки. */
+const lightbox = (function(){
+  const back = $("#lbBack");
+  if (!back) return { open(){} };
+  const img = $("#lbImg"), nmEl = $("#lbName"), prEl = $("#lbPrice"),
+        dsEl = $("#lbDesc"), buildBtn = $("#lbBuild"), xBtn2 = $("#lbX");
+  let returnTo = null, key = null;
+
+  function open(g, trigger){
+    key = g.preset;
+    returnTo = trigger || null;
+    img.src = g.img;
+    img.alt = `Сборка ${g.nm} в интерьере`;
+    nmEl.textContent = g.nm;
+    prEl.textContent = fmt(presetPrice(g.preset));
+    dsEl.textContent = g.ds;
+    back.hidden = false;
+    /* фон под оверлеем прокручиваться не должен; ширину полосы прокрутки
+       возвращаем паддингом, иначе страница дёргается на её исчезновении */
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    if (gap > 0) document.body.style.paddingRight = gap + "px";
+    document.body.style.overflow = "hidden";
+    buildBtn.focus();
+  }
+  function close(){
+    if (back.hidden) return;
+    back.hidden = true;
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+    if (returnTo && returnTo.isConnected) returnTo.focus();
+    returnTo = null;
+  }
+
+  xBtn2.addEventListener("click", close);
+  back.addEventListener("click", e => { if (e.target === back) close(); });
+  buildBtn.addEventListener("click", () => {
+    const k = key;
+    close();
+    buildFromShowcase(k);
+  });
+  /* Esc закрывает, Tab не выпускает фокус наружу: фокусируемых элементов
+     всего два, поэтому цикл считаем вручную, без библиотеки */
+  document.addEventListener("keydown", e => {
+    if (back.hidden) return;
+    if (e.key === "Escape"){ e.stopPropagation(); close(); return; }
+    if (e.key !== "Tab") return;
+    const stops = [xBtn2, buildBtn];
+    const i = stops.indexOf(document.activeElement);
+    e.preventDefault();
+    stops[(i + (e.shiftKey ? stops.length - 1 : 1) + stops.length) % stops.length].focus();
+  }, true);
+
+  return { open };
+})();
 
 /* ---------- панорамная карусель (первый экран) ---------- */
 /* Разметка слайдов статическая — карусель видна и без js. Здесь только
@@ -360,10 +427,16 @@ if (rail){
     const c = rail.querySelector(".mc-card");
     return c ? (c.offsetWidth + 16) * 2 : 560;
   };
+  const railWrap = rail.closest(".rail-wrap");
   const syncNav = () => {
     const max = rail.scrollWidth - rail.clientWidth;
-    railPrev.disabled = rail.scrollLeft < 8;
-    railNext.disabled = rail.scrollLeft > max - 8;
+    const atStart = rail.scrollLeft < 8, atEnd = rail.scrollLeft > max - 8;
+    railPrev.disabled = atStart;
+    railNext.disabled = atEnd;
+    /* матовые затухания по краям живут в css на .rail-wrap и гаснут там же,
+       где гаснет стрелка: у самого края прятать уже нечего */
+    railWrap.classList.toggle("at-start", atStart);
+    railWrap.classList.toggle("at-end", atEnd);
   };
   railPrev.addEventListener("click", () => rail.scrollBy({ left: -step() }));
   railNext.addEventListener("click", () => rail.scrollBy({ left: step() }));

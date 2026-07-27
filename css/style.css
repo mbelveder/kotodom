@@ -152,11 +152,15 @@ button{font-family:inherit}
    наоборот важно не обрезать конёк крыши-домика */
 .reel-slide:nth-child(1){--reel-pos:center bottom}
 .reel-slide:nth-child(3){--reel-pos:center 62%}
-/* подпись — «морозное стекло» в ВЕРХНЕМ ЛЕВОМ углу. Держим её компактной:
-   в кадре 21:9 высокая плашка налезала бы на саму постройку */
-.reel-cap{
+/* верхний левый угол кадра: стеклянная плашка с текстом и ОТДЕЛЬНАЯ кнопка
+   под ней. Раньше кнопка жила внутри плашки и растила её вниз — в кадре 21:9
+   стекло начинало налезать на постройку. Колонка выравнивает их по левому краю */
+.reel-lead{
   position:absolute;top:16px;left:16px;z-index:2;
   max-width:min(520px, 56%);
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+}
+.reel-cap{
   padding:12px 16px 14px;
   border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
   border-radius:16px;
@@ -165,13 +169,19 @@ button{font-family:inherit}
   -webkit-backdrop-filter:blur(7px) saturate(1.15);
   box-shadow:var(--shadow);
 }
-.reel-cap h2{font-size:clamp(18px,2.1vw,25px);margin:6px 0 0;color:var(--ink)}
+.reel-cap h2{font-size:clamp(18px,2.1vw,25px);margin:0;color:var(--ink)}
 .reel-cap p{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--muted)}
+/* кнопка стоит прямо на фото, поэтому носит своё стекло: без подложки
+   тонкий контур --aka терялся на светлой стене */
 .reel-more{
-  display:inline-block;margin-top:11px;
+  display:inline-block;
   border:1.5px solid var(--aka);border-radius:99px;
   padding:6px 16px;min-height:40px;line-height:26px;
   color:var(--aka);text-decoration:none;font-weight:800;font-size:13.5px;
+  background:color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter:blur(7px) saturate(1.15);
+  -webkit-backdrop-filter:blur(7px) saturate(1.15);
+  box-shadow:var(--shadow);
   transition:background .15s ease, color .15s ease;
 }
 .reel-more:hover{background:var(--aka);color:#FFFBF3}
@@ -205,15 +215,23 @@ button{font-family:inherit}
   .reel-frame{aspect-ratio:auto}
   .reel-slide{display:flex;flex-direction:column;height:auto}
   .reel-shot{position:relative;inset:auto;aspect-ratio:16/9;flex:none}
+  /* под кадром стекло не нужно: подпись и кнопка ложатся обычным блоком
+     на панель, поэтому снимаем и рамку, и backdrop-filter у обеих */
+  .reel-lead{
+    position:static;max-width:none;
+    background:var(--panel);padding:14px 16px 16px;gap:12px;
+  }
   .reel-cap{
-    position:static;max-width:none;border:none;border-radius:0;
-    box-shadow:none;background:var(--panel);
-    backdrop-filter:none;-webkit-backdrop-filter:none;
-    padding:14px 16px 16px;
+    border:none;border-radius:0;box-shadow:none;background:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;
   }
   /* на таче кнопке нужен полноценный палец — на десктопе плашка компактнее */
   .reel-cap h2{font-size:20px}
-  .reel-more{min-height:44px;padding:8px 17px}
+  .reel-more{
+    min-height:44px;padding:8px 17px;
+    background:none;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
   .reel-arw{bottom:auto;top:12px}
   .reel-prev{left:12px}
   .reel-next{right:12px}
@@ -260,6 +278,9 @@ button{font-family:inherit}
 .shot-tall{grid-row:1 / span 2}
 .shot:not(.shot-tall){aspect-ratio:1/1}
 .shot img{width:100%;height:100%;display:block;object-fit:cover}
+/* студийный кадр модуля: вокруг предмета много воздуха, рядом с макро-снимками
+   он выглядел пустым — подрезаем поля лёгким увеличением */
+.shot-module img{transform:scale(1.1)}
 /* пока кадра нет — полосатая заглушка с монопространственной подписью:
    честно говорим, что за кадр здесь будет, вместо пустой рамки */
 .shot-ph{display:none}
@@ -372,6 +393,30 @@ button{font-family:inherit}
   }
   .sc-reveal p{padding-top:2px}
 }
+/* «развернуть»: прозрачная кнопка на всё фото + значок в углу. Кнопка настоящая,
+   а не обработчик на div, — открывается и с клавиатуры, и читалкой */
+.sc-open{
+  position:absolute;inset:0;z-index:2;
+  border:none;background:none;padding:0;cursor:zoom-in;
+}
+.sc-open-i{
+  position:absolute;top:10px;right:10px;
+  width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;
+  font-size:15px;line-height:1;color:var(--ink);
+  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  backdrop-filter:blur(6px) saturate(1.15);
+  -webkit-backdrop-filter:blur(6px) saturate(1.15);
+  opacity:0;transform:scale(.9);
+  transition:opacity .2s ease, transform .2s ease;
+}
+.sc-card:hover .sc-open-i,.sc-open:focus-visible .sc-open-i{opacity:1;transform:scale(1)}
+.sc-open:focus-visible{outline:2px solid var(--aka);outline-offset:-3px}
+/* на таче ховера нет — значок виден всегда, иначе про полноэкранный режим не догадаться */
+@media (hover:none){ .sc-open-i{opacity:1;transform:none} }
+@media (prefers-reduced-motion: reduce){ .sc-open-i{transition:none} }
+
 .sc-ft{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
 .sc-nm{font-weight:800;font-size:15.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .sc-pr{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
@@ -467,6 +512,41 @@ button{font-family:inherit}
 /* короткое подтверждение «добавлено» прямо на кнопке — заказ живёт ниже,
    без обратной связи клик уходил в пустоту */
 .mc-acts .btn.done{background:var(--ok);color:#FFFBF3;border-color:var(--ok)}
+
+/* матовые затухания по краям ленты: под стрелками карточка уезжает в размытый
+   край страницы, а не подлезает под кнопку встык. Маска гасит и сам blur, иначе
+   у затухания была бы видна резкая правая кромка. Появляются вместе со
+   стрелками — на таче стрелок нет, значит и затемнять нечего */
+.rail-wrap::before,.rail-wrap::after{
+  content:"";position:absolute;top:0;bottom:0;z-index:3;pointer-events:none;
+  /* шире, чем поле до контейнера: затухание должно доставать ЗА стрелку,
+     иначе кнопка стоит уже на прозрачном месте и снова липнет к карточке */
+  width:max(120px, calc((100% - 1080px) / 2 + 110px));
+  backdrop-filter:blur(6px) saturate(1.05);
+  -webkit-backdrop-filter:blur(6px) saturate(1.05);
+  transition:opacity .25s ease;
+}
+.rail-wrap::before{
+  left:0;
+  background:linear-gradient(to right,
+    var(--paper) 28%, color-mix(in srgb, var(--paper) 55%, transparent) 68%, transparent);
+  mask-image:linear-gradient(to right, #000 55%, transparent);
+  -webkit-mask-image:linear-gradient(to right, #000 55%, transparent);
+}
+.rail-wrap::after{
+  right:0;
+  background:linear-gradient(to left,
+    var(--paper) 28%, color-mix(in srgb, var(--paper) 55%, transparent) 68%, transparent);
+  mask-image:linear-gradient(to left, #000 55%, transparent);
+  -webkit-mask-image:linear-gradient(to left, #000 55%, transparent);
+}
+/* у края прокрутки прятать нечего — гасим вместе с соответствующей стрелкой */
+.rail-wrap.at-start::before{opacity:0}
+.rail-wrap.at-end::after{opacity:0}
+@media (hover:none){ .rail-wrap::before,.rail-wrap::after{display:none} }
+@media (prefers-reduced-motion: reduce){
+  .rail-wrap::before,.rail-wrap::after{transition:none}
+}
 
 /* стрелки-скроллеры ленты — только там, где есть настоящий ховер */
 .rail-nav{
@@ -1109,6 +1189,58 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   display:none;
 }
 #dragGhost img{width:100%;height:100%;-webkit-user-drag:none}
+
+/* ============ полноэкранный просмотр готовой сборки ============ */
+/* В карточке рендер обрезан до 4:3 и увеличен — здесь кадр 16:9 виден целиком.
+   Отдельная оболочка, а не .modal: та рассчитана на узкую форму заказа. */
+.lb-back{
+  position:fixed;inset:0;z-index:400;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(12px,3vw,32px);
+  background:color-mix(in srgb, var(--ink) 62%, transparent);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.lb-back[hidden]{display:none}
+.lb{
+  position:relative;
+  width:min(1100px,100%);max-height:100%;overflow:auto;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:22px;box-shadow:var(--shadow);
+}
+/* кадр 16:9 целиком; на низком экране высоту режет max-height, и картинка
+   ложится письмом по центру, а не выдавливает описание за край */
+.lb-shot{
+  aspect-ratio:1376/768;
+  max-height:calc(100vh - 260px);
+  background:var(--paper);
+  display:grid;place-items:center;overflow:hidden;
+  border-radius:21px 21px 0 0;
+}
+@supports (height:100dvh){ .lb-shot{max-height:calc(100dvh - 260px)} }
+.lb-shot img{max-width:100%;max-height:100%;display:block}
+.lb-info{padding:16px 20px 20px;display:flex;flex-direction:column;gap:9px;align-items:flex-start}
+.lb-nm{
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:21px;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.lb-pr{font-size:16px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.lb-ds{margin:0;font-size:15px;line-height:1.5;color:var(--muted);max-width:70ch}
+.lb-info .btn{margin-top:3px;min-height:44px}
+.lb-x{
+  position:absolute;top:12px;right:12px;z-index:2;
+  width:40px;height:40px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  background:color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:var(--ink);font-size:16px;line-height:1;cursor:pointer;
+  display:grid;place-items:center;
+}
+.lb-x:hover{border-color:var(--aka);color:var(--aka)}
+@media (max-width:560px){
+  .lb-shot{max-height:none}
+  .lb-nm{font-size:19px}
+  .lb-info .btn{width:100%}
+}
 
 /* ============ модалка ============ */
 .modal-back{

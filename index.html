@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=69">
-<link rel="stylesheet" href="css/style.css?v=69">
-<script defer src="config.js?v=69"></script>
-<script defer src="js/zdog.dist.min.js?v=69"></script>
-<script defer src="js/catalog.js?v=69"></script>
-<script defer src="js/scene.js?v=69"></script>
-<script defer src="js/configurator.js?v=69"></script>
-<script defer src="js/chat.js?v=69"></script>
-<script defer src="js/app.js?v=69"></script>
+<link rel="stylesheet" href="css/fonts.css?v=70">
+<link rel="stylesheet" href="css/style.css?v=70">
+<script defer src="config.js?v=70"></script>
+<script defer src="js/zdog.dist.min.js?v=70"></script>
+<script defer src="js/catalog.js?v=70"></script>
+<script defer src="js/scene.js?v=70"></script>
+<script defer src="js/configurator.js?v=70"></script>
+<script defer src="js/chat.js?v=70"></script>
+<script defer src="js/app.js?v=70"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -83,7 +83,10 @@
      видны и без js), js/app.js добавляет только поведение: стрелки, точки,
      свайп, клавиатуру. Подпись — «морозное стекло» в ВЕРХНЕМ ЛЕВОМ углу кадра
      (тот же эффект, что у .scene-head): тёмных градиентов поверх фото нет,
-     они съедали продукт. -->
+     они съедали продукт. «Подробнее» стоит ОТДЕЛЬНОЙ пилюлей под плашкой, а не
+     внутри неё, и у всех трёх слайдов ведёт на следующую секцию (#product) —
+     карусель работает как приглашение листать страницу дальше. -->
+
 <section class="showreel" aria-label="Котоши крупным планом">
   <div class="wrap">
     <div class="reel" id="reel">
@@ -94,11 +97,12 @@
             <div class="reel-shot">
               <img src="assets/carousel-1.jpg?v=1" alt="Модульный домик Котоши из берёзовой фанеры в светлой комнате: два куба-норы, тоннель, гамак и башня с крышей" fetchpriority="high" decoding="async">
             </div>
-            <div class="reel-cap">
-              <div class="eyebrow-jp">ねこのいえ</div>
-              <h2>Домик, который растёт вместе с котом</h2>
-              <p>Берёзовая фанера, ковролиновые площадки, японская сдержанность. Собирается из модулей — как конструктор.</p>
-              <a class="reel-more" href="#detailMaterial">Подробнее →</a>
+            <div class="reel-lead">
+              <div class="reel-cap">
+                <h2>Домик, который растёт вместе с котом</h2>
+                <p>Берёзовая фанера, ковролиновые площадки, японская сдержанность. Собирается из модулей — как конструктор.</p>
+              </div>
+              <a class="reel-more" href="#product">Подробнее →</a>
             </div>
           </div>
 
@@ -110,11 +114,12 @@
                 <source src="assets/kotoshi-loop.mp4?v=4" type="video/mp4">
               </video>
             </div>
-            <div class="reel-cap">
-              <div class="eyebrow-jp">うごき</div>
-              <h2>Кот обживает домик за один вечер</h2>
-              <p>Лазы, тоннель, гамак, смотровая площадка — маршрут, по которому хочется бегать.</p>
-              <a class="reel-more" href="#smart">Подробнее →</a>
+            <div class="reel-lead">
+              <div class="reel-cap">
+                <h2>Кот обживает домик за один вечер</h2>
+                <p>Лазы, тоннель, гамак, смотровая площадка — маршрут, по которому хочется бегать.</p>
+              </div>
+              <a class="reel-more" href="#product">Подробнее →</a>
             </div>
           </div>
 
@@ -122,11 +127,12 @@
             <div class="reel-shot">
               <img src="assets/carousel-3.jpg?v=1" alt="Сборка «Дозорный»: ряд одинаковых кубов вдоль стены, башня с крышей, гамак и чаша-лежанка" loading="lazy" decoding="async">
             </div>
-            <div class="reel-cap">
-              <div class="eyebrow-jp">まとまり</div>
-              <h2>Выглядит как мебель, а не как аксессуар</h2>
-              <p>Одна линия вдоль стены, единый габарит модулей, четыре природных цвета когтеточки.</p>
-              <a class="reel-more" href="#gallery">Подробнее →</a>
+            <div class="reel-lead">
+              <div class="reel-cap">
+                <h2>Выглядит как мебель, а не как аксессуар</h2>
+                <p>Одна линия вдоль стены, единый габарит модулей, четыре природных цвета когтеточки.</p>
+              </div>
+              <a class="reel-more" href="#product">Подробнее →</a>
             </div>
           </div>
 
@@ -146,7 +152,7 @@
   </div>
 </section>
 
-<section class="hero2">
+<section class="hero2" id="product">
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <div class="eyebrow-jp">ねこのいえ</div>
@@ -174,7 +180,10 @@
           </div>
         </li>
       </ul>
-      <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
+      <!-- ведёт на «Готовые сборки», а не сразу в конструктор: та же логика, что
+           у «Подробнее» в карусели — кнопка передаёт человека следующей секции,
+           а оттуда любая карточка открывает конструктор с готовым планом -->
+      <a class="btn btn-aka hero-cta" href="#gallery">Собрать свой домик</a>
     </div>
     <!-- Ролик уехал в карусель на первый экран; здесь теперь тройка снимков-
          деталей: материал (большой вертикальный) + тактильность и модульность
@@ -194,11 +203,14 @@
                onerror="this.closest('.shot').classList.add('no-img')">
           <div class="shot-ph" aria-hidden="true">ковролин: когтеточка и лежанка</div>
         </figure>
-        <figure class="shot" id="detailJoint">
-          <img src="assets/detail-joint.jpg?v=1" alt="Стык двух модулей вплотную: тонкая тёмная шовная линия и ровные кромки"
+        <!-- вместо макро-стыка — сам модуль крыши целиком: студийный кадр из
+             каталога, тот же файл, что в ленте модулей (одна картинка на два
+             места, лишнего веса нет) -->
+        <figure class="shot shot-module" id="detailRoof">
+          <img src="assets/module-cards/roof-asym.jpg?v=1" alt="Модуль «Крыша»: домик из берёзовой фанеры с терракотовым ковролином на скате и джутовым коньком"
                loading="lazy" decoding="async"
                onerror="this.closest('.shot').classList.add('no-img')">
-          <div class="shot-ph" aria-hidden="true">стык: модули без зазоров</div>
+          <div class="shot-ph" aria-hidden="true">модуль: крыша</div>
         </figure>
       </div>
     </div>
@@ -517,6 +529,21 @@
 
 <!-- drag ghost -->
 <div id="dragGhost"></div>
+
+<!-- полноэкранный просмотр готовой сборки: в карточке рендер обрезан до 4:3 и
+     увеличен, здесь он виден целиком, вместе с описанием и кнопкой сборки.
+     Оболочка статическая, содержимое подставляет js/app.js -->
+<div class="lb-back" id="lbBack" role="dialog" aria-modal="true" aria-labelledby="lbName" hidden>
+  <div class="lb">
+    <button class="lb-x" id="lbX" type="button" aria-label="Закрыть просмотр">✕</button>
+    <div class="lb-shot"><img id="lbImg" alt="" decoding="async"></div>
+    <div class="lb-info">
+      <div class="lb-nm"><span id="lbName"></span><span class="lb-pr" id="lbPrice"></span></div>
+      <p class="lb-ds" id="lbDesc"></p>
+      <button class="btn btn-aka" id="lbBuild" type="button">Собрать в конструкторе</button>
+    </div>
+  </div>
+</div>
 
 <!-- checkout modal -->
 <div class="modal-back" id="modalBack">
