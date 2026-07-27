@@ -219,18 +219,352 @@ SHOWCASE.forEach(g => {
   const media = g.img
     ? `<img src="${g.img}" alt="Сборка ${g.nm} в интерьере" loading="lazy">`
     : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
+  /* Описание с карточки убрано совсем: на ховере оно перекрывало соседей и
+     мешало сравнивать сборки. Читается в развёрнутом просмотре — туда же
+     переехала и вся длинная копирайтерская часть */
+  /* «развернуть» есть только у сборок с настоящим рендером: мокап с иероглифом
+     во весь экран показывать нечего */
+  const zoom = g.img
+    ? `<button class="sc-open" type="button" aria-label="Открыть сборку ${g.nm} во весь экран">
+         <span class="sc-open-i"><span class="zi" aria-hidden="true">⤢</span>Развернуть</span>
+       </button>`
+    : "";
   el.innerHTML = `
     <div class="sc-media"${g.img ? ` style="--sc-img:url('${g.img}')"` : ""}>
       ${media}
-      <div class="sc-cap">${g.ds}</div>
+      ${zoom}
     </div>
     <div class="sc-ft">
       <div class="sc-nm">${g.nm}<span class="sc-pr">${fmt(presetPrice(g.preset))}</span></div>
       <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
     </div>`;
   showcaseGrid.appendChild(el);
-  el.querySelector("button").addEventListener("click", () => buildFromShowcase(g.preset));
+  el.querySelector(".sc-ft button").addEventListener("click", () => buildFromShowcase(g.preset));
+  const zoomBtn = el.querySelector(".sc-open");
+  if (zoomBtn) zoomBtn.addEventListener("click", () => openShowcase(g, zoomBtn));
 });
+
+/* ---------- полноэкранный просмотр: одна оболочка на витрину и на каталог ---------- */
+/* Карточка показывает картинку, имя и цену; всё остальное — здесь. Содержимое
+   правой части собирается на лету, поэтому кнопки у сборки и у модуля разные. */
+const lightbox = (function(){
+  const back = $("#lbBack");
+  if (!back) return { open(){} };
+  const box = back.querySelector(".lb"), img = $("#lbImg"),
+        info = $("#lbInfo"), xBtn2 = $("#lbX");
+  let returnTo = null;
+
+  /* opts: { src, alt, ratio, width, name, meta, desc, actions:[{label,cls,on}] } */
+  function open(opts){
+    returnTo = opts.trigger || null;
+    img.src = opts.src;
+    img.alt = opts.alt || "";
+    box.style.setProperty("--lb-ar", opts.ratio || "1376/768");
+    box.style.setProperty("--lb-w", opts.width || "1100px");
+    info.innerHTML = `
+      <div class="lb-nm"><span id="lbName">${opts.name}</span>${opts.meta || ""}</div>
+      <p class="lb-ds">${opts.desc}</p>
+      <div class="lb-acts"></div>`;
+    const acts = info.querySelector(".lb-acts");
+    (opts.actions || []).forEach(a => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn " + (a.cls || "btn-ghost");
+      b.textContent = a.label;
+      b.addEventListener("click", () => a.on(b));
+      acts.appendChild(b);
+    });
+    back.hidden = false;
+    /* фон под оверлеем прокручиваться не должен; ширину полосы прокрутки
+       возвращаем паддингом, иначе страница дёргается на её исчезновении */
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    if (gap > 0) document.body.style.paddingRight = gap + "px";
+    document.body.style.overflow = "hidden";
+    (acts.firstChild || xBtn2).focus();
+  }
+  function close(){
+    if (back.hidden) return;
+    back.hidden = true;
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+    if (returnTo && returnTo.isConnected) returnTo.focus();
+    returnTo = null;
+  }
+
+  xBtn2.addEventListener("click", close);
+  back.addEventListener("click", e => { if (e.target === back) close(); });
+  /* Esc закрывает, Tab не выпускает фокус наружу. Кнопки собираются заново на
+     каждое открытие, поэтому список остановок считаем в момент нажатия */
+  document.addEventListener("keydown", e => {
+    if (back.hidden) return;
+    if (e.key === "Escape"){ e.stopPropagation(); close(); return; }
+    if (e.key !== "Tab") return;
+    const stops = [xBtn2].concat(Array.from(info.querySelectorAll("button")));
+    const i = stops.indexOf(document.activeElement);
+    e.preventDefault();
+    stops[(i + (e.shiftKey ? stops.length - 1 : 1) + stops.length) % stops.length].focus();
+  }, true);
+
+  return { open, close };
+})();
+
+/* короткое подтверждение прямо на кнопке: заказ живёт ниже по странице, без
+   обратной связи клик выглядел бы «ничего не произошло». Исходную подпись
+   запоминаем ОДИН раз: иначе второй быстрый клик принимал за неё уже
+   подменённый текст и «Добавлено ✓» залипало навсегда */
+const flashTimers = new WeakMap();
+function flash(btn, text){
+  if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+  clearTimeout(flashTimers.get(btn));
+  btn.textContent = text;
+  btn.classList.add("done");
+  flashTimers.set(btn, setTimeout(() => {
+    btn.textContent = btn.dataset.label;
+    btn.classList.remove("done");
+  }, 1400));
+}
+
+function openShowcase(g, trigger){
+  lightbox.open({
+    trigger, src: g.img, alt: `Сборка ${g.nm} в интерьере`,
+    ratio: "1376/768", width: "1100px",
+    name: g.nm, meta: `<span class="lb-pr">${fmt(presetPrice(g.preset))}</span>`,
+    desc: g.ds,
+    actions: [{ label: "Собрать в конструкторе", cls: "btn-aka",
+                on: () => { lightbox.close(); buildFromShowcase(g.preset); } }]
+  });
+}
+
+/* модуль: рендер квадратный, поэтому оболочка уже — иначе картинка занимала бы
+   весь экран по высоте. Тут же полное описание, которого нет в карточке */
+function openModule(type, card, trigger){
+  const m = KD.MODULES[type];
+  lightbox.open({
+    trigger, src: `assets/module-cards/${card}.jpg`, alt: `Модуль «${m.name}»`,
+    ratio: "1/1", width: "760px",
+    name: m.name,
+    meta: `<span class="lb-jp">${m.jp}</span><span class="lb-pr">${fmt(m.price)}</span>
+           <span class="lb-size">${m.size}<span class="mc-prelim">предварительно</span></span>`,
+    desc: m.desc,
+    actions: [
+      { label: "В конструктор", cls: "btn-aka", on: b => {
+          const r = KD.addModule(type);
+          if (!r.ok){ flash(b, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return; }
+          lightbox.close();
+          ($("#builderHead") || $("#builder")).scrollIntoView({ behavior: "smooth", block: "start" });
+        } },
+      { label: "В корзину", cls: "btn-ghost", on: b => { KD.cart.add(type); flash(b, "Добавлено ✓"); } }
+    ]
+  });
+}
+
+/* ---------- панорамная карусель (первый экран) ---------- */
+/* Разметка слайдов статическая — карусель видна и без js. Здесь только
+   поведение: стрелки, точки, свайп, клавиатура. Автопрокрутки нет намеренно:
+   видео на втором слайде само держит внимание, а автосмена уводила бы кадр
+   из-под курсора. */
+(function reel(){
+  const root = $("#reel");
+  if (!root) return;
+  const track = $("#reelTrack");
+  const slides = Array.from(track.children);
+  const dots = Array.from($("#reelDots").children);
+  if (slides.length < 2) return;
+  let cur = 0;
+
+  function go(n){
+    cur = (n + slides.length) % slides.length;
+    track.style.transform = `translateX(${-cur * 100}%)`;
+    dots.forEach((d, i) => {
+      d.classList.toggle("is-on", i === cur);
+      d.setAttribute("aria-selected", i === cur ? "true" : "false");
+    });
+    /* соседние слайды уезжают за кадр — убираем их из фокуса и с экрана
+       читалок, иначе Tab уводит курсор в невидимую подпись */
+    slides.forEach((s, i) => s.toggleAttribute("inert", i !== cur));
+  }
+  go(0);
+
+  $("#reelPrev").addEventListener("click", () => go(cur - 1));
+  $("#reelNext").addEventListener("click", () => go(cur + 1));
+  dots.forEach((d, i) => d.addEventListener("click", () => go(i)));
+
+  /* стрелки клавиатуры — только когда фокус внутри карусели, иначе они
+     перехватывали бы обычную прокрутку страницы */
+  root.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft"){ e.preventDefault(); go(cur - 1); }
+    if (e.key === "ArrowRight"){ e.preventDefault(); go(cur + 1); }
+  });
+
+  /* свайп: считаем только заметно горизонтальный жест, чтобы не перехватывать
+     вертикальную прокрутку страницы пальцем по фото */
+  let sx = 0, sy = 0, down = false;
+  const frame = root.querySelector(".reel-frame");
+  frame.addEventListener("pointerdown", e => {
+    if (!e.isPrimary || e.button !== 0) return;
+    down = true; sx = e.clientX; sy = e.clientY;
+  });
+  frame.addEventListener("pointerup", e => {
+    if (!down) return;
+    down = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+    go(cur + (dx < 0 ? 1 : -1));
+  });
+  frame.addEventListener("pointercancel", () => { down = false; });
+})();
+
+/* ---------- каталог модулей: горизонтальная лента ---------- */
+/* Карточки рендерятся из KD.MODULES + KD.CATALOG, а не пишутся руками:
+   цена, описание и габариты живут в одном месте (js/catalog.js). */
+const rail = $("#moduleRail");
+if (rail){
+  KD.CATALOG.forEach(({ type, card }) => {
+    const m = KD.MODULES[type];
+    if (!m) return;
+    const el = document.createElement("article");
+    el.className = "mc-card";
+    el.dataset.type = type;
+    /* в карточке — КОРОТКАЯ строка (m.short) полосой понизу фото: полный текст
+       закрывал стеклом весь модуль, ради которого на карточку и смотрят.
+       Полное описание живёт в развёрнутом просмотре */
+    el.innerHTML = `
+      <div class="mc-media">
+        <img src="assets/module-cards/${card}.jpg" alt="Модуль «${m.name}»" loading="lazy" decoding="async">
+        <div class="mc-hover">${m.short || m.desc}</div>
+        <button class="sc-open mc-open" type="button" data-act="zoom" aria-label="Открыть модуль «${m.name}» во весь экран">
+          <span class="sc-open-i"><span class="zi" aria-hidden="true">⤢</span>Развернуть</span>
+        </button>
+      </div>
+      <div class="mc-body">
+        <div class="mc-nm">${m.name}<span class="mc-jp">${m.jp}</span></div>
+        <div class="mc-size">${m.size}<span class="mc-prelim">предварительно</span></div>
+        <div class="mc-pr">${fmt(m.price)}</div>
+        <div class="mc-acts">
+          <button class="btn btn-aka" type="button" data-act="build">В конструктор</button>
+          <button class="btn btn-ghost" type="button" data-act="cart">В корзину</button>
+        </div>
+      </div>`;
+    rail.appendChild(el);
+  });
+
+  rail.addEventListener("click", e => {
+    const b = e.target.closest("button[data-act]");
+    if (!b) return;
+    const cardEl = b.closest(".mc-card");
+    const type = cardEl.dataset.type;
+    if (b.dataset.act === "zoom"){
+      openModule(type, KD.CATALOG.find(c => c.type === type).card, b);
+      return;
+    }
+    if (b.dataset.act === "cart"){
+      KD.cart.add(type);
+      flash(b, "Добавлено ✓");
+      return;
+    }
+    /* «В конструктор» — кладём модуль в сцену и едем к ней; подсветку места
+       делает сам configurator (KD.scene.pulse) */
+    const r = KD.addModule(type);
+    if (!r.ok){ flash(b, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return; }
+    const head = $("#builderHead");
+    (head || $("#builder")).scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* стрелки-скроллеры: прокручиваем на пару карточек, гасим на краях */
+  const railPrev = $("#railPrev"), railNext = $("#railNext");
+  const step = () => {
+    const c = rail.querySelector(".mc-card");
+    return c ? (c.offsetWidth + 16) * 2 : 560;
+  };
+  const railWrap = rail.closest(".rail-wrap");
+  const syncNav = () => {
+    const max = rail.scrollWidth - rail.clientWidth;
+    const atStart = rail.scrollLeft < 8, atEnd = rail.scrollLeft > max - 8;
+    railPrev.disabled = atStart;
+    railNext.disabled = atEnd;
+    /* матовые затухания по краям живут в css на .rail-wrap и гаснут там же,
+       где гаснет стрелка: у самого края прятать уже нечего */
+    railWrap.classList.toggle("at-start", atStart);
+    railWrap.classList.toggle("at-end", atEnd);
+  };
+  railPrev.addEventListener("click", () => rail.scrollBy({ left: -step() }));
+  railNext.addEventListener("click", () => rail.scrollBy({ left: step() }));
+  rail.addEventListener("scroll", syncNav, { passive: true });
+  window.addEventListener("resize", syncNav);
+  syncNav();
+}
+
+/* плашка «отдельные модули в заказе» под лентой */
+const cartBar = $("#cartBar"), cartNote = $("#cartNote");
+if (cartBar){
+  const plural = n => n % 10 === 1 && n % 100 !== 11 ? "модуль"
+    : ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100) ? "модуля" : "модулей");
+  KD.cart.onChange = () => {
+    const lines = KD.cart.lines();
+    const n = KD.cart.count();
+    cartBar.classList.toggle("show", n > 0);
+    if (!n) return;
+    cartNote.textContent = `${n} ${plural(n)} · ${fmt(lines.reduce((s, l) => s + l.sum, 0))}`;
+  };
+  KD.cart.onChange();
+  $("#cartOrder").addEventListener("click", () => openCheckout());
+}
+
+/* ---------- переключатель темы: авто / светлая / тёмная ---------- */
+/* Атрибут data-theme на <html> уже мог быть выставлен инлайн-скриптом в <head>
+   (до первой отрисовки, чтобы не мигало). Здесь — только UI и реакция на клик.
+   «Авто» СНИМАЕТ атрибут: тогда снова работает @media prefers-color-scheme. */
+(function themePick(){
+  const box = $("#themePick");
+  if (!box) return;
+  const KEY = "kd_theme";
+  const btns = Array.from(box.querySelectorAll("button[data-theme-set]"));
+  /* ?theme= — служебный режим съёмки рендеров: переключатель в нём не врёт,
+     но и не перетирает сохранённый выбор пользователя */
+  const forced = new URLSearchParams(location.search).get("theme");
+
+  const current = () => {
+    const attr = document.documentElement.getAttribute("data-theme");
+    return attr === "light" || attr === "dark" ? attr : "auto";
+  };
+  const mark = () => {
+    const cur = current();
+    btns.forEach(b => {
+      const on = b.dataset.themeSet === cur;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+  };
+  mark();
+
+  box.addEventListener("click", e => {
+    const b = e.target.closest("button[data-theme-set]");
+    if (!b) return;
+    const v = b.dataset.themeSet;
+    if (v === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", v);
+    if (!forced){
+      try{
+        if (v === "auto") localStorage.removeItem(KEY);
+        else localStorage.setItem(KEY, v);
+      }catch(err){}
+    }
+    mark();
+    /* сцена конструктора живёт на canvas и CSS-переменных не видит —
+       пересобираем её палитру вручную; меню лаза привязано к экранной точке
+       и после пересборки «уплывёт», поэтому закрываем его */
+    if (KD.closeEntryMenu) KD.closeEntryMenu();
+    if (KD.scene && KD.scene.refreshTheme) KD.scene.refreshTheme();
+    /* иконки лотка обновлять НЕ нужно: KD.scene.moduleIcon намеренно рисует их
+       всегда светлой палитрой (в тёмной теме чипы остаются кремовыми, см. css) */
+  });
+
+  /* в режиме «авто» системная тема может смениться на лету — обновляем отметку
+     (саму сцену перерисовывает свой слушатель darkMq внутри js/scene.js) */
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (current() === "auto") mark();
+  });
+})();
 
 /* ---------- логотип = кнопка «домой» ---------- */
 const homeLink = document.querySelector(".hanko");
@@ -260,15 +594,51 @@ function linesTotals(lines){
   const disc = count >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
   return { count, sum, disc, total: sum - disc };
 }
-function checkoutStep(lines, t, subtitle){
+/* Состав заказа приходит из ДВУХ источников: сцена конструктора и модули,
+   купленные напрямую из каталога. Заказ при этом один — правила суммы,
+   скидки и отправки не меняются, разделены только строки состава. */
+const composition = () => ({
+  scene: KD.configurator.orderLines(),
+  cart: KD.cart.lines()
+});
+const allLines = c => c.scene.concat(c.cart);
+
+const lineRow = l => `<li><span class="nm">${l.name} × ${l.n}</span><span class="n">${fmt(l.sum)}</span></li>`;
+/* у прямых покупок есть счётчик: одну позицию можно взять несколько раз
+   и убрать, не выходя из модалки */
+const cartRow = l => `<li>
+    <span class="nm">${l.name}</span>
+    <span class="qty" data-t="${l.type}">
+      <button type="button" data-d="-1" aria-label="Убрать один ${l.name}">−</button>
+      <span class="q">${l.n}</span>
+      <button type="button" data-d="1" aria-label="Добавить один ${l.name}">+</button>
+      <button type="button" class="rm" data-d="0" aria-label="Убрать «${l.name}» из заказа">✕</button>
+    </span>
+    <span class="n">${fmt(l.sum)}</span>
+  </li>`;
+
+function compositionHTML(){
+  const c = composition();
+  const t = linesTotals(allLines(c));
+  const two = c.scene.length && c.cart.length;   // заголовки групп нужны только когда групп правда две
+  return `
+    ${c.scene.length ? `${two ? `<div class="og-t">Сборка из конструктора</div>` : ""}
+      <ul class="order-lines">${c.scene.map(lineRow).join("")}</ul>` : ""}
+    ${c.cart.length ? `${two ? `<div class="og-t">Отдельные модули</div>` : ""}
+      <ul class="order-lines">${c.cart.map(cartRow).join("")}</ul>` : ""}
+    <ul class="order-lines">
+      ${t.disc ? `<li><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n">−${fmt(t.disc)}</span></li>` : ""}
+      <li class="total"><span>Итого</span><span class="n">${fmt(t.total)}</span></li>
+    </ul>`;
+}
+
+function openCheckout(subtitle){
+  const t0 = linesTotals(allLines(composition()));
+  if (!t0.count) return;
   open(`
     <h3>Ваш Котоши</h3>
     <p class="m-sub">${subtitle || "Проверьте состав и оставьте контакты — Момо примет заказ."}</p>
-    <ul class="order-lines">
-      ${lines.map(l => `<li><span>${l.name} × ${l.n}</span><span class="n">${fmt(l.sum)}</span></li>`).join("")}
-      ${t.disc ? `<li><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n">−${fmt(t.disc)}</span></li>` : ""}
-      <li class="total"><span>Итого</span><span class="n">${fmt(t.total)}</span></li>
-    </ul>
+    <div id="orderComp">${compositionHTML()}</div>
     <form id="orderForm">
       <div class="f-row"><label for="fNm">Как вас зовут</label>
         <input id="fNm" required maxlength="80" placeholder="Имя"></div>
@@ -282,10 +652,29 @@ function checkoutStep(lines, t, subtitle){
       <div class="err-note" id="orderErr"></div>
     </form>
   `);
+  /* счётчик количества перерисовывает ТОЛЬКО состав: поля формы уже могут быть
+     заполнены, полная перерисовка модалки стирала бы введённое */
+  const comp = $("#orderComp");
+  comp.addEventListener("click", e => {
+    const b = e.target.closest("button[data-d]");
+    if (!b) return;
+    const type = b.closest(".qty").dataset.t;
+    const d = +b.dataset.d;
+    const cur = (KD.cart.lines().find(l => l.type === type) || {}).n || 0;
+    KD.cart.set(type, d === 0 ? 0 : cur + d);
+    comp.innerHTML = compositionHTML();
+    /* корзину могли обнулить до пустого заказа — тогда закрываем модалку */
+    if (!linesTotals(allLines(composition())).count) close();
+  });
   $("#orderForm").addEventListener("submit", e => {
     e.preventDefault();
+    const c = composition();
+    const t = linesTotals(allLines(c));
     payStep({
-      lines, total: t.total, disc: t.disc,
+      /* lines — прежний плоский формат для сервера (его трогать рано);
+         groups отдаём рядом, чтобы владелец видел, что собрано, а что докуплено */
+      lines: allLines(c), total: t.total, disc: t.disc,
+      groups: { build: c.scene, extra: c.cart },
       customer: {
         name: $("#fNm").value.trim(),
         contact: $("#fCt").value.trim(),
@@ -296,12 +685,8 @@ function checkoutStep(lines, t, subtitle){
   });
 }
 
-/* заказ того, что собрано в сцене */
-$("#btnOrder").addEventListener("click", () => {
-  const lines = KD.configurator.orderLines();
-  if (!lines.length) return;
-  checkoutStep(lines, KD.configurator.totals());
-});
+/* заказ: сцена конструктора + отдельные модули из каталога */
+$("#btnOrder").addEventListener("click", () => openCheckout());
 
 function payStep(order){
   open(`

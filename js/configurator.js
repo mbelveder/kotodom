@@ -110,6 +110,36 @@ const NO_SLOT_HINTS = {
   play: "Чаше-лежанке нужен пол или верх модуля — всё занято.",
 };
 
+/* ---------- прямые покупки модулей из каталога ---------- */
+/* Второй источник состава заказа: модуль можно взять из каталога напрямую,
+   минуя сцену. Заказ ОДИН — состав просто складывается со сценой при
+   оформлении (см. app.js), а правила скидки и отправки не меняются.
+   totals() ниже остаётся ПРО СЦЕНУ: ценник-бирка висит внутри конструктора
+   и должна показывать именно то, что стоит в комнате. Полную сумму заказа
+   считает orderTotals(). */
+const cart = {};                                        // тип -> количество
+const cartCount = () => Object.values(cart).reduce((s, n) => s + n, 0);
+KD.cart = {
+  add(type, n){
+    if (!MODULES[type]) return false;
+    cart[type] = (cart[type] || 0) + (n || 1);
+    refresh();
+    return true;
+  },
+  set(type, n){
+    if (!MODULES[type]) return;
+    if (n > 0) cart[type] = n; else delete cart[type];
+    refresh();
+  },
+  count: cartCount,
+  lines(){
+    return Object.entries(cart).map(([t, n]) => ({
+      type: t, name: MODULES[t].name, n, price: MODULES[t].price, sum: MODULES[t].price * n
+    }));
+  },
+  onChange: null      // app.js подписывается, чтобы обновлять плашку под лентой
+};
+
 /* ---------- цена ---------- */
 function totals(){
   const items = grid.filter(t => MODULES[t]); // без маркеров широких модулей
@@ -117,23 +147,37 @@ function totals(){
   const disc = items.length >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
   return { count: items.length, sum, disc, total: sum - disc };
 }
+/* полная сумма заказа: сцена + отдельные модули. Скидка считается по ОБЩЕМУ
+   числу модулей — правило «от пяти модулей» то же самое, просто источников два */
+function orderTotals(){
+  const items = grid.filter(t => MODULES[t]);
+  const sum = items.reduce((s, t) => s + MODULES[t].price, 0)
+            + KD.cart.lines().reduce((s, l) => s + l.sum, 0);
+  const count = items.length + cartCount();
+  const disc = count >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
+  return { count, sum, disc, total: sum - disc, sceneCount: items.length, cartCount: cartCount() };
+}
+KD.orderTotals = orderTotals;
 let hadDiscount = false;
 function refresh(){
   syncTunnels();
   reorientScratches();
-  const t = totals();
+  const t = totals();          // сцена — для бирки внутри конструктора
+  const o = orderTotals();     // весь заказ — для кнопки оформления
   sumOut.textContent = fmt(t.total);
   discOut.textContent = t.disc ? `скидка 5% (−${fmt(t.disc)}) 🎉` : (t.count ? `модулей: ${t.count}` : "");
-  btnOrder.textContent = t.count ? `Оформить заказ · ${fmt(t.total)}` : "Оформить заказ";
-  const empty = t.count === 0;
-  btnOrder.disabled = empty || animating;
+  btnOrder.textContent = o.count ? `Оформить заказ · ${fmt(o.total)}` : "Оформить заказ";
+  /* заказ можно оформить и с пустой сценой — если модули взяли прямо из каталога.
+     А вот «Очистить»/«Отменить» — про сцену, их состояние от корзины не зависит */
+  btnOrder.disabled = o.count === 0 || animating;
   btnUndo.disabled = !undoStack.length || animating;
-  btnClear.disabled = empty || animating;
+  btnClear.disabled = t.count === 0 || animating;
   if (t.disc && !hadDiscount){
     if (Date.now() >= quietUntil) say(pick(SAY.discount)); // в сборке не мигаем
     hadDiscount = true;
   }
   if (!t.disc) hadDiscount = false;
+  if (KD.cart.onChange) KD.cart.onChange(o);
 }
 
 /* ---------- операции ---------- */
@@ -601,6 +645,24 @@ btnClear.addEventListener("click", () => {
   disarmClear();
   buildGen++; snapshot(); notifyEdit(); clearAll();
 });
+
+/* «В конструктор» из каталога модулей: кладём модуль в первую подходящую
+   ячейку (validCells отсортирован по индексу — это самое нижнее-левое свободное
+   место, предсказуемо для глаза) и подсвечиваем её. Если места нет — возвращаем
+   подсказку, чтобы каталог мог показать её человеку, а не молча ничего не сделать */
+KD.addModule = function(type){
+  if (animating || !MODULES[type]) return { ok: false, hint: "Секунду — идёт сборка." };
+  closeEntryMenu();
+  const valid = validCells(type);
+  if (!valid.length) return { ok: false, hint: NO_SLOT_HINTS[type] || pick(SAY.noSlot) };
+  const i = valid[0];
+  KD.studioBooted = true;      // человек начал собирать сам — автосборка «Проныры» не нужна
+  snapshot();
+  notifyEdit();
+  place(i, type);              // place() сам зовёт say() — Момо комментирует модуль
+  KD.scene.pulse(i);
+  return { ok: true, cell: i };
+};
 
 /* реплика при выборе плана — про состав сборки (без имени плана: оно вторично).
    Возвращает true, если сборка реально запустилась (app.js по этому признаку

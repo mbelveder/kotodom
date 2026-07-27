@@ -96,36 +96,154 @@ button{font-family:inherit}
 .head-nav{margin-left:auto;display:flex;gap:18px;align-items:center}
 .head-nav a{color:var(--ink);text-decoration:none;font-weight:700;font-size:15px}
 .head-nav a:hover{color:var(--aka)}
-/* «Каталог модулей» — пока заглушка: комментарий во всплывающей подсказке при наведении */
-.nav-soon{
-  position:relative;color:var(--ink);font-weight:700;font-size:15px;
-  cursor:default;border-bottom:1px dashed color-mix(in srgb, var(--ink) 32%, transparent);
-}
-.nav-soon:hover,.nav-soon:focus-visible{color:var(--aka);outline:none}
-.nav-tip{
-  position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%) translateY(-4px);
-  width:max-content;max-width:240px;z-index:20;
-  padding:9px 12px;border-radius:12px;
-  border:1px solid color-mix(in srgb, var(--ink) 16%, transparent);
-  background:var(--panel);box-shadow:var(--shadow);
-  font-size:12.5px;line-height:1.4;font-weight:600;color:var(--muted);
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
-}
-.nav-tip::before{
-  content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-  border:6px solid transparent;border-bottom-color:var(--panel);
-}
-.nav-soon:hover .nav-tip,.nav-soon:focus-visible .nav-tip{
-  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);
-  transition:opacity .18s ease, transform .18s ease;
-}
-.demo-pill{
-  font-size:12px;font-weight:800;color:var(--aka);
-  border:1.5px dashed var(--aka);border-radius:99px;padding:3px 10px;
-  white-space:nowrap;
-}
+/* .nav-soon/.nav-tip (заглушка «здесь будет каталог») и .demo-pill убраны:
+   каталог модулей теперь настоящий раздел, а дисклеймер про демо живёт
+   в футере и в модалке заказа — в шапке он только шумел */
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
+
+/* переключатель темы: авто / светлая / тёмная. Служебный контрол, а не действие —
+   поэтому тихий: без своей панели и без заливки --aka у выбранного (красный
+   кружок был самым громким пятном в шапке). Выбранное состояние показываем
+   мягкой подложкой и цветом --ink, остальные приглушены до --muted */
+.theme-pick{
+  display:inline-flex;align-items:center;gap:1px;flex:none;
+  margin-left:12px;padding:2px;
+  border:1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius:99px;background:transparent;
+  opacity:.72;transition:opacity .18s ease;
+}
+.theme-pick:hover,.theme-pick:focus-within{opacity:1}
+.theme-pick button{
+  position:relative;
+  width:26px;height:26px;padding:0;flex:none;
+  border:none;border-radius:50%;background:transparent;color:var(--muted);
+  cursor:pointer;display:grid;place-items:center;
+  transition:background .15s ease, color .15s ease;
+}
+/* сама кнопка компактная — зону нажатия расширяем до 44px невидимой подложкой */
+.theme-pick button::before{content:"";position:absolute;inset:-9px}
+.theme-pick button:hover{color:var(--ink)}
+.theme-pick button.is-on{
+  background:color-mix(in srgb, var(--ink) 10%, transparent);
+  color:var(--ink);
+}
+.theme-pick svg{width:14px;height:14px;fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.theme-pick .tp-a{font-weight:800;font-size:11.5px;line-height:1}
+@media (max-width:520px){ .theme-pick{margin-left:8px} }
+
+/* ============ панорамная карусель (первый экран) ============ */
+/* Крупный масштаб продукта до всякого текста. Никаких тёмных градиентов
+   поверх фото — подпись стоит на «морозном стекле», как .scene-head. */
+.showreel{padding:22px 0 0}
+.reel{position:relative}
+.reel-frame{
+  position:relative;
+  aspect-ratio:21/9;
+  border-radius:var(--r);
+  overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  background:var(--panel);
+}
+.reel-track{display:flex;height:100%;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.reel-slide{position:relative;flex:0 0 100%;min-width:0;height:100%}
+/* исходники сняты 16:9, кадр — 21:9: обрезаем снизу, а не по центру,
+   иначе у построек срезает пол вместе с ковром */
+.reel-shot{position:absolute;inset:0}
+.reel-shot img,.reel-shot video{
+  width:100%;height:100%;display:block;
+  object-fit:cover;object-position:var(--reel-pos, center 60%);
+}
+/* у первого кадра запаса стены над постройкой почти нет — прижимаем к низу,
+   иначе 21:9 срезает пол вместе с ковром. У третьего запас большой, там
+   наоборот важно не обрезать конёк крыши-домика */
+.reel-slide:nth-child(1){--reel-pos:center bottom}
+.reel-slide:nth-child(3){--reel-pos:center 62%}
+/* верхний левый угол кадра: стеклянная плашка с текстом и ОТДЕЛЬНАЯ кнопка
+   под ней. Раньше кнопка жила внутри плашки и растила её вниз — в кадре 21:9
+   стекло начинало налезать на постройку. Колонка выравнивает их по левому краю */
+.reel-lead{
+  position:absolute;top:16px;left:16px;z-index:2;
+  max-width:min(520px, 56%);
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+}
+.reel-cap{
+  padding:12px 16px 14px;
+  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius:16px;
+  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  backdrop-filter:blur(7px) saturate(1.15);
+  -webkit-backdrop-filter:blur(7px) saturate(1.15);
+  box-shadow:var(--shadow);
+}
+.reel-cap h2{font-size:clamp(18px,2.1vw,25px);margin:0;color:var(--ink)}
+.reel-cap p{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--muted)}
+/* кнопка стоит прямо на фото, поэтому носит своё стекло: без подложки
+   тонкий контур --aka терялся на светлой стене */
+.reel-more{
+  display:inline-block;
+  border:1.5px solid var(--aka);border-radius:99px;
+  padding:6px 16px;min-height:40px;line-height:26px;
+  color:var(--aka);text-decoration:none;font-weight:800;font-size:13.5px;
+  background:color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter:blur(7px) saturate(1.15);
+  -webkit-backdrop-filter:blur(7px) saturate(1.15);
+  box-shadow:var(--shadow);
+  transition:background .15s ease, color .15s ease;
+}
+.reel-more:hover{background:var(--aka);color:#FFFBF3}
+/* стрелки — в нижних углах кадра, в стиле .momo-fab */
+.reel-arw{
+  position:absolute;bottom:16px;z-index:3;
+  width:46px;height:46px;border-radius:50%;padding:0 0 4px;
+  border:2px solid var(--ink);background:var(--panel);color:var(--ink);
+  box-shadow:3px 3px 0 var(--aka);
+  font-size:26px;font-weight:700;line-height:1;cursor:pointer;
+  display:grid;place-items:center;
+  transition:transform .15s ease, background .15s ease, color .15s ease;
+}
+.reel-prev{left:16px}
+.reel-next{right:16px}
+.reel-arw:hover{transform:scale(1.08);background:var(--aka);color:#FFFBF3;border-color:var(--aka)}
+/* точки — ПОД кадром и по центру; неактивные на --line (белые не видны на бумаге) */
+.reel-dots{display:flex;justify-content:center;gap:8px;margin-top:14px}
+.reel-dots button{
+  position:relative;width:34px;height:8px;padding:0;
+  border:none;border-radius:99px;background:var(--line);cursor:pointer;
+  transition:background .2s ease;
+}
+/* сама точка низкая — расширяем зону нажатия до 44px, не раздувая вид */
+.reel-dots button::before{content:"";position:absolute;inset:-18px -5px}
+.reel-dots button:hover{background:color-mix(in srgb, var(--aka) 45%, var(--line))}
+.reel-dots button.is-on{background:var(--aka)}
+@media (prefers-reduced-motion: reduce){ .reel-track{transition:none} }
+@media (max-width:860px){
+  /* кадр ниже, подпись переезжает под него обычным блоком, стрелки — поверх фото сверху */
+  .reel-frame{aspect-ratio:auto}
+  .reel-slide{display:flex;flex-direction:column;height:auto}
+  .reel-shot{position:relative;inset:auto;aspect-ratio:16/9;flex:none}
+  /* под кадром стекло не нужно: подпись и кнопка ложатся обычным блоком
+     на панель, поэтому снимаем и рамку, и backdrop-filter у обеих */
+  .reel-lead{
+    position:static;max-width:none;
+    background:var(--panel);padding:14px 16px 16px;gap:12px;
+  }
+  .reel-cap{
+    border:none;border-radius:0;box-shadow:none;background:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;
+  }
+  /* на таче кнопке нужен полноценный палец — на десктопе плашка компактнее */
+  .reel-cap h2{font-size:20px}
+  .reel-more{
+    min-height:44px;padding:8px 17px;
+    background:none;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
+  .reel-arw{bottom:auto;top:12px}
+  .reel-prev{left:12px}
+  .reel-next{right:12px}
+}
 
 /* ============ hero: заголовок слева (как в ранней версии), ролик справа ============ */
 .hero2{padding:34px 0 8px}
@@ -152,16 +270,71 @@ button{font-family:inherit}
 .hero-points p{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--muted)}
 .hero-cta{display:inline-block;margin-top:24px;text-decoration:none}
 
+/* ============ hero: тройка снимков-деталей вместо ролика ============ */
+/* Ролик уехал в карусель наверх. Здесь — «честная мебель» вблизи: большое
+   вертикальное фото материала слева (на обе строки) и два квадрата справа.
+   Высоту задают квадраты, вертикальный кадр растягивается на обе строки —
+   так три кадра всегда выровнены по общей нижней линии. */
+.detail-trio{display:grid;grid-template-columns:1.35fr 1fr;gap:12px}
+.shot{
+  position:relative;margin:0;overflow:hidden;
+  border-radius:var(--r);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  background:var(--paper);
+}
+.shot-tall{grid-row:1 / span 2}
+.shot:not(.shot-tall){aspect-ratio:1/1}
+.shot img{width:100%;height:100%;display:block;object-fit:cover}
+/* студийный кадр модуля: вокруг предмета много воздуха, рядом с макро-снимками
+   он выглядел пустым — подрезаем поля лёгким увеличением */
+.shot-module img{transform:scale(1.1)}
+/* пока кадра нет — полосатая заглушка с монопространственной подписью:
+   честно говорим, что за кадр здесь будет, вместо пустой рамки */
+.shot-ph{display:none}
+.shot.no-img img{display:none}
+.shot.no-img .shot-ph{
+  position:absolute;inset:0;display:flex;align-items:flex-end;
+  padding:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11.5px;line-height:1.35;color:var(--muted);
+  background:repeating-linear-gradient(135deg,
+    color-mix(in srgb, var(--wood) 22%, var(--panel)) 0 9px,
+    color-mix(in srgb, var(--wood) 34%, var(--panel)) 9px 18px);
+}
+/* заглушка вертикального кадра должна держать высоту сама: без img
+   растягиваться не на что, иначе строка схлопнется */
+.shot-tall.no-img{aspect-ratio:3/4}
+@media (max-width:860px){
+  .detail-trio{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+  .shot-tall{grid-row:auto;grid-column:1 / span 2;aspect-ratio:16/9}
+}
+
 /* ============ готовые сборки: витрина под hero (фото/мокап + видео уже отыграли своё выше) ============ */
 .showcase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
 @media (max-width:900px){.showcase-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.showcase-grid{grid-template-columns:1fr}}
+/* На ховере карточка приподнимается и укрупняет фото — и только. Описание
+   отсюда убрано совсем: оно перекрывало соседей и мешало сравнивать сборки,
+   читается в развёрнутом просмотре.
+   ВАЖНО про :has(:focus-visible) вместо :focus-within — после клика мышью
+   фокус остаётся на кнопке внутри карточки, и с :focus-within она навсегда
+   «залипала» в приподнятом состоянии. :focus-visible от клика мышью не
+   срабатывает, а с клавиатуры работает как раньше */
 .sc-card{
+  position:relative;
   background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  overflow:hidden;box-shadow:var(--shadow);
+  box-shadow:var(--shadow);
   display:flex;flex-direction:column;
+  transition:transform .26s ease, box-shadow .26s ease;
 }
-.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);--sc-zoom:1.34}
+.sc-card:hover,.sc-card:has(:focus-visible){
+  z-index:5;
+  transform:translateY(-4px);
+  box-shadow:0 18px 40px color-mix(in srgb, var(--ink) 20%, transparent);
+}
+.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);--sc-zoom:1.34;
+  border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
 /* Масштаб сборки в витрине.
    Рендеры сняты «в размер кадра»: маленький «Новичок» (2 ячейки, 5 220 ₽) занимал
    столько же места, сколько «Дозорный» (5 ячеек, 26 840 ₽), и в сетке дешёвые
@@ -176,7 +349,11 @@ button{font-family:inherit}
   transform:scale(1.35);filter:blur(28px) saturate(.85) brightness(1.05);
 }
 .sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:contain;
-  transform:scale(var(--sc-zoom));transform-origin:center}
+  transform:scale(var(--sc-zoom));transform-origin:center;transition:transform .3s ease}
+/* на ховере фото реально становится крупнее — не «стекло» поверх, а сам кадр */
+.sc-card:hover .sc-media img,.sc-card:has(:focus-visible) .sc-media img{
+  transform:scale(calc(var(--sc-zoom) + .1));
+}
 .sc-card[data-key="watch"]   .sc-media{--sc-zoom:1.34}  /* 5 ячеек — эталон */
 .sc-card[data-key="manor"]   .sc-media{--sc-zoom:1.34}  /* 4 ячейки, запас снят в рендере */
 .sc-card[data-key="zoomies"] .sc-media{--sc-zoom:1.34}  /* блок 2×2, высокий */
@@ -198,32 +375,203 @@ button{font-family:inherit}
   font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:58px;
   color:color-mix(in srgb, var(--aka) 42%, var(--panel));
 }
-/* описание поверх фото — «жидкое стекло», проявляется на ховере/фокусе,
-   как у карточек сайдбара (см. .pc-hover); имя сборки — не описание, оно ниже, всегда видно */
-.sc-cap{
-  position:absolute;inset:0;display:flex;align-items:flex-end;
-  padding:12px;font-size:14.5px;line-height:1.45;font-weight:600;color:var(--ink);
-  background:linear-gradient(to top,
-    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
-    color-mix(in srgb, var(--panel) 34%, transparent) 85%, transparent);
-  backdrop-filter:blur(5px) saturate(1.1);
-  -webkit-backdrop-filter:blur(5px) saturate(1.1);
-  opacity:0;transition:opacity .28s ease;pointer-events:none;
+@media (prefers-reduced-motion: reduce){
+  .sc-card,.sc-media img{transition:none}
 }
-.sc-card:hover .sc-cap,.sc-card:focus-within .sc-cap{opacity:1}
-@media (prefers-reduced-motion: reduce){ .sc-cap{transition:none} }
-/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу на фото */
-@media (hover:none){
-  .sc-cap{opacity:1;
-    background:linear-gradient(to top,
-      color-mix(in srgb, var(--panel) 88%, transparent) 60%, transparent);
-    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  }
+/* «развернуть»: прозрачная кнопка на всё фото + подпись в углу. Кнопка настоящая,
+   а не обработчик на div, — открывается и с клавиатуры, и читалкой.
+   Раньше это был безымянный кружок со значком, и про полноэкранный режим никто
+   не догадывался: теперь пилюля со словом, видна в покое и наливается на ховере */
+.sc-open{
+  position:absolute;inset:0;z-index:2;
+  border:none;background:none;padding:0;cursor:zoom-in;
 }
+.sc-open-i{
+  position:absolute;top:10px;right:10px;
+  display:inline-flex;align-items:center;gap:6px;
+  height:34px;padding:0 13px;border-radius:99px;
+  font-size:13px;font-weight:800;line-height:1;color:var(--ink);
+  border:1.5px solid color-mix(in srgb, var(--ink) 26%, transparent);
+  background:color-mix(in srgb, var(--panel) 80%, transparent);
+  backdrop-filter:blur(6px) saturate(1.15);
+  -webkit-backdrop-filter:blur(6px) saturate(1.15);
+  box-shadow:0 4px 14px color-mix(in srgb, var(--ink) 16%, transparent);
+  opacity:.9;
+  transition:opacity .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
+}
+.sc-open-i .zi{font-size:15px;line-height:1}
+.sc-card:hover .sc-open-i,.mc-card:hover .sc-open-i,.sc-open:focus-visible .sc-open-i{
+  opacity:1;background:var(--aka);color:#FFFBF3;border-color:var(--aka);
+}
+.sc-open:focus-visible{outline:2px solid var(--aka);outline-offset:-3px}
+@media (prefers-reduced-motion: reduce){ .sc-open-i{transition:none} }
+
 .sc-ft{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
 .sc-nm{font-weight:800;font-size:15.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .sc-pr{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
 .sc-ft .btn{width:100%;padding:8px 16px;font-size:13.5px}
+
+/* ============ каталог модулей: горизонтальная лента ============ */
+/* Лента выходит за пределы .wrap до края экрана, но первая карточка стоит
+   ровно по левой кромке контейнера — отсюда padding через max(). */
+#catalog{padding-bottom:0}
+.rail-wrap{position:relative;margin-top:6px}
+.rail{
+  display:flex;align-items:flex-start;gap:16px;
+  overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;
+  scroll-behavior:smooth;
+  padding-inline:max(20px, calc((100% - 1080px) / 2 + 20px));
+  /* без scroll-padding привязка scroll-snap выравнивает карточку по кромке
+     скроллпорта и «съедает» левый отступ — лента уезжала под край экрана */
+  scroll-padding-inline:max(20px, calc((100% - 1080px) / 2 + 20px));
+  /* вертикальный запас: карточка на ховере приподнимается и роняет тень,
+     а overflow-x:auto режет и по вертикали */
+  padding-block:10px 20px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--line) transparent;
+}
+.rail::-webkit-scrollbar{height:8px}
+.rail::-webkit-scrollbar-track{background:transparent}
+.rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.rail::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+@media (prefers-reduced-motion: reduce){ .rail{scroll-behavior:auto} }
+
+.mc-card{
+  flex:0 0 268px;scroll-snap-align:start;
+  display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);
+  transition:transform .24s ease, box-shadow .24s ease, border-color .24s ease;
+}
+/* :has(:focus-visible), а не :focus-within — иначе после клика мышью по
+   «В корзину» карточка навсегда оставалась приподнятой (см. .sc-card) */
+.mc-card:hover,.mc-card:has(:focus-visible){
+  transform:translateY(-5px);
+  box-shadow:0 16px 34px color-mix(in srgb, var(--ink) 20%, transparent);
+  border-color:color-mix(in srgb, var(--aka) 40%, var(--line));
+}
+.mc-media{
+  position:relative;aspect-ratio:1/1;overflow:hidden;
+  border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;
+  background:var(--paper);
+}
+.mc-media img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .3s ease}
+.mc-card:hover .mc-media img,.mc-card:has(:focus-visible) .mc-media img{transform:scale(1.06)}
+/* описание — «жидкое стекло» ТОЛЬКО под собственным текстом: раньше полоса
+   растягивалась на всё фото (inset:0) и размывала модуль целиком, ради
+   которого на карточку и смотрят. Теперь матовая только нижняя лента,
+   высотой ровно по строке-другой текста, а сам модуль остаётся виден */
+.mc-hover{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:10px 12px 11px;
+  font-size:12.5px;line-height:1.4;font-weight:600;color:var(--ink);
+  background:color-mix(in srgb, var(--panel) 78%, transparent);
+  border-top:1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  backdrop-filter:blur(7px) saturate(1.1);
+  -webkit-backdrop-filter:blur(7px) saturate(1.1);
+  opacity:0;transform:translateY(100%);
+  transition:opacity .24s ease, transform .24s ease;
+  pointer-events:none;
+}
+.mc-card:hover .mc-hover,.mc-card:has(:focus-visible) .mc-hover{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  .mc-card,.mc-media img,.mc-hover{transition:none}
+}
+/* на таче описание показываем постоянно — раскрывать нечем */
+@media (hover:none){
+  .mc-hover{opacity:1;transform:none}
+}
+.mc-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:5px;flex:1}
+.mc-nm{font-weight:800;font-size:16px;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.mc-jp{font-size:11px;font-weight:700;color:var(--aka);letter-spacing:.18em}
+.mc-size{font-size:12px;color:var(--muted);font-weight:700;line-height:1.4}
+/* пометка «предварительно»: числа в KD.MODULES.size — плейсхолдеры,
+   Майк заменит их одним проходом по каталогу */
+.mc-prelim{
+  display:inline-block;margin-left:5px;
+  font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--muted);
+  border:1px dashed var(--line);border-radius:99px;padding:1px 7px;
+  white-space:nowrap;
+}
+.mc-pr{
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:19px;
+  font-variant-numeric:tabular-nums;margin-top:2px;
+}
+.mc-acts{display:flex;flex-direction:column;gap:7px;margin-top:auto;padding-top:9px}
+.mc-acts .btn{width:100%;padding:10px 14px;font-size:13.5px;min-height:44px}
+/* короткое подтверждение «добавлено» прямо на кнопке — заказ живёт ниже,
+   без обратной связи клик уходил в пустоту */
+.mc-acts .btn.done{background:var(--ok);color:#FFFBF3;border-color:var(--ok)}
+
+/* матовые затухания по краям ленты: под стрелками карточка уезжает в размытый
+   край страницы, а не подлезает под кнопку встык. Маска гасит и сам blur, иначе
+   у затухания была бы видна резкая правая кромка. Появляются вместе со
+   стрелками — на таче стрелок нет, значит и затемнять нечего */
+.rail-wrap::before,.rail-wrap::after{
+  content:"";position:absolute;top:0;bottom:0;z-index:3;pointer-events:none;
+  /* шире, чем поле до контейнера: затухание должно доставать ЗА стрелку,
+     иначе кнопка стоит уже на прозрачном месте и снова липнет к карточке */
+  width:max(120px, calc((100% - 1080px) / 2 + 110px));
+  backdrop-filter:blur(6px) saturate(1.05);
+  -webkit-backdrop-filter:blur(6px) saturate(1.05);
+  transition:opacity .25s ease;
+}
+.rail-wrap::before{
+  left:0;
+  background:linear-gradient(to right,
+    var(--paper) 28%, color-mix(in srgb, var(--paper) 55%, transparent) 68%, transparent);
+  mask-image:linear-gradient(to right, #000 55%, transparent);
+  -webkit-mask-image:linear-gradient(to right, #000 55%, transparent);
+}
+.rail-wrap::after{
+  right:0;
+  background:linear-gradient(to left,
+    var(--paper) 28%, color-mix(in srgb, var(--paper) 55%, transparent) 68%, transparent);
+  mask-image:linear-gradient(to left, #000 55%, transparent);
+  -webkit-mask-image:linear-gradient(to left, #000 55%, transparent);
+}
+/* у края прокрутки прятать нечего — гасим вместе с соответствующей стрелкой */
+.rail-wrap.at-start::before{opacity:0}
+.rail-wrap.at-end::after{opacity:0}
+@media (hover:none){ .rail-wrap::before,.rail-wrap::after{display:none} }
+@media (prefers-reduced-motion: reduce){
+  .rail-wrap::before,.rail-wrap::after{transition:none}
+}
+
+/* стрелки-скроллеры ленты — только там, где есть настоящий ховер */
+.rail-nav{
+  position:absolute;top:calc(50% - 10px);transform:translateY(-50%);z-index:4;
+  width:44px;height:44px;border-radius:50%;padding:0 0 4px;
+  border:2px solid var(--ink);background:var(--panel);color:var(--ink);
+  box-shadow:3px 3px 0 var(--aka);
+  font-size:24px;font-weight:700;line-height:1;cursor:pointer;
+  display:grid;place-items:center;
+  transition:opacity .2s ease, transform .15s ease, background .15s ease, color .15s ease;
+}
+.rail-prev{left:max(6px, calc((100% - 1080px) / 2 - 14px))}
+.rail-next{right:max(6px, calc((100% - 1080px) / 2 - 14px))}
+.rail-nav:hover{transform:translateY(-50%) scale(1.08);background:var(--aka);color:#FFFBF3;border-color:var(--aka)}
+.rail-nav[disabled]{opacity:0;pointer-events:none}
+@media (hover:none){ .rail-nav{display:none} }
+
+/* сводка прямых покупок: появляется под лентой, когда что-то положили в заказ.
+   Иначе «В корзину» уходило бы в пустоту — состав виден только в модалке */
+.cart-bar{
+  display:none;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:6px auto 0;max-width:1080px;
+  padding:12px 16px;
+  border:1.5px dashed var(--aka);border-radius:16px;
+  background:color-mix(in srgb, var(--aka) 7%, var(--panel));
+}
+.cart-bar.show{display:flex}
+.cart-bar .cb-t{font-weight:800;font-size:14.5px}
+.cart-bar .cb-n{color:var(--muted);font-weight:700;font-size:13.5px}
+.cart-bar .btn{margin-left:auto;padding:9px 18px;font-size:13.5px;min-height:44px}
+@media (max-width:640px){
+  .cart-bar{margin-inline:20px}
+  .cart-bar .btn{margin-left:0;width:100%}
+}
 
 /* ============ студия (конструктор домиков) ============ */
 .studio{
@@ -557,13 +905,8 @@ button{font-family:inherit}
 .chip .pr{font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .chip.disabled{opacity:.45;cursor:not-allowed}
 .chip.disabled:hover{transform:none;border-color:var(--line);box-shadow:none}
-/* умная игрушка мягко светится, пока посетитель не навёл курсор
-   и не открыл её описание — идею модуля сами пока не считывают */
-.chip.glow{border-color:var(--aka);animation:chip-glow 2.2s ease-in-out infinite}
-@keyframes chip-glow{
-  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--aka) 0%, transparent)}
-  50%{box-shadow:0 0 16px 3px color-mix(in srgb, var(--aka) 55%, transparent)}
-}
+/* .chip.glow и @keyframes chip-glow удалены: подсветка была нужна одному
+   модулю, которого на странице больше нет, и js её никому не выставлял */
 @media (prefers-reduced-motion: reduce){
   .chip.glow{animation:none;box-shadow:0 0 12px 2px color-mix(in srgb, var(--aka) 45%, transparent)}
 }
@@ -787,7 +1130,6 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 }
 
 /* как это работает */
-.modes-note{font-weight:800;color:var(--ink);font-size:15px;margin:0 0 14px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media (max-width:760px){.steps{grid-template-columns:1fr}}
 .step{
@@ -833,6 +1175,64 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 #dragGhost img{width:100%;height:100%;-webkit-user-drag:none}
 
+/* ============ полноэкранный просмотр готовой сборки ============ */
+/* В карточке рендер обрезан до 4:3 и увеличен — здесь кадр 16:9 виден целиком.
+   Отдельная оболочка, а не .modal: та рассчитана на узкую форму заказа. */
+.lb-back{
+  position:fixed;inset:0;z-index:400;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(12px,3vw,32px);
+  background:color-mix(in srgb, var(--ink) 62%, transparent);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.lb-back[hidden]{display:none}
+/* --lb-w и --lb-ar задаёт js при открытии: у сборки кадр 16:9 и широкая
+   оболочка, у модуля — квадрат и узкая, иначе картинка занимала бы весь экран */
+.lb{
+  position:relative;
+  width:min(var(--lb-w, 1100px),100%);max-height:100%;overflow:auto;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:22px;box-shadow:var(--shadow);
+}
+/* кадр целиком; на низком экране высоту режет max-height, и картинка
+   ложится письмом по центру, а не выдавливает описание за край */
+.lb-shot{
+  aspect-ratio:var(--lb-ar, 1376/768);
+  max-height:calc(100vh - 260px);
+  background:var(--paper);
+  display:grid;place-items:center;overflow:hidden;
+  border-radius:21px 21px 0 0;
+}
+@supports (height:100dvh){ .lb-shot{max-height:calc(100dvh - 260px)} }
+.lb-shot img{max-width:100%;max-height:100%;display:block}
+.lb-info{padding:16px 20px 20px;display:flex;flex-direction:column;gap:9px;align-items:flex-start}
+.lb-nm{
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:21px;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.lb-pr{font-size:16px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.lb-jp{font-size:12px;font-weight:700;color:var(--aka);letter-spacing:.18em}
+.lb-size{font-size:12.5px;font-weight:700;color:var(--muted);font-family:Nunito,sans-serif}
+.lb-ds{margin:0;font-size:15px;line-height:1.5;color:var(--muted);max-width:70ch}
+.lb-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:3px}
+.lb-acts .btn{min-height:44px}
+.lb-acts .btn.done{background:var(--ok);color:#FFFBF3;border-color:var(--ok)}
+.lb-x{
+  position:absolute;top:12px;right:12px;z-index:2;
+  width:40px;height:40px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  background:color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:var(--ink);font-size:16px;line-height:1;cursor:pointer;
+  display:grid;place-items:center;
+}
+.lb-x:hover{border-color:var(--aka);color:var(--aka)}
+@media (max-width:560px){
+  .lb-shot{max-height:none}
+  .lb-nm{font-size:19px}
+  .lb-info .btn{width:100%}
+}
+
 /* ============ модалка ============ */
 .modal-back{
   position:fixed;inset:0;z-index:300;
@@ -856,11 +1256,32 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 .modal .x:hover{border-color:var(--aka);color:var(--aka)}
 .order-lines{margin:0 0 14px;padding:0;list-style:none}
 .order-lines li{
-  display:flex;justify-content:space-between;gap:10px;
+  display:flex;justify-content:space-between;gap:10px;align-items:center;
   font-size:14.5px;padding:7px 0;border-bottom:1px dashed var(--line);
 }
 .order-lines li.total{font-weight:800;font-size:16px;border-bottom:none}
-.order-lines .n{font-variant-numeric:tabular-nums}
+.order-lines .n{font-variant-numeric:tabular-nums;white-space:nowrap}
+/* заказ ОДИН, но состав разделён на две категории: собранное в конструкторе
+   и модули, купленные напрямую из каталога (у вторых — счётчик количества) */
+.og-t{
+  display:flex;align-items:center;gap:9px;
+  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:14px 0 0;
+}
+.og-t:first-child{margin-top:0}
+.og-t::after{content:"";height:1px;background:var(--line);flex:1}
+.order-lines li .nm{flex:1;min-width:0}
+.qty{display:inline-flex;align-items:center;gap:2px;flex:none}
+.qty button{
+  width:26px;height:26px;padding:0;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--line);background:var(--panel);color:var(--muted);
+  font-size:15px;font-weight:800;line-height:1;
+  transition:border-color .14s ease, color .14s ease;
+}
+.qty button:hover{border-color:var(--aka);color:var(--aka)}
+.qty .q{min-width:22px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
+.qty .rm{margin-left:4px;border-color:transparent;font-size:13px}
+.qty .rm:hover{border-color:var(--aka);color:var(--aka)}
 .f-row{margin-bottom:12px}
 .f-row label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
 .f-row input,.f-row textarea{
@@ -1017,23 +1438,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   100%{opacity:0;transform:translate(-50%,-70px) scale(.9)}
 }
 
-/* видео в правой половине героя */
-.film-frame{
-  position:relative;
-  aspect-ratio:4/3;
-  border-radius:var(--r);
-  overflow:hidden;
-  border:1px solid var(--line);
-  box-shadow:var(--shadow);
-  background:#000;
-}
-@media (max-width:860px){ .film-frame{aspect-ratio:16/9} }
-.film-frame video{display:block;width:100%;height:100%;object-fit:cover}
-
-/* видео-демо в разделе «умная игрушка» — отдельная широкая рамка 16:9 */
-.smart-film{max-width:760px;margin:0 auto 28px}
-.smart-film .film-frame{aspect-ratio:16/9}
-.smart-film .film-cap{margin:12px 0 0;text-align:center;color:var(--muted);font-size:14.5px}
+/* .film-frame / .smart-film / .modes-note удалены вместе с секцией про игровые
+   сценарии: последний видео-кадр на странице живёт в карусели (.reel-frame) */
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}

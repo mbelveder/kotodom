@@ -16,15 +16,29 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=64">
-<link rel="stylesheet" href="css/style.css?v=64">
-<script defer src="config.js?v=64"></script>
-<script defer src="js/zdog.dist.min.js?v=64"></script>
-<script defer src="js/catalog.js?v=64"></script>
-<script defer src="js/scene.js?v=64"></script>
-<script defer src="js/configurator.js?v=64"></script>
-<script defer src="js/chat.js?v=64"></script>
-<script defer src="js/app.js?v=64"></script>
+<link rel="stylesheet" href="css/fonts.css?v=72">
+<link rel="stylesheet" href="css/style.css?v=72">
+<script defer src="config.js?v=72"></script>
+<script defer src="js/zdog.dist.min.js?v=72"></script>
+<script defer src="js/catalog.js?v=72"></script>
+<script defer src="js/scene.js?v=72"></script>
+<script defer src="js/configurator.js?v=72"></script>
+<script defer src="js/chat.js?v=72"></script>
+<script defer src="js/app.js?v=72"></script>
+<!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
+     страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
+     Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
+     сохранённый выбор → системная тема (никакого data-theme, работает
+     @media prefers-color-scheme). -->
+<script>
+(function(){
+  try{
+    var p = new URLSearchParams(location.search).get("theme");
+    var t = (p === "light" || p === "dark") ? p : localStorage.getItem("kd_theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 
@@ -33,31 +47,121 @@
     <a class="hanko" href="#" aria-label="Котоши — на главную"><img src="assets/logo-momo.png?v=2" alt="" width="256" height="256" decoding="async"></a>
     <!-- штрих над второй «о»: ノ — один взмах кисти, читается как знак ударения -->
     <div class="brand disp">Кот<span class="jo">о<i>ノ</i></span>ши<small>домики для кошек</small></div>
+    <!-- «демо-магазин» из навигации убран: дисклеймер живёт в футере и в модалке
+         заказа, в шапке он только шумел. Каталог модулей — уже не заглушка -->
     <nav class="head-nav">
       <a href="#gallery" class="hide-m" id="navPresets">Готовые сборки</a>
+      <a href="#catalog" class="hide-m">Каталог модулей</a>
       <a href="#builder">Конструктор домиков</a>
-      <a href="#smart" class="hide-m">Умная игрушка</a>
-      <span class="nav-soon hide-m" tabindex="0" role="note"
-        aria-label="Здесь будет каталог отдельных модулей с указанием размеров">Каталог модулей<span class="nav-tip" aria-hidden="true">Здесь будет каталог отдельных модулей с указанием размеров.</span></span>
       <a href="#info" class="hide-m">Доставка</a>
-      <span class="demo-pill">демо-магазин</span>
     </nav>
+    <!-- переключатель темы: «авто» следует за системой (тогда data-theme не
+         выставлен вовсе и работает @media prefers-color-scheme), светлая и
+         тёмная — принудительно. Выбор помнится в localStorage (kd_theme).
+         Сцена конструктора рисуется на canvas и на CSS-переменные не смотрит —
+         её пересборку дёргает KD.scene.refreshTheme() из js/app.js. -->
+    <div class="theme-pick" id="themePick" role="radiogroup" aria-label="Оформление">
+      <button type="button" data-theme-set="auto" role="radio" aria-checked="true"
+              title="Как в системе" aria-label="Тема как в системе"><span class="tp-a">A</span></button>
+      <button type="button" data-theme-set="light" role="radio" aria-checked="false"
+              title="Светлая тема" aria-label="Светлая тема">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      </button>
+      <button type="button" data-theme-set="dark" role="radio" aria-checked="false"
+              title="Тёмная тема" aria-label="Тёмная тема">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.4A8.5 8.5 0 0 1 9.6 4a8.5 8.5 0 1 0 10.4 10.4Z"/></svg>
+      </button>
+    </div>
   </div>
 </header>
 
 <main>
 
-<section class="hero2">
+<!-- ============ панорамная карусель: первый экран ============
+     Крупный масштаб продукта ДО текста-простыни. Разметка статическая (слайды
+     видны и без js), js/app.js добавляет только поведение: стрелки, точки,
+     свайп, клавиатуру. Подпись — «морозное стекло» в ВЕРХНЕМ ЛЕВОМ углу кадра
+     (тот же эффект, что у .scene-head): тёмных градиентов поверх фото нет,
+     они съедали продукт. «Подробнее» стоит ОТДЕЛЬНОЙ пилюлей под плашкой, а не
+     внутри неё, и у всех трёх слайдов ведёт на следующую секцию (#product) —
+     карусель работает как приглашение листать страницу дальше. -->
+
+<section class="showreel" aria-label="Котоши крупным планом">
+  <div class="wrap">
+    <div class="reel" id="reel">
+      <div class="reel-frame">
+        <div class="reel-track" id="reelTrack">
+
+          <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="1 из 3">
+            <div class="reel-shot">
+              <img src="assets/carousel-1.jpg?v=1" alt="Модульный домик Котоши из берёзовой фанеры в светлой комнате: два куба-норы, тоннель, гамак и башня с крышей" fetchpriority="high" decoding="async">
+            </div>
+            <div class="reel-lead">
+              <div class="reel-cap">
+                <h2>Домик, который растёт вместе с котом</h2>
+                <p>Берёзовая фанера, ковролиновые площадки, японская сдержанность. Собирается из модулей — как конструктор.</p>
+              </div>
+              <a class="reel-more" href="#product">Подробнее →</a>
+            </div>
+          </div>
+
+          <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="2 из 3">
+            <div class="reel-shot">
+              <video id="filmVid" autoplay muted loop playsinline preload="metadata"
+                     poster="assets/kotoshi-poster.jpg?v=3" aria-label="Кот обживает свой Котоши">
+                <source src="assets/kotoshi-loop.webm?v=4" type="video/webm">
+                <source src="assets/kotoshi-loop.mp4?v=4" type="video/mp4">
+              </video>
+            </div>
+            <div class="reel-lead">
+              <div class="reel-cap">
+                <h2>Кот обживает домик за один вечер</h2>
+                <p>Лазы, тоннель, гамак, смотровая площадка — маршрут, по которому хочется бегать.</p>
+              </div>
+              <a class="reel-more" href="#product">Подробнее →</a>
+            </div>
+          </div>
+
+          <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="3 из 3">
+            <div class="reel-shot">
+              <img src="assets/carousel-3.jpg?v=1" alt="Сборка «Дозорный»: ряд одинаковых кубов вдоль стены, башня с крышей, гамак и чаша-лежанка" loading="lazy" decoding="async">
+            </div>
+            <div class="reel-lead">
+              <div class="reel-cap">
+                <h2>Выглядит как мебель, а не как аксессуар</h2>
+                <p>Одна линия вдоль стены, единый габарит модулей, четыре природных цвета когтеточки.</p>
+              </div>
+              <a class="reel-more" href="#product">Подробнее →</a>
+            </div>
+          </div>
+
+        </div>
+        <!-- стрелки — в нижних углах кадра, поверх фото больше ничего нет -->
+        <button class="reel-arw reel-prev" id="reelPrev" type="button" aria-label="Предыдущий слайд">‹</button>
+        <button class="reel-arw reel-next" id="reelNext" type="button" aria-label="Следующий слайд">›</button>
+      </div>
+      <!-- точки — ПОД кадром и по центру; на бумажном фоне белые точки не видны,
+           поэтому неактивные красим в --line, активную в --aka -->
+      <div class="reel-dots" id="reelDots" role="tablist" aria-label="Слайды">
+        <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Слайд 1"></button>
+        <button type="button" role="tab" aria-selected="false" aria-label="Слайд 2"></button>
+        <button type="button" role="tab" aria-selected="false" aria-label="Слайд 3"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero2" id="product">
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <div class="eyebrow-jp">ねこのいえ</div>
-      <h1>Умные модульные домики<br>для ваших кошек и котов</h1>
+      <h1>Модульные домики<br>для ваших кошек и котов</h1>
       <ul class="hero-points">
         <li>
           <span class="pt-ico">組</span>
           <div>
-            <strong>Умные</strong>
-            <p>Запускайте игровые сценарии через приложение и следите за активностью своих любимцев</p>
+            <strong>Единый габарит</strong>
+            <p>Одинаковая ширина и высота у всех модулей: они встают в одну линию без зазоров, в любом порядке</p>
           </div>
         </li>
         <li>
@@ -75,15 +179,38 @@
           </div>
         </li>
       </ul>
-      <a class="btn btn-aka hero-cta" href="#builder">Собрать свой домик</a>
+      <!-- ведёт на «Готовые сборки», а не сразу в конструктор: та же логика, что
+           у «Подробнее» в карусели — кнопка передаёт человека следующей секции,
+           а оттуда любая карточка открывает конструктор с готовым планом -->
+      <a class="btn btn-aka hero-cta" href="#gallery">Собрать свой домик</a>
     </div>
+    <!-- Ролик уехал в карусель на первый экран; здесь теперь тройка снимков-
+         деталей: материал (большой вертикальный) + тактильность и модульность
+         (два квадрата столбцом). Пока кадра нет, .shot-ph держит место
+         полосатой заглушкой с подписью — честно, без притворства. -->
     <div class="hero-media">
-      <div class="film-frame">
-        <video id="filmVid" autoplay muted loop playsinline preload="metadata"
-               poster="assets/kotoshi-poster.jpg?v=3" aria-label="Кот обживает свой Котоши">
-          <source src="assets/kotoshi-loop.webm?v=4" type="video/webm">
-          <source src="assets/kotoshi-loop.mp4?v=4" type="video/mp4">
-        </video>
+      <div class="detail-trio">
+        <figure class="shot shot-tall" id="detailMaterial">
+          <img src="assets/detail-material.jpg?v=2" alt="Макро: щека из берёзовой фанеры с тёмной кромкой и утопленным винтом, рядом джутовый вал и терракотовый ковролин"
+               loading="lazy" decoding="async"
+               onerror="this.closest('.shot').classList.add('no-img')">
+          <div class="shot-ph" aria-hidden="true">материал: фанера, кромка, винт</div>
+        </figure>
+        <figure class="shot" id="detailCarpet">
+          <img src="assets/detail-carpet.jpg?v=1" alt="Крупный план петлевого терракотового ковролина на скате крыши"
+               loading="lazy" decoding="async"
+               onerror="this.closest('.shot').classList.add('no-img')">
+          <div class="shot-ph" aria-hidden="true">ковролин: когтеточка и лежанка</div>
+        </figure>
+        <!-- вместо макро-стыка — сам модуль крыши целиком: студийный кадр из
+             каталога, тот же файл, что в ленте модулей (одна картинка на два
+             места, лишнего веса нет) -->
+        <figure class="shot shot-module" id="detailRoof">
+          <img src="assets/module-cards/roof-asym.jpg?v=1" alt="Модуль «Крыша»: домик из берёзовой фанеры с терракотовым ковролином на скате и джутовым коньком"
+               loading="lazy" decoding="async"
+               onerror="this.closest('.shot').classList.add('no-img')">
+          <div class="shot-ph" aria-hidden="true">модуль: крыша</div>
+        </figure>
       </div>
     </div>
   </div>
@@ -93,9 +220,37 @@
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">みほん</span>идеи для начала</div>
     <h2>Готовые сборки</h2>
-    <p class="sec-sub">Нажмите «Собрать» — домик откроется в конструкторе домиков, а дальше можно
-       двигать модули по своему желанию.</p>
+    <!-- раздел теперь третий, после карусели и деталей: продукт уже показан,
+         сборки читаются как идеи-заготовки, а не как первое знакомство -->
+    <p class="sec-sub">Шесть готовых конфигураций — от одного куба до целого комплекса.
+       «Развернуть» — рассмотреть сборку целиком и прочитать про неё, «Собрать» — открыть
+       её в конструкторе, где модули можно двигать как угодно.</p>
     <div class="showcase-grid" id="showcaseGrid"></div>
+  </div>
+</section>
+
+<!-- ============ каталог модулей ============
+     Почти все сценарии ведут в конструктор, но человек, который уже знает,
+     чего хочет, должен иметь возможность докупить модуль напрямую. Лента
+     рендерится из KD.MODULES + KD.CATALOG (js/app.js), а не руками в HTML. -->
+<section id="catalog">
+  <div class="wrap">
+    <div class="sec-eyebrow"><span class="jp">もくじ</span>каталог модулей</div>
+    <h2>Из чего собирается домик</h2>
+    <p class="sec-sub">Все модули одного габарита — одинаковая ширина и высота, различается только
+       глубина. Поэтому они состыковываются в одну линию без зазоров, в любом порядке.</p>
+  </div>
+  <div class="rail-wrap">
+    <button class="rail-nav rail-prev" id="railPrev" type="button" aria-label="Прокрутить каталог влево">‹</button>
+    <div class="rail" id="moduleRail"></div>
+    <button class="rail-nav rail-next" id="railNext" type="button" aria-label="Прокрутить каталог вправо">›</button>
+  </div>
+  <!-- прямые покупки видны только в модалке заказа — без этой плашки клик
+       «В корзину» уходил бы в пустоту -->
+  <div class="cart-bar" id="cartBar" role="status">
+    <span class="cb-t">Отдельные модули в заказе:</span>
+    <span class="cb-n" id="cartNote"></span>
+    <button class="btn btn-aka" id="cartOrder" type="button">Оформить заказ</button>
   </div>
 </section>
 
@@ -141,11 +296,13 @@
           <h2>Конструктор домиков</h2>
           <details class="scene-instr" id="sceneInstr">
             <summary id="guideToggle">Инструкция</summary>
-            <p class="scene-sub-lead">Воспользуйтесь любым из способов или скомбинируйте несколько:</p>
+            <!-- вступление сокращено: посетитель уже прошёл карусель, детали
+                 материала и каталог модулей — представлять продукт заново не нужно -->
+            <p class="scene-sub-lead">Любым способом или всеми сразу:</p>
             <ul class="scene-sub">
-              <li>Перетаскивайте модули в комнату; клик по кубу открывает выбор формы лаза и «убрать», клик по другим модулям убирает их</li>
-              <li>Откройте готовые сборки во вкладке слева</li>
-              <li>Опишите своего питомца в чате с Момо, нашим ИИ-консультантом по кнопке в правом нижнем углу конструктора домиков</li>
+              <li>Перетащите модули из полки внизу; клик по кубу — форма лаза или «убрать»</li>
+              <li>Возьмите готовую сборку во вкладке слева</li>
+              <li>Опишите кота в чате с Момо — кнопка в правом нижнем углу</li>
             </ul>
             <button class="guide-reopen" id="guideReopen" type="button">
               <span class="gr-q" aria-hidden="true">?</span>показать подсказки ещё раз
@@ -261,46 +418,6 @@
   </div>
 </section>
 
-<section id="smart">
-  <div class="wrap">
-    <div class="sec-eyebrow"><span class="jp">あそび</span>умная игрушка</div>
-    <h2>Кот в игре, даже когда вы заняты</h2>
-    <p class="sec-sub">Умная игрушка — не отдельный модуль, а «оживление» всего домика: пёрышко
-       и дразнилка развлекают кота по сценариям, пока вы на работе или в отъезде. Доступна для любой сборки от шести модулей (минимум два куба) и работает в трёх режимах —
-       выбирайте по характеру питомца.</p>
-    <div class="smart-film">
-      <div class="film-frame">
-        <video autoplay muted loop playsinline preload="metadata"
-               poster="assets/smart-toy-poster.jpg" aria-label="Как работает умная игрушка Котоши">
-          <source src="assets/smart-toy-loop.webm" type="video/webm">
-          <source src="assets/smart-toy-loop.mp4" type="video/mp4">
-        </video>
-      </div>
-      <p class="film-cap">Запустили сценарий с телефона — пёрышко ожило в тоннеле, кот примчался.
-         А камера в домике поймала момент, который вы увидите вечером.</p>
-    </div>
-    <p class="modes-note">Три режима — для сборок больше шести модулей (минимум два куба):</p>
-    <div class="steps">
-      <div class="step">
-        <div class="ico">初</div>
-        <h3>Начальный</h3>
-        <p>Пара базовых сценариев и пёрышко, запуск из приложения. Кот при деле, пока вас нет пару часов, — без лишних настроек.</p>
-      </div>
-      <div class="step">
-        <div class="ico">進</div>
-        <h3>Продвинутый</h3>
-        <p>Больше сценариев и датчики движения: игрушка замечает, когда кот подкрался или заскучал, и подхватывает игру. Плюс запуск голосом.</p>
-      </div>
-      <div class="step">
-        <div class="ico">極</div>
-        <h3>Максимальный</h3>
-        <p>Все сценарии, камера в домике и ритм игры под настроение кота. Распознование разных питомцев для индивидуальных сводок.
-           Вечером — короткий отчёт, как прошёл день и статистика игры.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section id="how">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">しくみ</span>как устроен магазин</div>
@@ -371,6 +488,18 @@
 
 <!-- drag ghost -->
 <div id="dragGhost"></div>
+
+<!-- полноэкранный просмотр — одна оболочка на витрину сборок и на каталог
+     модулей. В карточке картинка обрезана, здесь она видна целиком, вместе
+     с полным описанием и кнопками. Содержимое #lbInfo собирает js/app.js:
+     у сборки одна кнопка, у модуля две, поэтому разметка не статическая -->
+<div class="lb-back" id="lbBack" role="dialog" aria-modal="true" aria-labelledby="lbName" hidden>
+  <div class="lb">
+    <button class="lb-x" id="lbX" type="button" aria-label="Закрыть просмотр">✕</button>
+    <div class="lb-shot"><img id="lbImg" alt="" decoding="async"></div>
+    <div class="lb-info" id="lbInfo"></div>
+  </div>
+</div>
 
 <!-- checkout modal -->
 <div class="modal-back" id="modalBack">
