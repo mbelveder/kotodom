@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=70">
-<link rel="stylesheet" href="css/style.css?v=70">
-<script defer src="config.js?v=70"></script>
-<script defer src="js/zdog.dist.min.js?v=70"></script>
-<script defer src="js/catalog.js?v=70"></script>
-<script defer src="js/scene.js?v=70"></script>
-<script defer src="js/configurator.js?v=70"></script>
-<script defer src="js/chat.js?v=70"></script>
-<script defer src="js/app.js?v=70"></script>
+<link rel="stylesheet" href="css/fonts.css?v=71">
+<link rel="stylesheet" href="css/style.css?v=71">
+<script defer src="config.js?v=71"></script>
+<script defer src="js/zdog.dist.min.js?v=71"></script>
+<script defer src="js/catalog.js?v=71"></script>
+<script defer src="js/scene.js?v=71"></script>
+<script defer src="js/configurator.js?v=71"></script>
+<script defer src="js/chat.js?v=71"></script>
+<script defer src="js/app.js?v=71"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -53,7 +53,6 @@
       <a href="#gallery" class="hide-m" id="navPresets">Готовые сборки</a>
       <a href="#catalog" class="hide-m">Каталог модулей</a>
       <a href="#builder">Конструктор домиков</a>
-      <a href="#smart" class="hide-m">Умная игрушка</a>
       <a href="#info" class="hide-m">Доставка</a>
     </nav>
     <!-- переключатель темы: «авто» следует за системой (тогда data-theme не
@@ -161,8 +160,8 @@
         <li>
           <span class="pt-ico">組</span>
           <div>
-            <strong>Умные</strong>
-            <p>Запускайте игровые сценарии через приложение и следите за активностью своих любимцев</p>
+            <strong>Единый габарит</strong>
+            <p>Одинаковая ширина и высота у всех модулей: они встают в одну линию без зазоров, в любом порядке</p>
           </div>
         </li>
         <li>
@@ -223,9 +222,9 @@
     <h2>Готовые сборки</h2>
     <!-- раздел теперь третий, после карусели и деталей: продукт уже показан,
          сборки читаются как идеи-заготовки, а не как первое знакомство -->
-    <p class="sec-sub">Шесть готовых конфигураций — от одного куба до целого комплекса. Наведите,
-       чтобы прочитать про сборку, нажмите «Собрать» — она откроется в конструкторе, где
-       модули можно двигать как угодно.</p>
+    <p class="sec-sub">Шесть готовых конфигураций — от одного куба до целого комплекса.
+       «Развернуть» — рассмотреть сборку целиком и прочитать про неё, «Собрать» — открыть
+       её в конструкторе, где модули можно двигать как угодно.</p>
     <div class="showcase-grid" id="showcaseGrid"></div>
   </div>
 </section>
@@ -419,46 +418,6 @@
   </div>
 </section>
 
-<section id="smart">
-  <div class="wrap">
-    <div class="sec-eyebrow"><span class="jp">あそび</span>умная игрушка</div>
-    <h2>Кот в игре, даже когда вы заняты</h2>
-    <p class="sec-sub">Умная игрушка — не отдельный модуль, а «оживление» всего домика: пёрышко
-       и дразнилка развлекают кота по сценариям, пока вы на работе или в отъезде. Доступна для любой сборки от шести модулей (минимум два куба) и работает в трёх режимах —
-       выбирайте по характеру питомца.</p>
-    <div class="smart-film">
-      <div class="film-frame">
-        <video autoplay muted loop playsinline preload="metadata"
-               poster="assets/smart-toy-poster.jpg" aria-label="Как работает умная игрушка Котоши">
-          <source src="assets/smart-toy-loop.webm" type="video/webm">
-          <source src="assets/smart-toy-loop.mp4" type="video/mp4">
-        </video>
-      </div>
-      <p class="film-cap">Запустили сценарий с телефона — пёрышко ожило в тоннеле, кот примчался.
-         А камера в домике поймала момент, который вы увидите вечером.</p>
-    </div>
-    <p class="modes-note">Три режима — для сборок больше шести модулей (минимум два куба):</p>
-    <div class="steps">
-      <div class="step">
-        <div class="ico">初</div>
-        <h3>Начальный</h3>
-        <p>Пара базовых сценариев и пёрышко, запуск из приложения. Кот при деле, пока вас нет пару часов, — без лишних настроек.</p>
-      </div>
-      <div class="step">
-        <div class="ico">進</div>
-        <h3>Продвинутый</h3>
-        <p>Больше сценариев и датчики движения: игрушка замечает, когда кот подкрался или заскучал, и подхватывает игру. Плюс запуск голосом.</p>
-      </div>
-      <div class="step">
-        <div class="ico">極</div>
-        <h3>Максимальный</h3>
-        <p>Все сценарии, камера в домике и ритм игры под настроение кота. Распознование разных питомцев для индивидуальных сводок.
-           Вечером — короткий отчёт, как прошёл день и статистика игры.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section id="how">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">しくみ</span>как устроен магазин</div>
@@ -530,18 +489,15 @@
 <!-- drag ghost -->
 <div id="dragGhost"></div>
 
-<!-- полноэкранный просмотр готовой сборки: в карточке рендер обрезан до 4:3 и
-     увеличен, здесь он виден целиком, вместе с описанием и кнопкой сборки.
-     Оболочка статическая, содержимое подставляет js/app.js -->
+<!-- полноэкранный просмотр — одна оболочка на витрину сборок и на каталог
+     модулей. В карточке картинка обрезана, здесь она видна целиком, вместе
+     с полным описанием и кнопками. Содержимое #lbInfo собирает js/app.js:
+     у сборки одна кнопка, у модуля две, поэтому разметка не статическая -->
 <div class="lb-back" id="lbBack" role="dialog" aria-modal="true" aria-labelledby="lbName" hidden>
   <div class="lb">
     <button class="lb-x" id="lbX" type="button" aria-label="Закрыть просмотр">✕</button>
     <div class="lb-shot"><img id="lbImg" alt="" decoding="async"></div>
-    <div class="lb-info">
-      <div class="lb-nm"><span id="lbName"></span><span class="lb-pr" id="lbPrice"></span></div>
-      <p class="lb-ds" id="lbDesc"></p>
-      <button class="btn btn-aka" id="lbBuild" type="button">Собрать в конструкторе</button>
-    </div>
+    <div class="lb-info" id="lbInfo"></div>
   </div>
 </div>
 

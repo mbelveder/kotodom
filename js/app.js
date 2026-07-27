@@ -219,14 +219,14 @@ SHOWCASE.forEach(g => {
   const media = g.img
     ? `<img src="${g.img}" alt="Сборка ${g.nm} в интерьере" loading="lazy">`
     : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
-  /* описание больше НЕ лежит «стеклом» поверх фото: оно выпадает под карточкой
-     на обычном фоне (см. .sc-reveal). «Стекло» осталось за лентой модулей —
-     две витрины намеренно раскрываются по-разному */
+  /* Описание с карточки убрано совсем: на ховере оно перекрывало соседей и
+     мешало сравнивать сборки. Читается в развёрнутом просмотре — туда же
+     переехала и вся длинная копирайтерская часть */
   /* «развернуть» есть только у сборок с настоящим рендером: мокап с иероглифом
      во весь экран показывать нечего */
   const zoom = g.img
     ? `<button class="sc-open" type="button" aria-label="Открыть сборку ${g.nm} во весь экран">
-         <span class="sc-open-i" aria-hidden="true">⤢</span>
+         <span class="sc-open-i"><span class="zi" aria-hidden="true">⤢</span>Развернуть</span>
        </button>`
     : "";
   el.innerHTML = `
@@ -237,39 +237,50 @@ SHOWCASE.forEach(g => {
     <div class="sc-ft">
       <div class="sc-nm">${g.nm}<span class="sc-pr">${fmt(presetPrice(g.preset))}</span></div>
       <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
-    </div>
-    <div class="sc-reveal"><div><p>${g.ds}</p></div></div>`;
+    </div>`;
   showcaseGrid.appendChild(el);
   el.querySelector(".sc-ft button").addEventListener("click", () => buildFromShowcase(g.preset));
   const zoomBtn = el.querySelector(".sc-open");
-  if (zoomBtn) zoomBtn.addEventListener("click", () => lightbox.open(g, zoomBtn));
+  if (zoomBtn) zoomBtn.addEventListener("click", () => openShowcase(g, zoomBtn));
 });
 
-/* ---------- полноэкранный просмотр сборки ---------- */
-/* Раскрытие карточки на странице — «одним глазком»: обрезанный кадр и пара
-   строк. Отсюда видно рендер целиком, полное описание и кнопку сборки. */
+/* ---------- полноэкранный просмотр: одна оболочка на витрину и на каталог ---------- */
+/* Карточка показывает картинку, имя и цену; всё остальное — здесь. Содержимое
+   правой части собирается на лету, поэтому кнопки у сборки и у модуля разные. */
 const lightbox = (function(){
   const back = $("#lbBack");
   if (!back) return { open(){} };
-  const img = $("#lbImg"), nmEl = $("#lbName"), prEl = $("#lbPrice"),
-        dsEl = $("#lbDesc"), buildBtn = $("#lbBuild"), xBtn2 = $("#lbX");
-  let returnTo = null, key = null;
+  const box = back.querySelector(".lb"), img = $("#lbImg"),
+        info = $("#lbInfo"), xBtn2 = $("#lbX");
+  let returnTo = null;
 
-  function open(g, trigger){
-    key = g.preset;
-    returnTo = trigger || null;
-    img.src = g.img;
-    img.alt = `Сборка ${g.nm} в интерьере`;
-    nmEl.textContent = g.nm;
-    prEl.textContent = fmt(presetPrice(g.preset));
-    dsEl.textContent = g.ds;
+  /* opts: { src, alt, ratio, width, name, meta, desc, actions:[{label,cls,on}] } */
+  function open(opts){
+    returnTo = opts.trigger || null;
+    img.src = opts.src;
+    img.alt = opts.alt || "";
+    box.style.setProperty("--lb-ar", opts.ratio || "1376/768");
+    box.style.setProperty("--lb-w", opts.width || "1100px");
+    info.innerHTML = `
+      <div class="lb-nm"><span id="lbName">${opts.name}</span>${opts.meta || ""}</div>
+      <p class="lb-ds">${opts.desc}</p>
+      <div class="lb-acts"></div>`;
+    const acts = info.querySelector(".lb-acts");
+    (opts.actions || []).forEach(a => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn " + (a.cls || "btn-ghost");
+      b.textContent = a.label;
+      b.addEventListener("click", () => a.on(b));
+      acts.appendChild(b);
+    });
     back.hidden = false;
     /* фон под оверлеем прокручиваться не должен; ширину полосы прокрутки
        возвращаем паддингом, иначе страница дёргается на её исчезновении */
     const gap = window.innerWidth - document.documentElement.clientWidth;
     if (gap > 0) document.body.style.paddingRight = gap + "px";
     document.body.style.overflow = "hidden";
-    buildBtn.focus();
+    (acts.firstChild || xBtn2).focus();
   }
   function close(){
     if (back.hidden) return;
@@ -282,25 +293,70 @@ const lightbox = (function(){
 
   xBtn2.addEventListener("click", close);
   back.addEventListener("click", e => { if (e.target === back) close(); });
-  buildBtn.addEventListener("click", () => {
-    const k = key;
-    close();
-    buildFromShowcase(k);
-  });
-  /* Esc закрывает, Tab не выпускает фокус наружу: фокусируемых элементов
-     всего два, поэтому цикл считаем вручную, без библиотеки */
+  /* Esc закрывает, Tab не выпускает фокус наружу. Кнопки собираются заново на
+     каждое открытие, поэтому список остановок считаем в момент нажатия */
   document.addEventListener("keydown", e => {
     if (back.hidden) return;
     if (e.key === "Escape"){ e.stopPropagation(); close(); return; }
     if (e.key !== "Tab") return;
-    const stops = [xBtn2, buildBtn];
+    const stops = [xBtn2].concat(Array.from(info.querySelectorAll("button")));
     const i = stops.indexOf(document.activeElement);
     e.preventDefault();
     stops[(i + (e.shiftKey ? stops.length - 1 : 1) + stops.length) % stops.length].focus();
   }, true);
 
-  return { open };
+  return { open, close };
 })();
+
+/* короткое подтверждение прямо на кнопке: заказ живёт ниже по странице, без
+   обратной связи клик выглядел бы «ничего не произошло». Исходную подпись
+   запоминаем ОДИН раз: иначе второй быстрый клик принимал за неё уже
+   подменённый текст и «Добавлено ✓» залипало навсегда */
+const flashTimers = new WeakMap();
+function flash(btn, text){
+  if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+  clearTimeout(flashTimers.get(btn));
+  btn.textContent = text;
+  btn.classList.add("done");
+  flashTimers.set(btn, setTimeout(() => {
+    btn.textContent = btn.dataset.label;
+    btn.classList.remove("done");
+  }, 1400));
+}
+
+function openShowcase(g, trigger){
+  lightbox.open({
+    trigger, src: g.img, alt: `Сборка ${g.nm} в интерьере`,
+    ratio: "1376/768", width: "1100px",
+    name: g.nm, meta: `<span class="lb-pr">${fmt(presetPrice(g.preset))}</span>`,
+    desc: g.ds,
+    actions: [{ label: "Собрать в конструкторе", cls: "btn-aka",
+                on: () => { lightbox.close(); buildFromShowcase(g.preset); } }]
+  });
+}
+
+/* модуль: рендер квадратный, поэтому оболочка уже — иначе картинка занимала бы
+   весь экран по высоте. Тут же полное описание, которого нет в карточке */
+function openModule(type, card, trigger){
+  const m = KD.MODULES[type];
+  lightbox.open({
+    trigger, src: `assets/module-cards/${card}.jpg`, alt: `Модуль «${m.name}»`,
+    ratio: "1/1", width: "760px",
+    name: m.name,
+    meta: `<span class="lb-jp">${m.jp}</span><span class="lb-pr">${fmt(m.price)}</span>
+           <span class="lb-size">${m.size}<span class="mc-prelim">предварительно</span></span>`,
+    desc: m.desc,
+    actions: [
+      { label: "В конструктор", cls: "btn-aka", on: b => {
+          const r = KD.addModule(type);
+          if (!r.ok){ flash(b, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return; }
+          lightbox.close();
+          ($("#builderHead") || $("#builder")).scrollIntoView({ behavior: "smooth", block: "start" });
+        } },
+      { label: "В корзину", cls: "btn-ghost", on: b => { KD.cart.add(type); flash(b, "Добавлено ✓"); } }
+    ]
+  });
+}
 
 /* ---------- панорамная карусель (первый экран) ---------- */
 /* Разметка слайдов статическая — карусель видна и без js. Здесь только
@@ -369,12 +425,16 @@ if (rail){
     const el = document.createElement("article");
     el.className = "mc-card";
     el.dataset.type = type;
-    /* описание в покое СКРЫТО (.mc-hover проявляется на ховере/фокусе):
-       лента должна читаться как ровный ряд товаров, а не как стена текста */
+    /* в карточке — КОРОТКАЯ строка (m.short) полосой понизу фото: полный текст
+       закрывал стеклом весь модуль, ради которого на карточку и смотрят.
+       Полное описание живёт в развёрнутом просмотре */
     el.innerHTML = `
       <div class="mc-media">
         <img src="assets/module-cards/${card}.jpg" alt="Модуль «${m.name}»" loading="lazy" decoding="async">
-        <div class="mc-hover">${m.desc}</div>
+        <div class="mc-hover">${m.short || m.desc}</div>
+        <button class="sc-open mc-open" type="button" data-act="zoom" aria-label="Открыть модуль «${m.name}» во весь экран">
+          <span class="sc-open-i"><span class="zi" aria-hidden="true">⤢</span>Развернуть</span>
+        </button>
       </div>
       <div class="mc-body">
         <div class="mc-nm">${m.name}<span class="mc-jp">${m.jp}</span></div>
@@ -388,26 +448,15 @@ if (rail){
     rail.appendChild(el);
   });
 
-  /* короткое подтверждение прямо на кнопке: заказ живёт ниже по странице,
-     без обратной связи клик выглядел бы «ничего не произошло».
-     Исходную подпись запоминаем ОДИН раз: иначе второй быстрый клик принимал
-     за неё уже подменённый текст и «Добавлено ✓» залипало навсегда */
-  const flashTimers = new WeakMap();
-  function flash(btn, text){
-    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
-    clearTimeout(flashTimers.get(btn));
-    btn.textContent = text;
-    btn.classList.add("done");
-    flashTimers.set(btn, setTimeout(() => {
-      btn.textContent = btn.dataset.label;
-      btn.classList.remove("done");
-    }, 1400));
-  }
-
   rail.addEventListener("click", e => {
     const b = e.target.closest("button[data-act]");
     if (!b) return;
-    const type = b.closest(".mc-card").dataset.type;
+    const cardEl = b.closest(".mc-card");
+    const type = cardEl.dataset.type;
+    if (b.dataset.act === "zoom"){
+      openModule(type, KD.CATALOG.find(c => c.type === type).card, b);
+      return;
+    }
     if (b.dataset.act === "cart"){
       KD.cart.add(type);
       flash(b, "Добавлено ✓");

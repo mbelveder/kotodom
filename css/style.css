@@ -101,27 +101,35 @@ button{font-family:inherit}
    в футере и в модалке заказа — в шапке он только шумел */
 @media (max-width:720px){ .head-nav a.hide-m{display:none} }
 
-/* переключатель темы: авто / светлая / тёмная. Сегментированный контрол в духе
-   .collection-pick — та же роль radiogroup и та же «печатная» пилюля */
+/* переключатель темы: авто / светлая / тёмная. Служебный контрол, а не действие —
+   поэтому тихий: без своей панели и без заливки --aka у выбранного (красный
+   кружок был самым громким пятном в шапке). Выбранное состояние показываем
+   мягкой подложкой и цветом --ink, остальные приглушены до --muted */
 .theme-pick{
-  display:inline-flex;align-items:center;gap:2px;flex:none;
-  margin-left:14px;padding:3px;
-  border:1.5px solid var(--line);border-radius:99px;background:var(--panel);
+  display:inline-flex;align-items:center;gap:1px;flex:none;
+  margin-left:12px;padding:2px;
+  border:1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius:99px;background:transparent;
+  opacity:.72;transition:opacity .18s ease;
 }
+.theme-pick:hover,.theme-pick:focus-within{opacity:1}
 .theme-pick button{
   position:relative;
-  width:32px;height:32px;padding:0;flex:none;
+  width:26px;height:26px;padding:0;flex:none;
   border:none;border-radius:50%;background:transparent;color:var(--muted);
   cursor:pointer;display:grid;place-items:center;
   transition:background .15s ease, color .15s ease;
 }
 /* сама кнопка компактная — зону нажатия расширяем до 44px невидимой подложкой */
-.theme-pick button::before{content:"";position:absolute;inset:-6px}
-.theme-pick button:hover{color:var(--aka)}
-.theme-pick button.is-on{background:var(--aka);color:#FFFBF3}
-.theme-pick svg{width:16px;height:16px;fill:none;stroke:currentColor;
-  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.theme-pick .tp-a{font-weight:800;font-size:13px;line-height:1}
+.theme-pick button::before{content:"";position:absolute;inset:-9px}
+.theme-pick button:hover{color:var(--ink)}
+.theme-pick button.is-on{
+  background:color-mix(in srgb, var(--ink) 10%, transparent);
+  color:var(--ink);
+}
+.theme-pick svg{width:14px;height:14px;fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.theme-pick .tp-a{font-weight:800;font-size:11.5px;line-height:1}
 @media (max-width:520px){ .theme-pick{margin-left:8px} }
 
 /* ============ панорамная карусель (первый экран) ============ */
@@ -306,22 +314,24 @@ button{font-family:inherit}
 .showcase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
 @media (max-width:900px){.showcase-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.showcase-grid{grid-template-columns:1fr}}
-/* карточка раскрывается ПРЯМО НА СТРАНИЦЕ (sneak peek, не модалка): на ховере
-   поднимается над сеткой, фото укрупняется, а под карточкой выпадает описание
-   сборки. Описание — absolute, поэтому высота ряда не меняется и сетка не
-   «дёргается»; overflow:hidden на карточке снят, скругление ушло на .sc-media */
+/* На ховере карточка приподнимается и укрупняет фото — и только. Описание
+   отсюда убрано совсем: оно перекрывало соседей и мешало сравнивать сборки,
+   читается в развёрнутом просмотре.
+   ВАЖНО про :has(:focus-visible) вместо :focus-within — после клика мышью
+   фокус остаётся на кнопке внутри карточки, и с :focus-within она навсегда
+   «залипала» в приподнятом состоянии. :focus-visible от клика мышью не
+   срабатывает, а с клавиатуры работает как раньше */
 .sc-card{
   position:relative;
   background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
   box-shadow:var(--shadow);
   display:flex;flex-direction:column;
-  transition:transform .26s ease, box-shadow .26s ease, border-radius .26s ease;
+  transition:transform .26s ease, box-shadow .26s ease;
 }
-.sc-card:hover,.sc-card:focus-within{
+.sc-card:hover,.sc-card:has(:focus-visible){
   z-index:5;
   transform:translateY(-4px);
   box-shadow:0 18px 40px color-mix(in srgb, var(--ink) 20%, transparent);
-  border-bottom-left-radius:0;border-bottom-right-radius:0;
 }
 .sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);--sc-zoom:1.34;
   border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
@@ -341,7 +351,7 @@ button{font-family:inherit}
 .sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:contain;
   transform:scale(var(--sc-zoom));transform-origin:center;transition:transform .3s ease}
 /* на ховере фото реально становится крупнее — не «стекло» поверх, а сам кадр */
-.sc-card:hover .sc-media img,.sc-card:focus-within .sc-media img{
+.sc-card:hover .sc-media img,.sc-card:has(:focus-visible) .sc-media img{
   transform:scale(calc(var(--sc-zoom) + .1));
 }
 .sc-card[data-key="watch"]   .sc-media{--sc-zoom:1.34}  /* 5 ячеек — эталон */
@@ -365,56 +375,35 @@ button{font-family:inherit}
   font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:58px;
   color:color-mix(in srgb, var(--aka) 42%, var(--panel));
 }
-/* описание сборки выпадает ПОД карточкой на обычном фоне панели, без
-   backdrop-filter: «стекло» осталось только у ленты модулей — две витрины
-   намеренно раскрываются по-разному. position:absolute + top:100% — ряд не
-   растёт, карточка раскрывается поверх соседей снизу */
-.sc-reveal{
-  position:absolute;top:100%;left:-1px;right:-1px;z-index:1;
-  display:grid;grid-template-rows:0fr;
-  background:var(--panel);
-  border:1px solid var(--line);border-top:none;
-  border-radius:0 0 var(--r) var(--r);
-  box-shadow:0 18px 40px color-mix(in srgb, var(--ink) 20%, transparent);
-  opacity:0;pointer-events:none;
-  transition:grid-template-rows .28s ease, opacity .2s ease;
-}
-.sc-reveal>div{overflow:hidden}
-.sc-reveal p{margin:0;padding:0 14px 14px;font-size:14px;line-height:1.45;color:var(--muted)}
-.sc-card:hover .sc-reveal,.sc-card:focus-within .sc-reveal{grid-template-rows:1fr;opacity:1}
 @media (prefers-reduced-motion: reduce){
-  .sc-card,.sc-media img,.sc-reveal{transition:none}
+  .sc-card,.sc-media img{transition:none}
 }
-/* без ховера (тач) раскрывать нечем — описание видно всегда, обычным блоком в потоке */
-@media (hover:none){
-  .sc-reveal{
-    position:static;grid-template-rows:1fr;opacity:1;
-    border:none;box-shadow:none;border-radius:0;
-  }
-  .sc-reveal p{padding-top:2px}
-}
-/* «развернуть»: прозрачная кнопка на всё фото + значок в углу. Кнопка настоящая,
-   а не обработчик на div, — открывается и с клавиатуры, и читалкой */
+/* «развернуть»: прозрачная кнопка на всё фото + подпись в углу. Кнопка настоящая,
+   а не обработчик на div, — открывается и с клавиатуры, и читалкой.
+   Раньше это был безымянный кружок со значком, и про полноэкранный режим никто
+   не догадывался: теперь пилюля со словом, видна в покое и наливается на ховере */
 .sc-open{
   position:absolute;inset:0;z-index:2;
   border:none;background:none;padding:0;cursor:zoom-in;
 }
 .sc-open-i{
   position:absolute;top:10px;right:10px;
-  width:34px;height:34px;border-radius:50%;
-  display:grid;place-items:center;
-  font-size:15px;line-height:1;color:var(--ink);
-  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
-  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  display:inline-flex;align-items:center;gap:6px;
+  height:34px;padding:0 13px;border-radius:99px;
+  font-size:13px;font-weight:800;line-height:1;color:var(--ink);
+  border:1.5px solid color-mix(in srgb, var(--ink) 26%, transparent);
+  background:color-mix(in srgb, var(--panel) 80%, transparent);
   backdrop-filter:blur(6px) saturate(1.15);
   -webkit-backdrop-filter:blur(6px) saturate(1.15);
-  opacity:0;transform:scale(.9);
-  transition:opacity .2s ease, transform .2s ease;
+  box-shadow:0 4px 14px color-mix(in srgb, var(--ink) 16%, transparent);
+  opacity:.9;
+  transition:opacity .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
 }
-.sc-card:hover .sc-open-i,.sc-open:focus-visible .sc-open-i{opacity:1;transform:scale(1)}
+.sc-open-i .zi{font-size:15px;line-height:1}
+.sc-card:hover .sc-open-i,.mc-card:hover .sc-open-i,.sc-open:focus-visible .sc-open-i{
+  opacity:1;background:var(--aka);color:#FFFBF3;border-color:var(--aka);
+}
 .sc-open:focus-visible{outline:2px solid var(--aka);outline-offset:-3px}
-/* на таче ховера нет — значок виден всегда, иначе про полноэкранный режим не догадаться */
-@media (hover:none){ .sc-open-i{opacity:1;transform:none} }
 @media (prefers-reduced-motion: reduce){ .sc-open-i{transition:none} }
 
 .sc-ft{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
@@ -455,7 +444,9 @@ button{font-family:inherit}
   box-shadow:var(--shadow);
   transition:transform .24s ease, box-shadow .24s ease, border-color .24s ease;
 }
-.mc-card:hover,.mc-card:focus-within{
+/* :has(:focus-visible), а не :focus-within — иначе после клика мышью по
+   «В корзину» карточка навсегда оставалась приподнятой (см. .sc-card) */
+.mc-card:hover,.mc-card:has(:focus-visible){
   transform:translateY(-5px);
   box-shadow:0 16px 34px color-mix(in srgb, var(--ink) 20%, transparent);
   border-color:color-mix(in srgb, var(--aka) 40%, var(--line));
@@ -466,30 +457,30 @@ button{font-family:inherit}
   background:var(--paper);
 }
 .mc-media img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .3s ease}
-.mc-card:hover .mc-media img,.mc-card:focus-within .mc-media img{transform:scale(1.06)}
-/* описание — «жидкое стекло» поверх фото (паттерн .pc-hover). В покое лента
-   читается как ровный ряд товаров, а не как стена текста */
+.mc-card:hover .mc-media img,.mc-card:has(:focus-visible) .mc-media img{transform:scale(1.06)}
+/* описание — «жидкое стекло» ТОЛЬКО под собственным текстом: раньше полоса
+   растягивалась на всё фото (inset:0) и размывала модуль целиком, ради
+   которого на карточку и смотрят. Теперь матовая только нижняя лента,
+   высотой ровно по строке-другой текста, а сам модуль остаётся виден */
 .mc-hover{
-  position:absolute;inset:0;display:flex;align-items:flex-end;
-  padding:12px;font-size:13px;line-height:1.45;font-weight:600;color:var(--ink);
-  background:linear-gradient(to top,
-    color-mix(in srgb, var(--panel) 86%, transparent) 55%,
-    color-mix(in srgb, var(--panel) 45%, transparent) 85%, transparent);
-  backdrop-filter:blur(5px) saturate(1.1);
-  -webkit-backdrop-filter:blur(5px) saturate(1.1);
-  opacity:0;transition:opacity .26s ease;pointer-events:none;
+  position:absolute;left:0;right:0;bottom:0;
+  padding:10px 12px 11px;
+  font-size:12.5px;line-height:1.4;font-weight:600;color:var(--ink);
+  background:color-mix(in srgb, var(--panel) 78%, transparent);
+  border-top:1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  backdrop-filter:blur(7px) saturate(1.1);
+  -webkit-backdrop-filter:blur(7px) saturate(1.1);
+  opacity:0;transform:translateY(100%);
+  transition:opacity .24s ease, transform .24s ease;
+  pointer-events:none;
 }
-.mc-card:hover .mc-hover,.mc-card:focus-within .mc-hover{opacity:1}
+.mc-card:hover .mc-hover,.mc-card:has(:focus-visible) .mc-hover{opacity:1;transform:none}
 @media (prefers-reduced-motion: reduce){
   .mc-card,.mc-media img,.mc-hover{transition:none}
 }
-/* на таче описание показываем постоянно внизу фото — как в витрине сборок */
+/* на таче описание показываем постоянно — раскрывать нечем */
 @media (hover:none){
-  .mc-hover{opacity:1;
-    background:linear-gradient(to top,
-      color-mix(in srgb, var(--panel) 90%, transparent) 62%, transparent);
-    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  }
+  .mc-hover{opacity:1;transform:none}
 }
 .mc-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:5px;flex:1}
 .mc-nm{font-weight:800;font-size:16px;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
@@ -1144,7 +1135,6 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 }
 
 /* как это работает */
-.modes-note{font-weight:800;color:var(--ink);font-size:15px;margin:0 0 14px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media (max-width:760px){.steps{grid-template-columns:1fr}}
 .step{
@@ -1201,16 +1191,18 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
 }
 .lb-back[hidden]{display:none}
+/* --lb-w и --lb-ar задаёт js при открытии: у сборки кадр 16:9 и широкая
+   оболочка, у модуля — квадрат и узкая, иначе картинка занимала бы весь экран */
 .lb{
   position:relative;
-  width:min(1100px,100%);max-height:100%;overflow:auto;
+  width:min(var(--lb-w, 1100px),100%);max-height:100%;overflow:auto;
   background:var(--panel);border:1px solid var(--line);
   border-radius:22px;box-shadow:var(--shadow);
 }
-/* кадр 16:9 целиком; на низком экране высоту режет max-height, и картинка
+/* кадр целиком; на низком экране высоту режет max-height, и картинка
    ложится письмом по центру, а не выдавливает описание за край */
 .lb-shot{
-  aspect-ratio:1376/768;
+  aspect-ratio:var(--lb-ar, 1376/768);
   max-height:calc(100vh - 260px);
   background:var(--paper);
   display:grid;place-items:center;overflow:hidden;
@@ -1224,8 +1216,12 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
 }
 .lb-pr{font-size:16px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.lb-jp{font-size:12px;font-weight:700;color:var(--aka);letter-spacing:.18em}
+.lb-size{font-size:12.5px;font-weight:700;color:var(--muted);font-family:Nunito,sans-serif}
 .lb-ds{margin:0;font-size:15px;line-height:1.5;color:var(--muted);max-width:70ch}
-.lb-info .btn{margin-top:3px;min-height:44px}
+.lb-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:3px}
+.lb-acts .btn{min-height:44px}
+.lb-acts .btn.done{background:var(--ok);color:#FFFBF3;border-color:var(--ok)}
 .lb-x{
   position:absolute;top:12px;right:12px;z-index:2;
   width:40px;height:40px;border-radius:50%;
@@ -1447,23 +1443,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
   100%{opacity:0;transform:translate(-50%,-70px) scale(.9)}
 }
 
-/* видео в правой половине героя */
-.film-frame{
-  position:relative;
-  aspect-ratio:4/3;
-  border-radius:var(--r);
-  overflow:hidden;
-  border:1px solid var(--line);
-  box-shadow:var(--shadow);
-  background:#000;
-}
-@media (max-width:860px){ .film-frame{aspect-ratio:16/9} }
-.film-frame video{display:block;width:100%;height:100%;object-fit:cover}
-
-/* видео-демо в разделе «умная игрушка» — отдельная широкая рамка 16:9 */
-.smart-film{max-width:760px;margin:0 auto 28px}
-.smart-film .film-frame{aspect-ratio:16/9}
-.smart-film .film-cap{margin:12px 0 0;text-align:center;color:var(--muted);font-size:14.5px}
+/* .film-frame / .smart-film / .modes-note удалены вместе с секцией «умная
+   игрушка»: последний видео-кадр на странице живёт в карусели (.reel-frame) */
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
