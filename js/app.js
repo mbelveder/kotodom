@@ -259,7 +259,11 @@ const lightbox = (function(){
     returnTo = opts.trigger || null;
     img.src = opts.src;
     img.alt = opts.alt || "";
-    box.style.setProperty("--lb-ar", opts.ratio || "1376/768");
+    /* --lb-ar для aspect-ratio, --lb-arn числом: в calc() дробь не умножить */
+    const ratio = opts.ratio || "1376/768";
+    const [rw, rh] = ratio.split("/").map(Number);
+    box.style.setProperty("--lb-ar", ratio);
+    box.style.setProperty("--lb-arn", rh ? (rw / rh).toFixed(4) : "1");
     box.style.setProperty("--lb-w", opts.width || "1100px");
     info.innerHTML = `
       <div class="lb-nm"><span id="lbName">${opts.name}</span>${opts.meta || ""}</div>
