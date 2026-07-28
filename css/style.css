@@ -1188,23 +1188,35 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 .lb-back[hidden]{display:none}
 /* --lb-w и --lb-ar задаёт js при открытии: у сборки кадр 16:9 и широкая
    оболочка, у модуля — квадрат и узкая, иначе картинка занимала бы весь экран */
+/* ширину оболочки ограничивает не только --lb-w, но и запас высоты: кадру
+   нужно (высота экрана − место под описание) × пропорция. Иначе кадр ужимался
+   бы по высоте и оставлял пустую полосу панели справа от себя */
 .lb{
   position:relative;
-  width:min(var(--lb-w, 1100px),100%);max-height:100%;overflow:auto;
+  width:min(var(--lb-w, 1100px), 100%,
+            max(520px, calc((100vh - 272px) * var(--lb-arn, 1.7917))));
+  max-height:100%;overflow:auto;
   background:var(--panel);border:1px solid var(--line);
   border-radius:22px;box-shadow:var(--shadow);
 }
-/* кадр целиком; на низком экране высоту режет max-height, и картинка
-   ложится письмом по центру, а не выдавливает описание за край */
+/* высоту кадра задаёт сама картинка, а не контейнер: при пропорции на
+   контейнере его высота остаётся неопределённой, проценты на картинке не
+   разрешаются и её режет кадром */
 .lb-shot{
-  aspect-ratio:var(--lb-ar, 1376/768);
-  max-height:calc(100vh - 260px);
-  background:var(--paper);
-  display:grid;place-items:center;overflow:hidden;
+  background:var(--paper);overflow:hidden;
   border-radius:21px 21px 0 0;
 }
-@supports (height:100dvh){ .lb-shot{max-height:calc(100dvh - 260px)} }
-.lb-shot img{max-width:100%;max-height:100%;display:block}
+.lb-shot img{
+  display:block;width:100%;
+  aspect-ratio:var(--lb-ar, 1376/768);
+  max-height:calc(100vh - 272px);
+  object-fit:contain;
+}
+@supports (height:100dvh){
+  .lb{width:min(var(--lb-w, 1100px), 100%,
+                max(520px, calc((100dvh - 272px) * var(--lb-arn, 1.7917))))}
+  .lb-shot img{max-height:calc(100dvh - 272px)}
+}
 .lb-info{padding:16px 20px 20px;display:flex;flex-direction:column;gap:9px;align-items:flex-start}
 .lb-nm{
   font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:21px;
@@ -1228,7 +1240,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .lb-x:hover{border-color:var(--aka);color:var(--aka)}
 @media (max-width:560px){
-  .lb-shot{max-height:none}
+  /* на узком экране оболочка во всю ширину, как и раньше */
+  .lb{width:min(var(--lb-w, 1100px),100%)}
+  .lb-shot img{max-height:none}
   .lb-nm{font-size:19px}
   .lb-info .btn{width:100%}
 }
