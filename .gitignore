@@ -8,12 +8,24 @@ docs/update-agents-doc.log
 server/ops-bot-offset.json
 server/kanban-map.json
 server/pending-track.json
+server/known-contacts.json
 
 # logo master (kept locally, only the web-size logo-momo.png is tracked)
 assets/logo-momo-full.png
 
 # local backup of original hero renders (kept on disk, not tracked)
 assets/_originals_render/
+
+# служебный каталог агента: внутри лежат worktree-копии самого репозитория
+.claude/
+
+# исходники и черновики под генерацию рендеров: на них не ссылается ни
+# index.html, ни js/*. Рабочие ассеты сайта лежат рядом под другими именами
+# (assets/kotoshi-loop.mp4, assets/carousel-1.jpg) и остаются в репозитории
+media_references/
+assets/t_*.mp4
+assets/carusel_1.png
+assets/kotoshi_hero_loop.mp4
 
 # внутреннее описание — не публикуем
 README.md
