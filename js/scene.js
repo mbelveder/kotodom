@@ -958,6 +958,23 @@ api.soloHouse = function(){
   dirty = true;
 };
 
+/* кадрирование соло-снимка: zoom — во сколько раз уменьшить/увеличить постройку
+   в кадре (1 = как в конструкторе), ox/oy — сдвиг в пикселях холста (вправо/вниз).
+   Нужно, когда рендеру требуется запас пустого поля СВЕРХУ: генератор изображений
+   следует за референсом буквально, поэтому «воздух» нельзя выпросить словами в
+   промпте — его надо заложить прямо в референсную картинку. */
+api.soloFrame = function(zoomMul, ox, oy){
+  if (!illo) return;
+  if (illo._baseZoom == null){
+    illo._baseZoom = illo.zoom;
+    world._baseX = world.translate.x; world._baseY = world.translate.y;
+  }
+  illo.zoom = illo._baseZoom * (zoomMul || 1);
+  world.translate.x = world._baseX + (ox || 0) / illo.zoom;
+  world.translate.y = world._baseY + (oy || 0) / illo.zoom;
+  dirty = true;
+};
+
 /* пульс модуля (при визите кота) */
 api.pulse = function(i){
   const a = moduleAnchors[i];

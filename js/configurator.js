@@ -800,13 +800,27 @@ io.observe(sceneWrap);
    подписей размеров и интерфейса страницы. Нужен, чтобы снимать чистые
    структурные референсы постройки под генерацию фото-рендеров.
    Примеры: ?solo=watch, ?solo=zoomies, ?solo (текущая/пустая сцена).
-   ?solo&module=tower — ОДИН модуль по центру пола (для каталога модулей). */
+   ?solo&module=tower — ОДИН модуль по центру пола (для каталога модулей).
+   ?solo&cells=0:base,1:tunnel,5:hammock — произвольная сборка, которой нет в
+   планах (варианты пресетов под альтернативные рендеры).
+   ?solo&zoom=0.95&ox=42&oy=82 — кадрирование: уменьшить постройку и опустить её вниз,
+   когда рендеру нужен запас пустого поля сверху (см. api.soloFrame). */
 (function solo(){
   const params = new URLSearchParams(location.search);
   if (!params.has("solo")) return;
   const key = params.get("solo");
   const moduleType = params.get("module");   // одиночный модуль для карточек-каталога
   const entryShape = params.get("entry");     // форма лаза для соло-куба: circle|square|pentagon
+  const zoomMul = parseFloat(params.get("zoom")) || 1;
+  const offsetX = parseFloat(params.get("ox")) || 0;
+  const offsetY = parseFloat(params.get("oy")) || 0;
+  /* "0:base,1:tunnel,5:hammock" -> { 0:"base", 1:"tunnel", 5:"hammock" } */
+  const rawCells = params.get("cells");
+  const cellsSpec = rawCells && rawCells.split(",").reduce((acc, pair) => {
+    const [i, t] = pair.split(":");
+    if (MODULES[t]) acc[+i] = t;
+    return acc;
+  }, {});
   const CENTER = 2;                          // центральная ячейка нижнего ряда (row0,col2)
   const placeSoloModule = t => {
     if (!MODULES[t]) return;
@@ -829,18 +843,32 @@ io.observe(sceneWrap);
     // подсказки-ярлыки (.bg-tip: «Размеры модулей…», чат) — оверлеи поверх сцены
     document.querySelectorAll(".bg-tip").forEach(e => { e.style.display = "none"; });
     document.body.style.background = "#F2ECDD";
+    // и распрямляем цепочку предков: поля, скругления и тени страницы смещают
+    // холст в кадре, из-за чего скриншот соло-режима невозможно повторить.
+    // Убираем их — холст занимает кадр целиком, границы кадра = границы холста
+    node = sceneWrap;
+    while (node){
+      Object.assign(node.style, { margin: "0", padding: "0", maxWidth: "none",
+        width: "100%", borderRadius: "0", boxShadow: "none", background: "#F2ECDD" });
+      if (node === document.body) break;
+      node = node.parentElement;
+    }
     window.scrollTo(0, 0);
   };
   const enter = () => {
     strip();
     if (moduleType) placeSoloModule(moduleType);
+    else if (cellsSpec) applyCells(cellsSpec);
     else if (PRESETS[key]) loadPreset(key);
     KD.scene.soloHouse();
-    // повторяем изоляцию после отложенной сборки пресета (place() держит houseA в кадре)
-    const delay = PRESETS[key] ? Object.keys(PRESETS[key].cells).length * 160 + 500 : 200;
+    KD.scene.soloFrame(zoomMul, offsetX, offsetY);
+    // повторяем изоляцию после отложенной сборки (place() держит houseA в кадре)
+    const built = cellsSpec || (PRESETS[key] && PRESETS[key].cells);
+    const delay = built ? Object.keys(built).length * 160 + 500 : 200;
     setTimeout(() => {
       if (moduleType) placeSoloModule(moduleType);
       KD.scene.soloHouse();
+      KD.scene.soloFrame(zoomMul, offsetX, offsetY);
     }, delay);
   };
   if (document.readyState === "complete") enter();
