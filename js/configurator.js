@@ -24,6 +24,7 @@ const momoTxt = $("#momoTxt");
 const btnOrder = $("#btnOrder");
 const btnUndo = $("#btnUndo");
 const btnClear = $("#btnClear");
+const removeZone = $("#removeZone");
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
@@ -424,14 +425,18 @@ function beginDrag(e, type, el, origin, valid){
   const pos = cellPositions(valid, w);
   const a = KD.scene.cellClientPos(0), b = KD.scene.cellClientPos(1);
   const cellPx = Math.hypot(b.x - a.x, b.y - a.y);
-  drag = { type, valid, pos, hot: null, thresh: Math.max(cellPx * 0.72, 26),
-           origin, w, el, pointerId: e.pointerId };
+  drag = { type, valid, pos, hot: null, trash: false, thresh: Math.max(cellPx * 0.72, 26),
+           origin, w, el, pointerId: e.pointerId,
+           /* полка «убрать» имеет смысл только для модуля, который уже стоял в
+              сборке (origin) — новый модуль из лотка ронять там нечего убирать */
+           zoneRect: origin ? removeZone.getBoundingClientRect() : null };
   ghostEl.innerHTML = ICON_SRC[type]
     ? `<img src="${ICON_SRC[type]}" alt="" draggable="false">`
     : `<div class="ico-txt">${MODULES[type].jp}</div>`;
   ghostEl.style.display = "block";
   moveGhost(e);
   KD.scene.showGhosts(valid, null, w);
+  if (drag.zoneRect) removeZone.classList.add("show");
   updateHot(e);   // курсор уже может стоять над валидной ячейкой
   canvas.classList.add("placing");
   el.addEventListener("pointermove", onDragMove);
@@ -452,14 +457,25 @@ function moveGhost(e){
   ghostEl.style.left = e.clientX + "px";
   ghostEl.style.top = e.clientY + "px";
 }
+function inRect(r, x, y){ return r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }
 function updateHot(e){
   if (!drag) return;
+  const overZone = inRect(drag.zoneRect, e.clientX, e.clientY);
+  if (overZone !== drag.trash){
+    drag.trash = overZone;
+    removeZone.classList.toggle("armed", overZone);
+    if (overZone) blip(320, 260, 0.05, 0.025);
+  }
+  /* курсор над полкой «убрать» — ячейки ковра больше не подсвечиваем: это
+     альтернативная цель, а не ещё одна ячейка для переноса */
   let best = null, bd = drag.thresh;
-  drag.valid.forEach(i => {
-    const p = drag.pos[i];
-    const d = Math.hypot(p.x - e.clientX, p.y - e.clientY);
-    if (d < bd){ bd = d; best = i; }
-  });
+  if (!overZone){
+    drag.valid.forEach(i => {
+      const p = drag.pos[i];
+      const d = Math.hypot(p.x - e.clientX, p.y - e.clientY);
+      if (d < bd){ bd = d; best = i; }
+    });
+  }
   if (best !== drag.hot){
     drag.hot = best;
     KD.scene.showGhosts(drag.valid, best, drag.w);
@@ -475,6 +491,16 @@ function onDragUp(e){
   if (!drag || e.pointerId !== drag.pointerId) return;
   const d = drag;
   endDrag();
+  /* отпустили над полкой «убрать» — модуль (d.origin) уже снят со сцены при
+     подхвате (см. canvas pointermove ниже), тут только фиксируем это как
+     необратимое действие: в историю отмен и с репликой, как обычное removeAt */
+  if (d.trash && d.origin){
+    undoStack.push(d.origin.prevGrid);
+    notifyEdit();
+    say(pick(SAY.removed));
+    refresh();
+    return;
+  }
   if (d.hot !== null && d.hot !== undefined){
     if (d.origin && d.hot === d.origin.from){
       place(d.hot, d.type, { silent: true, instant: true, entryShape: d.origin.entryShape });  // вернул на прежнее место
@@ -508,6 +534,7 @@ function onCtxMenu(e){ e.preventDefault(); } // меню посреди драг
 function onViewChange(){
   if (!drag) return;
   drag.pos = cellPositions(drag.valid, drag.w); // страница сдвинулась — ячейки теперь в других экранных координатах
+  if (drag.zoneRect) drag.zoneRect = removeZone.getBoundingClientRect();
 }
 function endDrag(){
   if (drag && drag.el){
@@ -525,6 +552,7 @@ function endDrag(){
   ghostEl.style.display = "none";
   KD.scene.clearGhosts();
   canvas.classList.remove("placing");
+  removeZone.classList.remove("show", "armed");
   drag = null;
 }
 

@@ -924,6 +924,40 @@ button{font-family:inherit}
 :root[data-theme="light"] .chip .nm{color:var(--ink)}
 :root[data-theme="light"] .chip .nm .nm-jp,:root[data-theme="light"] .chip .pr{color:var(--muted)}
 
+/* полка + действия под сценой — относительный контейнер для .remove-zone поверх них */
+.lower-panel{position:relative}
+
+/* подсветка «убрать перетаскиванием»: перекрывает всю полку (hint-bar…studio-actions)
+   пунктирной рамкой в цвете акцента — визуально совсем не похоже на подсветку
+   ячейки ковра (та — сплошной силуэт модуля прямо в сцене), чтобы не путать
+   «переставить» с «убрать». Показывается только когда тянут УЖЕ стоящий в
+   сборке модуль (drag.origin), не новый из лотка — см. beginDrag/updateHot */
+.remove-zone{
+  position:absolute;inset:6px;z-index:15;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border-radius:18px;
+  background:color-mix(in srgb, var(--aka) 10%, var(--panel) 90%);
+  border:2px dashed color-mix(in srgb, var(--aka) 55%, var(--line));
+  color:var(--aka);font-weight:800;font-size:14.5px;text-align:center;
+  opacity:0;transform:scale(.97);pointer-events:none;
+  transition:opacity .16s ease, transform .16s ease, background .16s ease, border-color .16s ease;
+}
+.remove-zone.show{opacity:1;transform:none}
+/* курсор наведён внутри полки — «взведена», отпустить здесь и правда уберёт модуль */
+.remove-zone.armed{
+  background:color-mix(in srgb, var(--aka) 24%, var(--panel) 76%);
+  border-style:solid;border-color:var(--aka);
+}
+.remove-zone .rz-ico{width:21px;height:21px;flex:none}
+.remove-zone .rz-ico path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.remove-zone.armed .rz-ico{animation:rz-shake .32s ease}
+@keyframes rz-shake{0%,100%{transform:none}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+@media (prefers-reduced-motion: reduce){
+  .remove-zone{transition:opacity .16s ease}
+  .remove-zone.armed .rz-ico{animation:none}
+}
+@media (max-width:560px){ .remove-zone{font-size:13px;gap:7px} }
+
 /* панель действий */
 .studio-actions{
   display:flex;flex-wrap:wrap;gap:10px;align-items:center;
