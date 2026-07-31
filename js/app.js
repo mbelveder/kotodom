@@ -362,6 +362,95 @@ function openModule(type, card, trigger){
   });
 }
 
+/* ---------- выбор цвета ткани на снимке модуля (секция «Продукт») ---------- */
+/* Три кадра сняты в одной точке и различаются только тоном ковролина и подушки,
+   поэтому переключение читается как смена материала на одном предмете. Разметка
+   статическая: без js виден терракотовый кадр — это рабочее состояние, а не
+   поломка. Соседние кадры подгружаются заранее, чтобы первый клик не мигал. */
+(function colorShot(){
+  const root = $("#colorShot");
+  const pick = $("#colorShotPick");
+  const img  = $("#colorShotImg");
+  const prev = $("#colorShotPrev");
+  if (!root || !pick || !img) return;
+
+  /* alt пересобираем целиком, а не заменяем слово в строке: цвет стоит в ней
+     дважды и в разных падежах («…ковролином» / «…подушкой») */
+  const ALT = {
+    terracotta: ["терракотовым", "терракотовой"],
+    sage:       ["шалфейным",    "шалфейной"],
+    charcoal:   ["угольным",     "угольной"],
+  };
+  const altText = col => `Модуль «Крыша»: домик из берёзовой фанеры с ${ALT[col][0]} `
+    + `ковролином на скате, джутовым коньком и плоской ${ALT[col][1]} подушкой внутри`;
+  const src = col => `assets/product-color-${col}.jpg?v=2`;
+  const swatches = Array.from(pick.querySelectorAll(".cs-sw"));
+
+  /* предзагрузка соседних кадров — но только когда снимок доехал до экрана,
+     чтобы не отбирать канал у первого экрана страницы */
+  const preload = () => swatches.forEach(b => { new Image().src = src(b.dataset.col); });
+  if ("IntersectionObserver" in window){
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)){ preload(); io.disconnect(); }
+    }, { rootMargin: "200px" });
+    io.observe(root);
+  } else preload();
+
+  /* стартовый цвет — угольный: он же стоит в разметке и в src картинки.
+     Менять надо в трёх местах сразу, иначе первый клик уедет не туда */
+  let cur = "charcoal";
+  function set(col){
+    if (col === cur || !ALT[col]) return;
+    const outgoing = img.currentSrc || img.src;
+    cur = col;
+    swatches.forEach(b => {
+      const on = b.dataset.col === col;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    /* Меняем src только когда следующий кадр уже в кэше: иначе <img> успевает
+       очиститься и в переходе мелькает фон. Пока новый проявляется, уходящий
+       держит слой .cs-prev — получается перекрёстное затухание, а не рывок. */
+    let swapped = false;
+    const swap = () => {
+      if (swapped) return;               // у кэшированной картинки complete и onload оба верны
+      swapped = true;
+      if (prev){
+        prev.style.backgroundImage = `url("${outgoing}")`;
+        prev.style.transition = "none";
+        prev.style.opacity = "1";
+        void prev.offsetWidth;           // форсируем reflow до снятия непрозрачности
+      }
+      img.src = src(col);
+      img.alt = altText(col);
+      if (prev) requestAnimationFrame(() => {
+        prev.style.transition = "";      // возвращаем длительность из css
+        prev.style.opacity = "0";
+      });
+    };
+    const next = new Image();
+    next.onload = next.onerror = swap;
+    next.src = src(col);
+    if (next.complete) swap();
+  }
+
+  pick.addEventListener("click", e => {
+    const b = e.target.closest(".cs-sw");
+    if (b) set(b.dataset.col);
+  });
+  /* стрелками — как в любом radiogroup: образцы это один выбор, а не три кнопки */
+  pick.addEventListener("keydown", e => {
+    const i = swatches.indexOf(document.activeElement);
+    if (i < 0) return;
+    const d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1
+            : e.key === "ArrowLeft"  || e.key === "ArrowUp"   ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    const nx = swatches[(i + d + swatches.length) % swatches.length];
+    nx.focus(); set(nx.dataset.col);
+  });
+})();
+
 /* ---------- панорамная карусель (первый экран) ---------- */
 /* Разметка слайдов статическая — карусель видна и без js. Здесь только
    поведение: стрелки, точки, свайп, клавиатура. Автопрокрутки нет намеренно:
