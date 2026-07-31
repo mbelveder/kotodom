@@ -915,20 +915,6 @@ button{font-family:inherit}
   color:var(--aka);border-color:var(--aka);
   background:color-mix(in srgb, var(--aka) 12%, var(--panel));
 }
-/* разделитель — отделяет необратимое «убрать» от выбора формы */
-.em-sep{width:1px;height:22px;background:var(--line);margin:0 1px}
-/* «убрать куб» — НАМЕРЕННО отличается от кнопок-форм: красная, крест-иконка */
-.em-rm{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:34px;height:34px;padding:0;cursor:pointer;
-  background:color-mix(in srgb, var(--aka) 12%, var(--panel));
-  border:1.5px solid color-mix(in srgb, var(--aka) 45%, var(--line));
-  border-radius:10px;color:var(--aka);
-  transition:background .16s,border-color .16s,color .16s;
-}
-.em-rm svg{width:17px;height:17px}
-.em-rm svg path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.em-rm:hover{background:var(--aka);border-color:var(--aka);color:#FFFBF3}
 /* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
 .em-rot{
   display:none;align-items:center;justify-content:center;
@@ -940,9 +926,8 @@ button{font-family:inherit}
 .em-rot svg{width:17px;height:17px}
 .em-rot svg path{fill:currentColor}
 .em-rot:hover{border-color:var(--aka);color:var(--aka)}
-/* меню когтеточки: только поворот + «убрать» — прячем формы лаза и разделитель форм */
-.entry-menu.scratch-only .ep-b,
-.entry-menu.scratch-only .em-sep-entry{ display:none }
+/* меню когтеточки: только поворот — прячем формы лаза */
+.entry-menu.scratch-only .ep-b{ display:none }
 .entry-menu.scratch-only .em-rot{ display:inline-flex }
 
 /* выбор цвета когтеточки и ковра — одна глобальная коллекция (когтеточка = ковёр);
@@ -965,7 +950,6 @@ button{font-family:inherit}
 .cp-terracotta{background:#D96A55}
 .cp-sage{background:#93A97F}
 .cp-charcoal{background:#6E686A}
-.cp-natural{background:#CBAE82}
 
 /* полка модулей: все 9 видны сразу, без прокрутки. Верхнюю границу даёт
    .collection-pick над лотком (одна панель) — здесь border-top не нужен */

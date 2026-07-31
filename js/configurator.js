@@ -255,15 +255,6 @@ function place(i, type, opts){
   }
   refresh();
 }
-function removeAt(i){
-  const type = grid[i];
-  if (!type) return;
-  const w = wOf(type);
-  for (let k = 0; k < w; k++){ grid[i + k] = null; delete scratchManual[i + k]; }
-  KD.scene.remove(i);
-  say(pick(SAY.removed));
-  refresh();
-}
 function clearAll(silent){
   closeEntryMenu();
   for (const k in scratchManual) delete scratchManual[k];
@@ -303,11 +294,13 @@ function refreshTrayIcons(){
   });
 }
 
-/* ---------- форма лаза: меню у куба ----------
-   Лаз выбирается на каждый куб отдельно. Наведение на куб подсвечивает его лаз
-   (KD.scene.setEntryHover), клик по кубу открывает у него меню: три формы +
-   кнопка «убрать» (см. index.html #entryMenu). Форма — отделка (в undo не пишем,
-   состав и цену не трогает); в сцене живёт по индексу ячейки. */
+/* ---------- меню настройки модуля ----------
+   Меню только настраивает: у куба — форма лаза, у когтеточки — поворот пандуса.
+   Убрать модуль отсюда нельзя, для этого его тянут на полку (см. removeZone в
+   onDragUp) — клик по модулю ничего не удаляет.
+   Лаз выбирается на каждый куб отдельно, наведение подсвечивает его
+   (KD.scene.setEntryHover); см. index.html #entryMenu. Форма — отделка (в undo
+   не пишем, состав и цену не трогает); в сцене живёт по индексу ячейки. */
 const entryMenu = $("#entryMenu");
 const ENTRY_SAY = {
   pentagon: "Лаз-домик — как у настоящего Котоши. Захожу по-хозяйски.",
@@ -315,7 +308,7 @@ const ENTRY_SAY = {
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
 let menuCell = null;   // ячейка открытого меню (или null)
-let menuKind = "cube"; // "cube" — куб (лаз + убрать); "scratch" — когтеточка (поворот + убрать)
+let menuKind = "cube"; // "cube" — куб (форма лаза); "scratch" — когтеточка (поворот пандуса)
 const ROT_SAY = ["Развернул пандус. Так удобнее заходить.", "Крутанул когтеточку — новый угол атаки.", "Повернул. Подиум смотрит куда надо."];
 
 function positionMenu(i){
@@ -336,7 +329,7 @@ function markMenuShape(i){
 function openEntryMenu(i, kind){
   menuCell = i;
   menuKind = kind || "cube";
-  entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот + убрать
+  entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот
   entryMenu.setAttribute("aria-label",
     menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
   markMenuShape(i);
@@ -353,12 +346,6 @@ KD.closeEntryMenu = closeEntryMenu;
 if (entryMenu){
   entryMenu.addEventListener("click", e => {
     if (menuCell === null || animating) return;
-    if (e.target.closest(".em-rm")){          // «убрать» — единственный необратимый пункт меню
-      const i = menuCell; closeEntryMenu();
-      if (!canRemove(i)){ say(pick(SAY.blocked)); KD.scene.pulse(i); return; }
-      snapshot(); notifyEdit(); removeAt(i);
-      return;
-    }
     if (e.target.closest(".em-rot") && menuKind === "scratch"){  // поворот пандуса (отделка, не в undo)
       const nd = (KD.scene.getScratchDir(menuCell) + 1) % 4;
       if (KD.scene.setScratchDir(menuCell, nd)){
@@ -493,8 +480,13 @@ function onDragUp(e){
   endDrag();
   /* отпустили над полкой «убрать» — модуль (d.origin) уже снят со сцены при
      подхвате (см. canvas pointermove ниже), тут только фиксируем это как
-     необратимое действие: в историю отмен и с репликой, как обычное removeAt */
+     необратимое действие: в историю отмен и с репликой.
+     Это ЕДИНСТВЕННЫЙ способ убрать модуль поштучно (кроме «Очистить») — клик по
+     модулю больше ничего не удаляет, поэтому здесь же чистим scratchManual:
+     флаг ручного поворота живёт по индексу ячейки, и без уборки следующий
+     пандус в этой же ячейке считался бы уже повёрнутым вручную */
   if (d.trash && d.origin){
+    for (let k = 0; k < wOf(d.type); k++) delete scratchManual[d.origin.from + k];
     undoStack.push(d.origin.prevGrid);
     notifyEdit();
     say(pick(SAY.removed));
@@ -556,7 +548,7 @@ function endDrag(){
   drag = null;
 }
 
-/* ---------- модуль в сцене: короткий клик = убрать, потянул = перенести ---------- */
+/* ---------- модуль в сцене: короткий клик = меню настройки, потянул = перенести ---------- */
 function cellAt(x, y){
   let best = null, bd = 46;
   for (let i = 0; i < N; i++){
@@ -596,32 +588,21 @@ canvas.addEventListener("pointerup", e => {
   let best = cellAt(e.clientX, e.clientY);
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
-  /* куб: клик открывает меню (лаз + убрать), а не удаляет сразу — удаление куба
-     живёт в меню. Модуль-крыша: конфигурация и так фиксирована, меню ей нечего
-     показать кроме «убрать» — так что клик убирает её сразу, без попапа.
-     «roof» проверяем ПЕРВЫМ, т.к. у него тоже есть лаз (hasEntry === true), но
-     там это не выбор. Остальные модули убираются как прежде */
-  if (grid[best] === "roof"){
-    closeEntryMenu();
-    if (!canRemove(best)){ say(pick(SAY.blocked)); KD.scene.pulse(best); return; }
-    snapshot();
-    notifyEdit();
-    removeAt(best);
-    return;
-  }
-  if (KD.scene.hasEntry(best)){
+  /* клик НИЧЕГО не убирает — убрать модуль можно только перетаскиванием на полку
+     (см. removeZone в onDragUp). Меню открывается лишь тем модулям, которым есть
+     что настроить: кубу — форма лаза, когтеточке — поворот пандуса. У крыши и
+     остальных настраивать нечего, поэтому клик по ним просто закрывает открытое
+     меню. «roof» проверяем ПЕРВЫМ: лаз у него есть (hasEntry === true), но это
+     не выбор. */
+  if (grid[best] !== "roof" && KD.scene.hasEntry(best)){
     if (menuCell === best && menuKind === "cube") closeEntryMenu(); else openEntryMenu(best, "cube");
     return;
   }
-  if (grid[best] === "scratch"){   // когтеточка: клик открывает меню поворота (+ убрать)
+  if (grid[best] === "scratch"){   // когтеточка: клик открывает меню поворота
     if (menuCell === best && menuKind === "scratch") closeEntryMenu(); else openEntryMenu(best, "scratch");
     return;
   }
   closeEntryMenu();
-  if (!canRemove(best)){ say(pick(SAY.blocked)); KD.scene.pulse(best); return; }
-  snapshot();
-  notifyEdit();
-  removeAt(best);
 });
 
 /* наведение на куб слегка подсвечивает его лаз — подсказка, что по нему кликают */
@@ -776,7 +757,7 @@ refresh();
 
 /* ---------- выбор цвета когтеточки/ковра (глобальная коллекция) ----------
    Одна коллекция задаёт цвет и когтеточки, и ковра — по правилу брендворлда.
-   ?collection=sage|charcoal|natural — применить сразу (для соло-съёмки рендеров). */
+   ?collection=sage|charcoal — применить сразу (для соло-съёмки рендеров). */
 const collectionPick = $("#collectionPick");
 function markCollection(){
   if (!collectionPick) return;

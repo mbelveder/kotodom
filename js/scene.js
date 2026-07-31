@@ -59,7 +59,7 @@ const isDark = () => {
 /* ---------- коллекции цвета акцентов ----------
    Глобальная коллекция задаёт АКЦЕНТЫ сборки: ковролин когтеточки/крыш/скатов
    (carpet/carpetDeep), полотно гамака/подушку (sling/slingDeep) и ободок
-   чаши-лежанки (bowlRim). Четыре природных тона; переключение пересобирает сцену.
+   чаши-лежанки (bowlRim). Три природных тона; переключение пересобирает сцену.
    ВАЖНО: ковёр ПОД модулями (rug/rugIn) в коллекции НЕ участвует — он фиксированно
    светло-серый (см. PALETTES), чтобы «пол» сборки не менялся вслед за акцентом. */
 const COLLECTIONS = {
@@ -72,9 +72,6 @@ const COLLECTIONS = {
   charcoal: {
     light:{ carpet:"#4A4547", carpetDeep:"#3A3639", sling:"#8A8285", slingDeep:"#6E686A", bowlRim:"#6E686A" },
     dark: { carpet:"#5B5661", carpetDeep:"#49444E", sling:"#7A747C", slingDeep:"#5B5661", bowlRim:"#8A8285" } },
-  natural: {
-    light:{ carpet:"#A9814B", carpetDeep:"#886237", sling:"#C29A5F", slingDeep:"#A9814B", bowlRim:"#A9814B" },
-    dark: { carpet:"#8A6E44", carpetDeep:"#6B5333", sling:"#B49468", slingDeep:"#9A7E56", bowlRim:"#B49468" } },
 };
 let collection = "terracotta";   // по умолчанию — как «Новичок» в брендворлде
 /* палитра активной темы, поверх неё — цвета выбранной коллекции. Копия, а не
@@ -734,7 +731,7 @@ api.init = function(){
    поэтому палитру сцены пересобираем явно (см. js/app.js) */
 api.refreshTheme = rebuildAndRestore;
 
-/* цветовая коллекция (когтеточка = ковёр): terracotta | sage | charcoal | natural */
+/* цветовая коллекция (когтеточка = ковёр): terracotta | sage | charcoal */
 api.getCollection = () => collection;
 api.listCollections = () => Object.keys(COLLECTIONS);
 api.setCollection = function(name){
