@@ -270,25 +270,20 @@ button{font-family:inherit}
 .hero-points p{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--muted)}
 .hero-cta{display:inline-block;margin-top:24px;text-decoration:none}
 
-/* ============ hero: тройка снимков-деталей вместо ролика ============ */
-/* Ролик уехал в карусель наверх. Здесь — «честная мебель» вблизи: большое
-   вертикальное фото материала слева (на обе строки) и два квадрата справа.
-   Высоту задают квадраты, вертикальный кадр растягивается на обе строки —
-   так три кадра всегда выровнены по общей нижней линии. */
-.detail-trio{display:grid;grid-template-columns:1.35fr 1fr;gap:12px}
+/* ============ hero: интерактивный кадр «выбери ткань» вместо ролика ============ */
+/* Ролик уехал в карусель наверх, тройка макро-снимков — в один кадр: модуль
+   «Крыша» с плоской подушкой, три цвета ковролина. Снимки сняты в одной
+   точке и различаются только тоном ткани, поэтому переключение читается как
+   смена материала на одном предмете, а не как смена картинки. */
 .shot{
   position:relative;margin:0;overflow:hidden;
   border-radius:var(--r);
   border:1px solid var(--line);
   box-shadow:var(--shadow);
   background:var(--paper);
+  aspect-ratio:1/1;
 }
-.shot-tall{grid-row:1 / span 2}
-.shot:not(.shot-tall){aspect-ratio:1/1}
 .shot img{width:100%;height:100%;display:block;object-fit:cover}
-/* студийный кадр модуля: вокруг предмета много воздуха, рядом с макро-снимками
-   он выглядел пустым — подрезаем поля лёгким увеличением */
-.shot-module img{transform:scale(1.1)}
 /* пока кадра нет — полосатая заглушка с монопространственной подписью:
    честно говорим, что за кадр здесь будет, вместо пустой рамки */
 .shot-ph{display:none}
@@ -302,12 +297,110 @@ button{font-family:inherit}
     color-mix(in srgb, var(--wood) 22%, var(--panel)) 0 9px,
     color-mix(in srgb, var(--wood) 34%, var(--panel)) 9px 18px);
 }
-/* заглушка вертикального кадра должна держать высоту сама: без img
-   растягиваться не на что, иначе строка схлопнется */
-.shot-tall.no-img{aspect-ratio:3/4}
-@media (max-width:860px){
-  .detail-trio{grid-template-columns:1fr 1fr;grid-template-rows:auto}
-  .shot-tall{grid-row:auto;grid-column:1 / span 2;aspect-ratio:16/9}
+/* Кадры сняты по одному референсу, но терракотовый чуть отличается посадкой
+   предмета: снимать заново ради этого дороже, чем оно того стоит, поэтому
+   разницу гасим перекрёстным затуханием. Уходящий кадр держит .cs-prev, пока
+   новый уже стоит в <img>, — простая смена src давала вспышку фона между
+   кадрами. Пан обоих слоёв одинаковый, иначе картинки разъедутся в переходе. */
+.color-shot img,
+.cs-prev{
+  /* предмет в кадре стоит правее центра — уводим его чуть влево. Увеличение на
+     6% даёт по 3% запаса с каждой стороны, сдвиг 2.5% в него укладывается */
+  transform:translateX(-2.5%) scale(1.06);
+}
+.cs-prev{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-size:cover;background-position:center;
+  opacity:0;transition:opacity .34s ease;
+}
+.color-shot.no-img .cs-pick,
+.color-shot.no-img .cs-prev{display:none}
+
+/* образцы поверх снимка: стеклянная подложка по центру верхнего края.
+   Кадр снят с намеренно пустой верхней третью — панель ничего не закрывает */
+.cs-pick{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:2;
+  display:flex;flex-direction:column;gap:8px;
+  padding:11px 12px 10px;
+  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius:14px;
+  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  backdrop-filter:blur(7px) saturate(1.15);
+  -webkit-backdrop-filter:blur(7px) saturate(1.15);
+  box-shadow:var(--shadow);
+}
+/* нижняя кромка образцов — общая линия: выбранный растёт ВВЕРХ, а не
+   раздвигает соседей, поэтому ряд не дёргается при переключении */
+.cs-row{display:flex;gap:8px;align-items:flex-end}
+/* кнопка — колонка «лоскут + подпись», сама по себе прозрачная: рамку, тень и
+   ткань несёт .cs-tile, поэтому подпись остаётся снаружи лоскута и не мешает
+   ему расти. Подпись — последний элемент колонки, а ряд выровнен по низу:
+   выбранный лоскут тянется ВВЕРХ, а строка названий стоит на месте */
+.cs-sw{
+  /* высоту кнопка держит ПО ВЫБРАННОМУ состоянию, а не по текущему: иначе рост
+     лоскута тянул за собой строку и вся стеклянная панель прыгала при
+     переключении. Содержимое прижато к низу, поэтому лоскут растёт вверх
+     в уже зарезервированное пустое место */
+  --tile-h:44px; --tile-h-on:58px; --cap-h:11px; --tile-gap:6px;
+  width:112px;padding:0;cursor:pointer;
+  height:calc(var(--tile-h-on) + var(--tile-gap) + var(--cap-h));
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;
+  gap:var(--tile-gap);
+  border:0;background:none;box-shadow:none;
+  transition:opacity .16s;
+}
+/* прямоугольник ткани, а не кружок краски. Фактуру НЕ подделываем градиентами:
+   нарисованный ворс на любом масштабе читался клеткой, а не ковролином —
+   здесь лежит вырезка настоящей съёмки образца (assets/swatch-*.png, нарезаны
+   из media_references/fabric_swatches_1k.png). --sw-tone остаётся подложкой:
+   пока картинка не загрузилась, лоскут уже правильного цвета. */
+.cs-tile{
+  display:block;flex:none;height:var(--tile-h);
+  border:1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  border-radius:7px;
+  background-color:var(--sw-tone);
+  background-image:var(--sw-img, none);
+  background-size:cover;
+  background-position:center;
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.14), inset 0 2px 4px rgba(255,255,255,.12);
+  transition:height .18s ease, box-shadow .16s, border-color .16s;
+}
+/* название — тихая подпись под лоскутом: взгляд должен идти на ткань */
+.cs-sw span{
+  flex:none;
+  font-size:var(--cap-h);font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  line-height:1;color:var(--muted);
+  transition:color .16s;
+}
+/* невыбранные слегка приглушены — вместе с ростом выбранного это заменяет
+   контурное кольцо, которое спорило с самой тканью */
+.cs-sw:not(.is-on){opacity:.82}
+.cs-sw:hover{opacity:1}
+.cs-sw.is-on span{color:var(--ink)}
+.cs-sw.is-on .cs-tile{
+  height:var(--tile-h-on);
+  border-color:color-mix(in srgb, var(--ink) 55%, transparent);
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.14), inset 0 2px 4px rgba(255,255,255,.12),
+             0 3px 10px rgba(0,0,0,.22);
+}
+.cs-sw:focus-visible{outline:2px solid var(--aka);outline-offset:3px;border-radius:9px}
+/* тона — из COLLECTIONS в js/scene.js: образец на снимке и когтеточка
+   в конструкторе должны быть одного цвета, иначе выбор «поедет» между секциями */
+.cs-terracotta{--sw-tone:#BF5A47;--sw-img:url(../assets/swatch-terracotta.png)}
+.cs-sage{--sw-tone:#6E8F63;--sw-img:url(../assets/swatch-sage.png)}
+.cs-charcoal{--sw-tone:#4A4547;--sw-img:url(../assets/swatch-charcoal.png)}
+/* узкий экран: три лоскута по 112px в строку не помещаются — отдаём им всю
+   ширину панели поровну, панель растягивается почти по кадру */
+@media (max-width:520px){
+  .cs-pick{top:10px;left:10px;right:10px;transform:none;padding:9px 10px;gap:7px}
+  .cs-row{gap:6px}
+  /* меняем только переменные — высота кнопки пересчитается сама и панель
+     по-прежнему не будет прыгать */
+  .cs-sw{--tile-h:40px;--tile-h-on:52px;--cap-h:10px;flex:1 1 0;width:auto;min-width:0}
+  .cs-sw span{letter-spacing:.06em}
+}
+@media (prefers-reduced-motion:reduce){
+  .cs-prev{transition:none}
 }
 
 /* ============ готовые сборки: витрина под hero (фото/мокап + видео уже отыграли своё выше) ============ */

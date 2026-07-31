@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=73">
-<link rel="stylesheet" href="css/style.css?v=73">
-<script defer src="config.js?v=73"></script>
-<script defer src="js/zdog.dist.min.js?v=73"></script>
-<script defer src="js/catalog.js?v=73"></script>
-<script defer src="js/scene.js?v=73"></script>
-<script defer src="js/configurator.js?v=73"></script>
-<script defer src="js/chat.js?v=73"></script>
-<script defer src="js/app.js?v=73"></script>
+<link rel="stylesheet" href="css/fonts.css?v=79">
+<link rel="stylesheet" href="css/style.css?v=79">
+<script defer src="config.js?v=79"></script>
+<script defer src="js/zdog.dist.min.js?v=79"></script>
+<script defer src="js/catalog.js?v=79"></script>
+<script defer src="js/scene.js?v=79"></script>
+<script defer src="js/configurator.js?v=79"></script>
+<script defer src="js/chat.js?v=79"></script>
+<script defer src="js/app.js?v=79"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -184,34 +184,43 @@
            а оттуда любая карточка открывает конструктор с готовым планом -->
       <a class="btn btn-aka hero-cta" href="#gallery">Собрать свой домик</a>
     </div>
-    <!-- Ролик уехал в карусель на первый экран; здесь теперь тройка снимков-
-         деталей: материал (большой вертикальный) + тактильность и модульность
-         (два квадрата столбцом). Пока кадра нет, .shot-ph держит место
-         полосатой заглушкой с подписью — честно, без притворства. -->
+    <!-- Ролик уехал в карусель на первый экран, тройка макро-снимков — сюда, в
+         один интерактивный кадр: модуль «Крыша» с плоской подушкой внутри,
+         три цвета ткани на выбор. Обещание «три цвета» из списка слева здесь
+         же и проверяется руками, а не остаётся текстом.
+         Кнопки лежат ПОВЕРХ снимка в его верхнем левом углу — кадр снят
+         специально с пустой верхней третью, чтобы им было где стоять.
+         Пока кадра нет, .shot-ph держит место полосатой заглушкой. -->
     <div class="hero-media">
-      <div class="detail-trio">
-        <figure class="shot shot-tall" id="detailMaterial">
-          <img src="assets/detail-material.jpg?v=2" alt="Макро: щека из берёзовой фанеры с тёмной кромкой и утопленным винтом, рядом джутовый вал и терракотовый ковролин"
-               loading="lazy" decoding="async"
-               onerror="this.closest('.shot').classList.add('no-img')">
-          <div class="shot-ph" aria-hidden="true">материал: фанера, кромка, винт</div>
-        </figure>
-        <figure class="shot" id="detailCarpet">
-          <img src="assets/detail-carpet.jpg?v=1" alt="Крупный план петлевого терракотового ковролина на скате крыши"
-               loading="lazy" decoding="async"
-               onerror="this.closest('.shot').classList.add('no-img')">
-          <div class="shot-ph" aria-hidden="true">ковролин: когтеточка и лежанка</div>
-        </figure>
-        <!-- вместо макро-стыка — сам модуль крыши целиком: студийный кадр из
-             каталога, тот же файл, что в ленте модулей (одна картинка на два
-             места, лишнего веса нет) -->
-        <figure class="shot shot-module" id="detailRoof">
-          <img src="assets/module-cards/roof-asym.jpg?v=1" alt="Модуль «Крыша»: домик из берёзовой фанеры с терракотовым ковролином на скате и джутовым коньком"
-               loading="lazy" decoding="async"
-               onerror="this.closest('.shot').classList.add('no-img')">
-          <div class="shot-ph" aria-hidden="true">модуль: крыша</div>
-        </figure>
-      </div>
+      <figure class="shot color-shot" id="colorShot">
+        <img id="colorShotImg" src="assets/product-color-charcoal.jpg?v=2"
+             width="1200" height="1200"
+             alt="Модуль «Крыша»: домик из берёзовой фанеры с угольным ковролином на скате, джутовым коньком и плоской угольной подушкой внутри"
+             loading="lazy" decoding="async"
+             onerror="this.closest('.shot').classList.add('no-img')">
+        <!-- уходящий кадр держится этим слоем, пока новый уже стоит в <img>:
+             без него смена src даёт короткую вспышку фона. Оформление — в css,
+             для читалок слой невидим -->
+        <div class="cs-prev" id="colorShotPrev" aria-hidden="true"></div>
+        <!-- образцы — вырезки настоящей съёмки ковролина (assets/swatch-*.png),
+             а не нарисованная фактура: человек выбирает материал, а не «цвет №2».
+             Стеклянная подложка — тот же приём, что у подписи в карусели:
+             на светлой стене контур иначе теряется. Заголовка у блока нет —
+             три лоскута ткани и так читаются как выбор материала -->
+        <div class="cs-pick" id="colorShotPick" role="radiogroup" aria-label="Цвет ковролина и подушки">
+          <!-- кнопка = лоскут ткани (i.cs-tile) + подпись под ним. Подпись внутри
+               кнопки, а не рядом: клик по названию тоже переключает цвет -->
+          <div class="cs-row">
+            <button type="button" class="cs-sw cs-charcoal is-on" data-col="charcoal"
+                    role="radio" aria-checked="true"><i class="cs-tile"></i><span>Угольный</span></button>
+            <button type="button" class="cs-sw cs-terracotta" data-col="terracotta"
+                    role="radio" aria-checked="false"><i class="cs-tile"></i><span>Терракота</span></button>
+            <button type="button" class="cs-sw cs-sage" data-col="sage"
+                    role="radio" aria-checked="false"><i class="cs-tile"></i><span>Шалфейный</span></button>
+          </div>
+        </div>
+        <div class="shot-ph" aria-hidden="true">модуль: крыша с подушкой</div>
+      </figure>
     </div>
   </div>
 </section>
