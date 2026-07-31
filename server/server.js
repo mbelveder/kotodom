@@ -14,6 +14,18 @@ if (fs.existsSync(envPath)){
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
+/* POLZA_API_KEY is kept OUT of server/.env — read it from the global
+   ~/.hermes/.env (same source the media-gen scripts use). Only the chat
+   key POLZA_API_KEY is pulled here; POLZA_MEDIA_API_KEY stays media-only. */
+if (!process.env.POLZA_API_KEY){
+  const homeEnv = path.join(require("os").homedir(), ".hermes", ".env");
+  if (fs.existsSync(homeEnv)){
+    for (const ln of fs.readFileSync(homeEnv, "utf8").split("\n")){
+      const m = ln.match(/^\s*POLZA_API_KEY\s*=\s*(.*)\s*$/);
+      if (m){ process.env.POLZA_API_KEY = m[1].replace(/^["']|["']$/g, ""); break; }
+    }
+  }
+}
 const POLZA_KEY = process.env.POLZA_API_KEY || "";
 const TG_TOKEN  = process.env.TG_BOT_TOKEN || "";
 let   TG_CHATS  = (process.env.TG_CHAT_IDS || process.env.TG_CHAT_ID || "")
