@@ -300,7 +300,7 @@
                  материала и каталог модулей — представлять продукт заново не нужно -->
             <p class="scene-sub-lead">Любым способом или всеми сразу:</p>
             <ul class="scene-sub">
-              <li>Перетащите модули из полки внизу; клик по кубу — форма лаза или «убрать»</li>
+              <li>Перетащите модули из полки внизу; клик по кубу — форма лаза или «убрать». Потяните модуль вниз, на подсветившуюся полку — чтобы убрать его</li>
               <li>Возьмите готовую сборку во вкладке слева</li>
               <li>Опишите кота в чате с Момо — кнопка в правом нижнем углу</li>
             </ul>
@@ -398,8 +398,14 @@
         </div>
       </aside>
     </div>
+    <!-- .lower-panel — полка модулей и действия под сценой; относительный контейнер
+         для .remove-zone (см. ниже): при перетаскивании УЖЕ ПОСТАВЛЕННОГО модуля
+         (не нового из лотка) вся эта полка подсвечивается как цель «отпустить,
+         чтобы убрать» — отдельно от подсветки ячеек ковра при обычной раскладке
+         (см. js/configurator.js, beginDrag/updateHot) -->
+    <div class="lower-panel" id="lowerPanel">
     <div class="hint-bar" id="hintBar">
-      <span>Можно добавлять модули на свой вкус — они внизу. Клик по кубу — выбрать форму лаза или убрать его; по другим модулям — убрать.</span>
+      <span>Можно добавлять модули на свой вкус — они внизу. Клик по модулю — убрать (у куба — ещё и форма лаза); либо перетащите модуль вниз, на подсветившуюся полку.</span>
     </div>
     <div class="collection-pick" id="collectionPick" role="radiogroup" aria-label="Цвет когтеточки и подушек">
       <span class="cp-label">Цвет когтеточки и подушек</span>
@@ -413,6 +419,14 @@
       <button class="btn btn-aka" id="btnOrder" disabled>Оформить заказ</button>
       <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
       <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
+    </div>
+    <!-- подсветка «убрать перетаскиванием» — см. .remove-zone в css/style.css и
+         removeZone-логику в js/configurator.js. Скрыта (opacity:0), пока не начат
+         перенос уже стоящего в сборке модуля -->
+    <div class="remove-zone" id="removeZone" aria-hidden="true">
+      <svg class="rz-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.7 7V4.7h4.6V7M6.6 7l.9 12.3h9l.9-12.3M10 10.5v6M14 10.5v6"/></svg>
+      <span>Отпустите здесь — модуль уберётся</span>
+    </div>
     </div>
   </div>
   </div>

@@ -183,7 +183,7 @@ const ROOF_RIDGE_SHIFT = -0.15; // сдвиг конька к высокой с�
 const ENTRY_X = CELL * ROOF_RIDGE_SHIFT + 6 - CELL * 0.10;  // сдвиг вбок — вправо от конька крыши, минус 10% ширины модуля влево
 const ENTRY_DHW = CELL * 0.25;                   // половина ширины проёма (~S*0.5 целиком)
 const ENTRY_BOTTOM_Y = -9;                       // низ проёма над полом
-const ENTRY_SHOULDER_Y = -ROOF_WALL_TALL + 10;   // где вертикальная часть переходит в скат
+const ENTRY_SHOULDER_Y = ENTRY_BOTTOM_Y - 26 * 1.15;  // где вертикальная часть переходит в скат — высота этой части на 15% больше (было 26)
 const ENTRY_TRIANGLE_H = 26 / 1.5;               // высота треугольной (верхней) части — укорочена в 1.5 раза (было 26)
 const ENTRY_PEAK_Y = ENTRY_SHOULDER_Y - ENTRY_TRIANGLE_H;  // конёк проёма — совпадает с коньком крыши по X
 function entryHousePath(floorY){
