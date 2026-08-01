@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=80">
-<link rel="stylesheet" href="css/style.css?v=80">
-<script defer src="config.js?v=80"></script>
-<script defer src="js/zdog.dist.min.js?v=80"></script>
-<script defer src="js/catalog.js?v=80"></script>
-<script defer src="js/scene.js?v=80"></script>
-<script defer src="js/configurator.js?v=80"></script>
-<script defer src="js/chat.js?v=80"></script>
-<script defer src="js/app.js?v=80"></script>
+<link rel="stylesheet" href="css/fonts.css?v=88">
+<link rel="stylesheet" href="css/style.css?v=88">
+<script defer src="config.js?v=88"></script>
+<script defer src="js/zdog.dist.min.js?v=88"></script>
+<script defer src="js/catalog.js?v=88"></script>
+<script defer src="js/scene.js?v=88"></script>
+<script defer src="js/configurator.js?v=88"></script>
+<script defer src="js/chat.js?v=88"></script>
+<script defer src="js/app.js?v=88"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -77,79 +77,11 @@
 
 <main>
 
-<!-- ============ панорамная карусель: первый экран ============
-     Крупный масштаб продукта ДО текста-простыни. Разметка статическая (слайды
-     видны и без js), js/app.js добавляет только поведение: стрелки, точки,
-     свайп, клавиатуру. Подпись — «морозное стекло» в ВЕРХНЕМ ЛЕВОМ углу кадра
-     (тот же эффект, что у .scene-head): тёмных градиентов поверх фото нет,
-     они съедали продукт. «Подробнее» стоит ОТДЕЛЬНОЙ пилюлей под плашкой, а не
-     внутри неё, и у всех трёх слайдов ведёт на следующую секцию (#product) —
-     карусель работает как приглашение листать страницу дальше. -->
-
-<section class="showreel" aria-label="Котоши крупным планом">
-  <div class="wrap">
-    <div class="reel" id="reel">
-      <div class="reel-frame">
-        <div class="reel-track" id="reelTrack">
-
-          <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="1 из 3">
-            <div class="reel-shot">
-              <img src="assets/carousel-1.jpg?v=1" alt="Модульный домик Котоши из берёзовой фанеры в светлой комнате: два куба-норы, тоннель, гамак и башня с крышей" fetchpriority="high" decoding="async">
-            </div>
-            <div class="reel-lead">
-              <div class="reel-cap">
-                <h2>Домик, который растёт вместе с котом</h2>
-                <p>Берёзовая фанера, ковролиновые площадки, японская сдержанность. Собирается из модулей — как конструктор.</p>
-              </div>
-              <a class="reel-more" href="#product">Подробнее →</a>
-            </div>
-          </div>
-
-          <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="2 из 3">
-            <div class="reel-shot">
-              <video id="filmVid" autoplay muted loop playsinline preload="metadata"
-                     poster="assets/kotoshi-poster.jpg?v=3" aria-label="Кот обживает свой Котоши">
-                <source src="assets/kotoshi-loop.webm?v=4" type="video/webm">
-                <source src="assets/kotoshi-loop.mp4?v=4" type="video/mp4">
-              </video>
-            </div>
-            <div class="reel-lead">
-              <div class="reel-cap">
-                <h2>Кот обживает домик за один вечер</h2>
-                <p>Лазы, тоннель, гамак, смотровая площадка — маршрут, по которому хочется бегать.</p>
-              </div>
-              <a class="reel-more" href="#product">Подробнее →</a>
-            </div>
-          </div>
-
-          <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="3 из 3">
-            <div class="reel-shot">
-              <img src="assets/carousel-3.jpg?v=1" alt="Сборка «Дозорный»: ряд одинаковых кубов вдоль стены, башня с крышей, гамак и чаша-лежанка" loading="lazy" decoding="async">
-            </div>
-            <div class="reel-lead">
-              <div class="reel-cap">
-                <h2>Выглядит как мебель, а не как аксессуар</h2>
-                <p>Одна линия вдоль стены, единый габарит модулей, три природных цвета когтеточки.</p>
-              </div>
-              <a class="reel-more" href="#product">Подробнее →</a>
-            </div>
-          </div>
-
-        </div>
-        <!-- стрелки — в нижних углах кадра, поверх фото больше ничего нет -->
-        <button class="reel-arw reel-prev" id="reelPrev" type="button" aria-label="Предыдущий слайд">‹</button>
-        <button class="reel-arw reel-next" id="reelNext" type="button" aria-label="Следующий слайд">›</button>
-      </div>
-      <!-- точки — ПОД кадром и по центру; на бумажном фоне белые точки не видны,
-           поэтому неактивные красим в --line, активную в --aka -->
-      <div class="reel-dots" id="reelDots" role="tablist" aria-label="Слайды">
-        <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Слайд 1"></button>
-        <button type="button" role="tab" aria-selected="false" aria-label="Слайд 2"></button>
-        <button type="button" role="tab" aria-selected="false" aria-label="Слайд 3"></button>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- Панорамной карусели на первом экране больше нет: она показывала продукт
+     ещё до заголовка, но при этом отодвигала его на второй экран. Её механика
+     (стрелки, точки, свайп, клавиатура) не пропала — переехала в правую
+     колонку секции «Продукт» ниже и листает там три кадра. Поведение живёт всё
+     в той же reel() в js/app.js, стили — в блоке «галерея» в css/style.css. -->
 
 <section class="hero2" id="product">
   <div class="wrap hero-grid">
@@ -160,15 +92,15 @@
         <li>
           <span class="pt-ico">和</span>
           <div>
-            <strong>Под Ваш интерьер</strong>
-            <p>Три цвета для съемных когтеточек на выбор — обновляйте материал и меняйте цвет по настроению.</p>
+            <strong>Под ваш интерьер</strong>
+            <p>Три цвета для съемных когтеточек на выбор — обновляйте материал и меняйте цвет по настроению</p>
           </div>
         </li>
         <li>
           <span class="pt-ico">遊</span>
           <div>
             <strong>Модульные</strong>
-            <p>Переставляйте секции и докупайте новые в любой момент, чтобы собрать домик мечты для вашего питомца</p>
+            <p>Переставляйте секции и докупайте новые в любой момент, чтобы вашему питомцу всегда было что исследовать</p>
           </div>
         </li>
         <li>
@@ -179,48 +111,71 @@
           </div>
         </li>
       </ul>
-      <!-- ведёт на «Готовые сборки», а не сразу в конструктор: та же логика, что
-           у «Подробнее» в карусели — кнопка передаёт человека следующей секции,
-           а оттуда любая карточка открывает конструктор с готовым планом -->
+      <!-- ведёт на «Готовые сборки», а не сразу в конструктор: кнопка передаёт
+           человека следующей секции, а оттуда любая карточка открывает
+           конструктор с готовым планом -->
       <a class="btn btn-aka hero-cta" href="#gallery">Собрать свой домик</a>
     </div>
-    <!-- Ролик уехал в карусель на первый экран, тройка макро-снимков — сюда, в
-         один интерактивный кадр: модуль «Крыша» с плоской подушкой внутри,
-         три цвета ткани на выбор. Обещание «три цвета» из списка слева здесь
-         же и проверяется руками, а не остаётся текстом.
-         Кнопки лежат ПОВЕРХ снимка в его верхнем левом углу — кадр снят
-         специально с пустой верхней третью, чтобы им было где стоять.
-         Пока кадра нет, .shot-ph держит место полосатой заглушкой. -->
+    <!-- Галерея на три кадра: модуль «Крыша» крупным планом (фактура берёзы,
+         ковролин на скате, джутовый конёк), затем общий план собранного домика,
+         затем ролик — деталь, целое и живой кот. Кадры сменяются сами раз в
+         15 секунд; условия, при которых автолистание замирает, описаны в reel()
+         в js/app.js.
+         Разметка и id — те же, что были у карусели на первом экране, поэтому
+         reel() в js/app.js подхватывает её без единой правки. Слайды видны и
+         без js: без него виден первый кадр, остальные просто уезжают за край
+         .reel-frame. Стеклянных подписей здесь нет намеренно — заголовки стоят
+         в левой колонке.
+         Раньше на этом месте стоял переключатель цвета ткани. Он снят, но не
+         выброшен: разметку смотри в истории файла, стили .cs-* — в
+         css/style.css, поведение — в colorShot() в js/app.js; инициализатор
+         молча выходит, не найдя #colorShot. -->
     <div class="hero-media">
-      <figure class="shot color-shot" id="colorShot">
-        <img id="colorShotImg" src="assets/product-color-charcoal.jpg?v=2"
-             width="1200" height="1200"
-             alt="Модуль «Крыша»: домик из берёзовой фанеры с угольным ковролином на скате, джутовым коньком и плоской угольной подушкой внутри"
-             loading="lazy" decoding="async"
-             onerror="this.closest('.shot').classList.add('no-img')">
-        <!-- уходящий кадр держится этим слоем, пока новый уже стоит в <img>:
-             без него смена src даёт короткую вспышку фона. Оформление — в css,
-             для читалок слой невидим -->
-        <div class="cs-prev" id="colorShotPrev" aria-hidden="true"></div>
-        <!-- образцы — вырезки настоящей съёмки ковролина (assets/swatch-*.png),
-             а не нарисованная фактура: человек выбирает материал, а не «цвет №2».
-             Стеклянная подложка — тот же приём, что у подписи в карусели:
-             на светлой стене контур иначе теряется. Заголовка у блока нет —
-             три лоскута ткани и так читаются как выбор материала -->
-        <div class="cs-pick" id="colorShotPick" role="radiogroup" aria-label="Цвет ковролина и подушки">
-          <!-- кнопка = лоскут ткани (i.cs-tile) + подпись под ним. Подпись внутри
-               кнопки, а не рядом: клик по названию тоже переключает цвет -->
-          <div class="cs-row">
-            <button type="button" class="cs-sw cs-charcoal is-on" data-col="charcoal"
-                    role="radio" aria-checked="true"><i class="cs-tile"></i><span>Угольный</span></button>
-            <button type="button" class="cs-sw cs-terracotta" data-col="terracotta"
-                    role="radio" aria-checked="false"><i class="cs-tile"></i><span>Терракота</span></button>
-            <button type="button" class="cs-sw cs-sage" data-col="sage"
-                    role="radio" aria-checked="false"><i class="cs-tile"></i><span>Шалфейный</span></button>
+      <div class="reel" id="reel">
+        <div class="reel-frame">
+          <div class="reel-track" id="reelTrack">
+
+            <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="1 из 3">
+              <div class="reel-shot">
+                <img src="assets/product-roof.jpg?v=2" width="962" height="941"
+                     alt="Модуль «Крыша» крупным планом: домик из берёзовой фанеры с угольным ковролином на скате и джутовым коньком-ручкой; внутри на тёмной лежанке спит рыжий кот"
+                     fetchpriority="high" decoding="async">
+              </div>
+            </div>
+
+            <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="2 из 3">
+              <div class="reel-shot">
+                <img src="assets/carousel-1.jpg?v=2" width="1672" height="941"
+                     alt="Собранный домик Котоши из берёзовой фанеры: два куба-норы, тоннель, гамак и башня с крышей; на тоннеле сидит чёрно-белый кот"
+                     loading="lazy" decoding="async">
+              </div>
+            </div>
+
+            <!-- ролик длится ровно 15 секунд — столько же, сколько кадр стоит
+                 на автолистании, так что за один показ он успевает пройти цикл
+                 целиком и не обрывается на середине. preload="metadata": сам
+                 файл тянется, только когда до кадра доходит очередь -->
+            <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="3 из 3">
+              <div class="reel-shot">
+                <video id="filmVid" autoplay muted loop playsinline preload="metadata"
+                       width="1280" height="720"
+                       poster="assets/kotoshi-poster.jpg?v=3" aria-label="Кот дремлет на коленях у хозяйки рядом со своим Котоши">
+                  <source src="assets/kotoshi-loop.webm?v=4" type="video/webm">
+                  <source src="assets/kotoshi-loop.mp4?v=4" type="video/mp4">
+                </video>
+              </div>
+            </div>
+
           </div>
+          <button class="reel-arw reel-prev" id="reelPrev" type="button" aria-label="Предыдущий кадр">‹</button>
+          <button class="reel-arw reel-next" id="reelNext" type="button" aria-label="Следующий кадр">›</button>
         </div>
-        <div class="shot-ph" aria-hidden="true">модуль: крыша с подушкой</div>
-      </figure>
+        <div class="reel-dots" id="reelDots" role="tablist" aria-label="Кадры">
+          <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Кадр 1"></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 2"></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 3"></button>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -229,11 +184,10 @@
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">みほん</span>идеи для начала</div>
     <h2>Готовые сборки</h2>
-    <!-- раздел теперь третий, после карусели и деталей: продукт уже показан,
-         сборки читаются как идеи-заготовки, а не как первое знакомство -->
-    <p class="sec-sub">Шесть готовых конфигураций — от одного куба до целого комплекса.
-       «Развернуть» — рассмотреть сборку целиком и прочитать про неё, «Собрать» — открыть
-       её в конструкторе, где модули можно двигать как угодно.</p>
+    <!-- раздел идёт сразу после «Продукта»: продукт уже показан крупно в
+         галерее, поэтому сборки читаются как идеи-заготовки, а не как первое
+         знакомство -->
+    <p class="sec-sub">Начните с готовой сборки и меняйте её в конструкторе по своему усмотрению</p>
     <div class="showcase-grid" id="showcaseGrid"></div>
   </div>
 </section>
@@ -244,10 +198,9 @@
      рендерится из KD.MODULES + KD.CATALOG (js/app.js), а не руками в HTML. -->
 <section id="catalog">
   <div class="wrap">
-    <div class="sec-eyebrow"><span class="jp">もくじ</span>каталог модулей</div>
-    <h2>Из чего собирается домик</h2>
-    <p class="sec-sub">Все модули одного габарита — одинаковая ширина и высота, различается только
-       глубина. Поэтому они состыковываются в одну линию без зазоров, в любом порядке.</p>
+    <div class="sec-eyebrow"><span class="jp">もくじ</span>найдите свою комбинацию</div>
+    <h2>Каталог модулей</h2>
+    <p class="sec-sub">Соберите уникальный домик из отдельных модулей или сразу переходите в конструктор</p>
   </div>
   <div class="rail-wrap">
     <button class="rail-nav rail-prev" id="railPrev" type="button" aria-label="Прокрутить каталог влево">‹</button>
@@ -271,8 +224,8 @@
         <canvas id="scene" width="980" height="540"></canvas>
         <!-- меню настройки модуля: всплывает по клику (см. js/configurator.js).
              У куба — три формы лаза, у когтеточки — поворот пандуса (.scratch-only).
-             Кнопки «убрать» здесь НЕТ: модуль убирается только перетаскиванием на
-             полку (.remove-zone), клик сам по себе ничего не удаляет. Крыша и
+             Кнопки «убрать» здесь НЕТ: модуль убирается только перетаскиванием в
+             зону под сценой (.remove-zone), клик сам по себе ничего не удаляет. Крыша и
              прочие модули меню не открывают — настраивать у них нечего. -->
         <div class="entry-menu" id="entryMenu" role="menu" aria-label="Форма лаза этого куба">
           <button type="button" class="ep-b" data-shape="circle" role="menuitemradio" aria-checked="false" title="Круглый лаз" aria-label="Круглый лаз">
@@ -300,24 +253,38 @@
           <h2>Конструктор домиков</h2>
           <details class="scene-instr" id="sceneInstr">
             <summary id="guideToggle">Инструкция</summary>
-            <!-- вступление сокращено: посетитель уже прошёл карусель, детали
+            <!-- вступление сокращено: посетитель уже прошёл галерею, детали
                  материала и каталог модулей — представлять продукт заново не нужно -->
-            <p class="scene-sub-lead">Любым способом или всеми сразу:</p>
+            <p class="scene-sub-lead">Любым способом или обоими сразу:</p>
             <ul class="scene-sub">
-              <li>Перетащите модули из полки внизу; чтобы убрать — потяните модуль вниз, на подсветившуюся полку. Клик по кубу — форма лаза, по когтеточке — поворот</li>
+              <li>Перетащите модули из полки внизу; чтобы убрать — потяните модуль в пунктирную рамку под сценой. Клик по кубу — форма лаза, по когтеточке — поворот</li>
               <li>Возьмите готовую сборку во вкладке слева</li>
-              <li>Опишите кота в чате с Момо — кнопка в правом нижнем углу</li>
+              <!-- третий способ (чат с Момо) снят вместе с кнопкой — см. парковку
+                   #momoFab ниже; вернёте кнопку — верните и эту строку:
+              <li>Опишите кота в чате с Момо — кнопка в правом нижнем углу</li> -->
             </ul>
             <button class="guide-reopen" id="guideReopen" type="button">
               <span class="gr-q" aria-hidden="true">?</span>показать подсказки ещё раз
             </button>
           </details>
         </div>
+        <!-- ============ кнопка чата с Момо — ПАРКОВКА ============
+             Аватар-кнопка снята со сцены, а вместе с ней и баббл с репликами:
+             они парные, .momo-say висит ровно над кнопкой и без неё указывает
+             хвостиком в пустоту. Панель чата (#chatPanel) и весь js/chat.js
+             остались на месте — открывать её просто нечем, единственным входом
+             была эта кнопка. Ярлык-подсказка #chatTip припаркован ниже.
+             Чтобы вернуть — раскомментируйте блок; guard'ы в chat.js и
+             configurator.js рассчитаны на оба состояния и мешать не будут.
+
+             vvv  разметка кнопки и баббла  vvv
         <div class="momo-say" id="momoSay"><span class="who">Момо</span><span id="momoTxt"></span></div>
         <button class="momo-fab" id="momoFab" aria-label="Открыть чат с Момо" aria-expanded="false">
           <img src="assets/logo-momo-chat.png?v=2" alt="" width="256" height="256" decoding="async">
           <span class="fab-lbl">чат</span>
         </button>
+             ^^^  разметка кнопки и баббла  ^^^
+             ======================================================== -->
         <div class="price-tag">
           <div class="lbl">итого</div>
           <div class="sum" id="sumOut">0 ₽</div>
@@ -344,7 +311,7 @@
           <!-- 2. собрать самому — подпись выше и правее центра, длинная стрелка
                тянется вниз до полки модулей (инвентаря) под сценой -->
           <div class="bg-tip bg-tip--self">
-            <span class="bg-txt">Соберите домик<br>самостоятельно<br>(убрать — перетащить<br>модуль вниз, на полку)</span>
+            <span class="bg-txt">Соберите домик<br>самостоятельно<br>(убрать — перетащить<br>в пунктирную рамку)</span>
             <svg class="bg-arw" viewBox="0 0 46 240" width="46" height="240" aria-hidden="true">
               <path d="M23 4 C11 92 35 168 23 232" fill="none"/>
               <path class="bg-head" d="M23 232 l-11 -7 M23 232 l11 -8" fill="none"/>
@@ -353,19 +320,30 @@
 
         </div>
 
-        <!-- 3. чат с Момо — ярлык живёт ВНЕ гида: под интро выглядит как остальные
+        <!-- ============ ярлык «Размеры модулей и рекомендации» — ПАРКОВКА ============
+             Стрелка указывала на аватар Момо, а он снят (см. парковку #momoFab выше),
+             поэтому ярлык уехал вместе с ним. Гид теперь показывает два способа
+             сборки вместо трёх. Возвращать — только парой с кнопкой.
+
+             3. чат с Момо — ярлык живёт ВНЕ гида: под интро выглядит как остальные
              подсказки (ярко, над затемнением), после закрытия гида остаётся у аватара
              в приглушённом виде и убирается после первого открытия чата (localStorage
              kd_chatTipSeen); реоткрытие гида возвращает его (см. js/chat.js). Должен
              стоять сразу после .build-guide — css переключает вид сосед-селектором.
-             Svg зеркалится в css -->
-        <div class="bg-tip bg-tip--chat" id="chatTip">
+             Svg зеркалится в css
+
+             vvv  разметка ярлыка  vvv
+        <div class="bg-tip bg-tip——chat" id="chatTip">
           <span class="bg-txt">Размеры модулей<br>и рекомендации</span>
           <svg class="bg-arw" viewBox="0 0 50 34" width="50" height="34" aria-hidden="true">
             <path d="M44 6 C26 8 14 16 7 28" fill="none"/>
             <path class="bg-head" d="M7 28 l8 -2 M7 28 l2 -8" fill="none"/>
           </svg>
         </div>
+             ^^^  разметка ярлыка  ^^^
+             ВНИМАНИЕ: в классе выше двойной дефис заменён на длинное тире,
+             иначе он закрыл бы этот комментарий. При возврате пишите bg-tip--chat.
+             ========================================================================= -->
       </div>
       <aside class="preset-panel" id="presetPanel" aria-label="Готовые сборки">
         <div class="preset-head">
@@ -402,14 +380,20 @@
         </div>
       </aside>
     </div>
-    <!-- .lower-panel — полка модулей и действия под сценой; относительный контейнер
-         для .remove-zone (см. ниже): при перетаскивании УЖЕ ПОСТАВЛЕННОГО модуля
-         (не нового из лотка) вся эта полка подсвечивается как цель «отпустить,
-         чтобы убрать» — отдельно от подсветки ячеек ковра при обычной раскладке
-         (см. js/configurator.js, beginDrag/updateHot) -->
+    <!-- .lower-panel — полка модулей и действия под сценой -->
     <div class="lower-panel" id="lowerPanel">
+    <!-- подсказка над полкой: слева текст, справа — .remove-zone, куда тянут
+         модуль, чтобы убрать его из сборки. Рамка зоны видна всегда (иначе цель
+         не найти, пока не начал тянуть), при переносе УЖЕ ПОСТАВЛЕННОГО модуля
+         (не нового из лотка) она оживает, а под курсором — подсвечивается.
+         См. .hint-bar/.remove-zone в css/style.css и beginDrag/updateHot в
+         js/configurator.js -->
     <div class="hint-bar" id="hintBar">
-      <span>Можно добавлять модули на свой вкус — они внизу. Чтобы убрать модуль, перетащите его вниз, на подсветившуюся полку. Клик по кубу — форма лаза, по когтеточке — поворот.</span>
+      <span class="hint-txt">Можно добавлять модули на свой вкус — они внизу. Клик по кубу — форма лаза, по когтеточке — поворот.</span>
+      <div class="remove-zone" id="removeZone">
+        <svg class="rz-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.7 7V4.7h4.6V7M6.6 7l.9 12.3h9l.9-12.3M10 10.5v6M14 10.5v6"/></svg>
+        <span>Перетащите модуль сюда, чтобы убрать</span>
+      </div>
     </div>
     <div class="collection-pick" id="collectionPick" role="radiogroup" aria-label="Цвет когтеточки и подушек">
       <span class="cp-label">Цвет когтеточки и подушек</span>
@@ -423,18 +407,19 @@
       <button class="btn btn-ghost" id="btnUndo" disabled>↩ Отменить</button>
       <button class="btn btn-ghost" id="btnClear" disabled>Очистить</button>
     </div>
-    <!-- подсветка «убрать перетаскиванием» — см. .remove-zone в css/style.css и
-         removeZone-логику в js/configurator.js. Скрыта (opacity:0), пока не начат
-         перенос уже стоящего в сборке модуля -->
-    <div class="remove-zone" id="removeZone" aria-hidden="true">
-      <svg class="rz-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.7 7V4.7h4.6V7M6.6 7l.9 12.3h9l.9-12.3M10 10.5v6M14 10.5v6"/></svg>
-      <span>Отпустите здесь — модуль уберётся</span>
-    </div>
     </div>
   </div>
   </div>
 </section>
 
+<!-- ============ «Как устроен Котоши» — ПАРКОВКА ============
+     Секция снята со страницы целиком, но не выброшена: раскомментируйте блок
+     ниже, чтобы вернуть. Стили (.steps / .step / .ico) остались в css/style.css.
+     Ссылок на #how в навигации нет, так что якорь ничего не ломает.
+     Учтите: второй шаг зовёт нажать на кота в конструкторе, а кнопка чата
+     сейчас тоже снята (см. парковку #momoFab ниже) — вернуть стоит их вместе.
+
+     vvv  разметка секции  vvv
 <section id="how">
   <div class="wrap">
     <div class="sec-eyebrow"><span class="jp">しくみ</span>как устроен магазин</div>
@@ -460,6 +445,9 @@
     </div>
   </div>
 </section>
+     ^^^  разметка секции  ^^^
+     ============================================================ -->
+
 
 <section id="info">
   <div class="wrap">

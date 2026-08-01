@@ -363,6 +363,10 @@ function openModule(type, card, trigger){
 }
 
 /* ---------- выбор цвета ткани на снимке модуля (секция «Продукт») ---------- */
+/* ПАРКОВКА: разметка #colorShot из index.html снята — в секции стоит один
+   статичный кадр. Инициализатор ниже на такой странице просто выходит на
+   проверке в первых строках. Код оставлен целиком, потому что к переключателю
+   планируем вернуться; стили .cs-* так же ждут в css/style.css. */
 /* Три кадра сняты в одной точке и различаются только тоном ковролина и подушки,
    поэтому переключение читается как смена материала на одном предмете. Разметка
    статическая: без js виден терракотовый кадр — это рабочее состояние, а не
@@ -451,11 +455,12 @@ function openModule(type, card, trigger){
   });
 })();
 
-/* ---------- панорамная карусель (первый экран) ---------- */
-/* Разметка слайдов статическая — карусель видна и без js. Здесь только
-   поведение: стрелки, точки, свайп, клавиатура. Автопрокрутки нет намеренно:
-   видео на втором слайде само держит внимание, а автосмена уводила бы кадр
-   из-под курсора. */
+/* ---------- галерея кадров в секции «Продукт» ---------- */
+/* Раньше это была панорамная карусель на первом экране; секция снята, а код
+   переехал вместе с разметкой в правую колонку hero и не изменился ни на
+   строку — id и классы там те же. Разметка слайдов статическая, первый кадр
+   виден и без js; здесь только поведение: стрелки, точки, свайп, клавиатура
+   и автолистание раз в 15 секунд. */
 (function reel(){
   const root = $("#reel");
   if (!root) return;
@@ -475,8 +480,84 @@ function openModule(type, card, trigger){
     /* соседние слайды уезжают за кадр — убираем их из фокуса и с экрана
        читалок, иначе Tab уводит курсор в невидимую подпись */
     slides.forEach((s, i) => s.toggleAttribute("inert", i !== cur));
+    /* ролик играет только на своём кадре и всегда с начала: за краем рамки его
+       всё равно не видно, а 15 секунд показа ровно равны его длине — так он
+       каждый раз проходит цикл целиком, а не подхватывает с середины */
+    slides.forEach((s, i) => {
+      const v = s.querySelector("video");
+      if (!v) return;
+      if (i !== cur){ v.pause(); return; }
+      if (still.matches) return;      // «поменьше движения» — ждём кнопки Play
+      try { v.currentTime = 0; } catch(e){}
+      const p = v.play();
+      if (p) p.catch(() => {});   // автовоспроизведение могли и запретить
+    });
+    /* любое листание — хоть руками, хоть по таймеру — отсчитывает паузу
+       заново: иначе кадр, который только что выбрали кликом, мог смениться
+       через полсекунды остатком прошлого интервала */
+    arm();
   }
+
+  /* ---------- автолистание ----------
+     15 секунд — длина ролика на третьем кадре: за один показ он успевает
+     пройти цикл целиком. Раньше автосмены здесь не было намеренно, потому что
+     она уводит кадр из-под курсора, — поэтому таймер замирает во всех случаях,
+     когда человек смотрит именно сюда или не смотрит вообще:
+       • галереи нет на экране — крутить нечего;
+       • курсор внутри рамки — человек разглядывает кадр;
+       • внутри клавиатурный фокус (:focus-visible) — идёт навигация с клавиш.
+         Именно focus-visible, а не любой фокус: клик мышью по стрелке в Chrome
+         тоже ставит фокус, и по «просто фокусу» автолистание умирало навсегда
+         после первого же клика;
+       • вкладка в фоне — таймеры там душит сам браузер, и кадры «прыгали» бы
+         пачкой при возврате.
+     При prefers-reduced-motion автолистания нет вовсе: сама смена кадра в этом
+     режиме мгновенная (css гасит transition), и подпрыгивающая без спроса
+     картинка — ровно то движение, от которого человек отказался. */
+  const SLIDE_MS = 15000;
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  let timer = null, hover = false, onScreen = false;
+
+  function keyFocusInside(){
+    try { return !!root.querySelector(":focus-visible"); }
+    catch(e){ return false; }        // старые браузеры без :focus-visible
+  }
+  function arm(){
+    clearTimeout(timer);
+    if (still.matches || !onScreen || hover || document.hidden || keyFocusInside()) return;
+    timer = setTimeout(() => go(cur + 1), SLIDE_MS);
+  }
+
+  /* «поменьше движения»: ролик не запускается сам — но и не пропадает. Отдаём
+     человеку обычные элементы управления, чтобы он посмотрел его по своей воле;
+     просто заглушить видео значило бы отобрать кадр, а не убрать движение */
+  if (still.matches) slides.forEach(s => {
+    const v = s.querySelector("video");
+    if (!v) return;
+    v.removeAttribute("autoplay");
+    v.controls = true;
+    v.pause();
+  });
+
   go(0);
+
+  if ("IntersectionObserver" in window){
+    /* порог 0.5: кадр, наполовину уехавший за край экрана, уже не «смотрят» */
+    new IntersectionObserver(es => {
+      onScreen = es[0].isIntersecting;
+      arm();
+    }, { threshold: 0.5 }).observe(root);
+  } else { onScreen = true; arm(); }
+
+  root.addEventListener("pointerenter", () => { hover = true;  arm(); });
+  root.addEventListener("pointerleave", () => { hover = false; arm(); });
+  root.addEventListener("focusin",  arm);
+  root.addEventListener("focusout", () => setTimeout(arm, 0));  // activeElement обновится после события
+  document.addEventListener("visibilitychange", arm);
+  /* в Safari до 14 у MediaQueryList нет addEventListener — там просто не будет
+     реакции на смену системной настройки, но обвалить остальную инициализацию
+     (стрелки регистрируются ниже) это не должно */
+  try { still.addEventListener("change", arm); } catch(e){}
 
   $("#reelPrev").addEventListener("click", () => go(cur - 1));
   $("#reelNext").addEventListener("click", () => go(cur + 1));
@@ -505,6 +586,10 @@ function openModule(type, card, trigger){
     go(cur + (dx < 0 ? 1 : -1));
   });
   frame.addEventListener("pointercancel", () => { down = false; });
+  /* картинку нельзя «хватать на буксир»: иначе браузер начинает свой native
+     drag-and-drop, глотает pointerup и вместо листания шлёт pointercancel.
+     В css это же гасит -webkit-user-drag, но он есть не везде */
+  frame.addEventListener("dragstart", e => e.preventDefault());
 })();
 
 /* ---------- каталог модулей: горизонтальная лента ---------- */
@@ -665,13 +750,6 @@ if (homeLink) homeLink.addEventListener("click", e => {
   e.preventDefault();
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
-
-/* ---------- ролик: уважаем «поменьше движения» ---------- */
-const filmVid = document.getElementById("filmVid");
-if (filmVid && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  filmVid.removeAttribute("autoplay");
-  filmVid.pause();
-}
 
 /* ---------- модалка ---------- */
 function open(html){ body.innerHTML = html; back.classList.add("open"); }
