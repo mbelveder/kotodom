@@ -90,6 +90,7 @@ const GROUND = 118;                       // y пола (вниз положит
    base = B-H = -CELL/2: верх куба теперь ровно на ребре ячейки (после того как
    корпус куба стал во всю высоту CELL) — иначе опоры/ножки уходили ниже ребра. */
 const TOP_Y = { base:-CELL/2, lounge:1, tower:-30, tunnel:-12 };
+const SCRATCH_HH = 46;   // высота высокой (задней) кромки пандуса-когтеточки
 const cellX = c => (c - (COLS-1)/2) * CELL;
 const cellY = r => GROUND - CELL/2 - r*CELL;
 const colOf = i => i % COLS;
@@ -346,20 +347,34 @@ function makeModule(type, parent, opts){
       stroke:6, fill:true, color:P.sling });   // подушка в цвет коллекции
   }
   else if (type === "tunnel"){
-    // ось: "x" — соединяет соседние модули, "z" — одиночный, входом к зрителю
+    /* Тоннель ВСЕГДА лежит вдоль ряда — вид сбоку. Раньше одиночный разворачивался
+       входом к зрителю, и с этого ракурса читался тёмным кругом: непонятно ни что
+       это труба, ни как она стыкуется с соседями.
+       Торец продлеваем в соседа ТОЛЬКО если сосед — куб (см. tunnelExt): куб полной
+       высоты и целиком прячет торец внутри себя. У лежанки корпус вдвое ниже трубы,
+       у башни на этой высоте лишь столб 14 в ширину, гамак и чаша прозрачны насквозь —
+       в них торец не утонет, а выедет наружу поперёк соседа. */
     const D = S*0.78;
-    const xax = !(opts && opts.tunnelAxis === "z");
-    // с соседом по горизонтали тоннель ДЛИННЕЕ ячейки — торцы утоплены в соседние
-    // кубы, чтобы тёмное нутро не зияло в зазоре (модули «слипаются» по горизонтали)
-    const L = xax ? CELL + 12 : S + 2;
-    const t = new Zdog.Anchor({ addTo:a, translate:{ y: B - D/2 - 1 },
-      rotate:{ y: xax ? 0 : TAU/4 } });
+    const eL = (opts && opts.tunnelExtL) ? 6 : 1;   // 6 — утопить в куб, 1 — встык по границе ячейки
+    const eR = (opts && opts.tunnelExtR) ? 6 : 1;
+    const L = S + eL + eR;
+    const t = new Zdog.Anchor({ addTo:a, translate:{ y: B - D/2 - 1, x: (eR - eL)/2 } });
     new Zdog.Cylinder({ addTo:t, diameter:D, length:L,
       rotate:{ y:TAU/4 }, color:P.carpet, frontFace:P.hole, backface:P.hole, stroke:false });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:L/2 },
       stroke:4, color:P.edge });
     new Zdog.Ellipse({ addTo:t, diameter:D, rotate:{ y:TAU/4 }, translate:{ x:-L/2 },
       stroke:4, color:P.edge });
+    /* Тоннель стоит НА модуле — поднимаем его над отделкой верхней грани опоры,
+       ровно как это делает чаша-лежанка (boostSort там же). Иначе ковролиновая
+       площадка куба и его тёмный шов сортируются перед трубой (они ниже, а сцена
+       наклонена) и проступают сквозь неё контуром куба.
+       Но только когда прятать нечего: утопленный торец (eL/eR = 6) держится
+       исключительно на порядке отрисовки — сосед-куб закрашивает его собой, — и
+       поднятый тоннель вылез бы из него верхним краем. Так что boost получает
+       лишь труба без утопленных торцов; с торцами её и так закрывают соседи. */
+    const buried = eL > 1 || eR > 1;
+    if (opts && opts.cellIndex >= COLS && !buried) boostSort(t, 14);
   }
   else if (type === "tower"){
     box(a, Object.assign({ width:14, height:SB-(B-(H-9)), depth:14,
@@ -460,7 +475,7 @@ function makeModule(type, parent, opts){
     // конструктор ставит высокую кромку к ближнему кубу («подиум»), см. configurator.
     const dir = (opts && opts.scratchDir) || 0;
     const w = new Zdog.Anchor({ addTo:a, rotate:{ y: dir*TAU/4 } });
-    const HH = 46;               // высота у высокой (задней) кромки
+    const HH = SCRATCH_HH;       // высота у высокой (задней) кромки
     const xc = S/2;              // полуширина клина (боковины на x=±xc)
     const side = [ {z:S/2,y:B}, {z:-S/2,y:B}, {z:-S/2,y:B-HH} ];
     // Боковины сортируем по БЛИЖНЕЙ точке (max z рёбер), а не по среднему z всех
@@ -741,6 +756,24 @@ api.setCollection = function(name){
   return true;
 };
 
+/* Верхушка модуля в координатах его ячейки (y вверх отрицателен; у модулей во
+   всю ячейку это -CELL/2) и высота высокой кромки пандуса-когтеточки — то и
+   другое нужно конструктору, чтобы разворачивать пандус только к тому соседу,
+   на который с него и правда заезжают (см. defaultScratchDir в configurator). */
+api.moduleTopLocal = t => TOP_Y[t] ?? -CELL/2;
+api.SCRATCH_RIDGE = CELL/2 - SCRATCH_HH;
+
+/* Куда тоннелю можно утопить торец: только в соседний КУБ — он единственный
+   стоит на всю высоту ячейки сплошным корпусом и прячет торец внутри. Правило
+   живёт здесь одно на всех: им пользуются и restore(), и конструктор (place /
+   syncTunnels в js/configurator.js) — иначе они разъезжаются, и тоннель после
+   пересборки сцены выглядит иначе, чем сразу после постановки. */
+api.tunnelExt = function(grid, i){
+  const col = i % COLS;
+  return { tunnelExtL: col > 0        && grid[i-1] === "base",
+           tunnelExtR: col < COLS - 1 && grid[i+1] === "base" };
+};
+
 api._snapshot = null;
 api.restore = function(grid){
   api._snapshot = grid;
@@ -750,10 +783,7 @@ api.restore = function(grid){
     if (!t || !MODULES[t]) return; // пусто или маркер широкого модуля
     const opts = { below: i >= COLS ? grid[i - COLS] : null };
     if (MODULES[t].w > 1) opts.below2 = i >= COLS ? grid[i - COLS + 1] : null;
-    if (t === "tunnel"){
-      const col = i % COLS;
-      opts.tunnelAxis = ((col > 0 && grid[i-1]) || (col < COLS-1 && grid[i+1])) ? "x" : "z";
-    }
+    if (t === "tunnel") Object.assign(opts, api.tunnelExt(grid, i));
     if (t === "scratch" && savedScratch[i] != null) opts.scratchDir = savedScratch[i];
     api.place(i, t, true, opts);
   });
@@ -887,7 +917,7 @@ function moduleTopY(i){
     case "base":    return B - H - 5;
     case "roof":    return (B - ROOF_TOTAL_H) - 6;   // конёк домика-крыши (от пола до самого верха)
     case "tower":   return -B - 6;
-    case "scratch": return B - 46 - 6;          // конёк пандуса (HH=46)
+    case "scratch": return B - SCRATCH_HH - 6;  // конёк пандуса
     case "play":    return -B - 12;
     default:        return -6;                    // невысокие модули: чуть выше центра
   }

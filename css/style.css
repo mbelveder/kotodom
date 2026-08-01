@@ -132,84 +132,69 @@ button{font-family:inherit}
 .theme-pick .tp-a{font-weight:800;font-size:11.5px;line-height:1}
 @media (max-width:520px){ .theme-pick{margin-left:8px} }
 
-/* ============ панорамная карусель (первый экран) ============ */
-/* Крупный масштаб продукта до всякого текста. Никаких тёмных градиентов
-   поверх фото — подпись стоит на «морозном стекле», как .scene-head. */
-.showreel{padding:22px 0 0}
+/* ============ галерея в секции «Продукт» ============ */
+/* Раньше это была панорамная карусель на первом экране. Секция снята, а её
+   механика переехала сюда, в правую колонку hero: разметка и поведение те же
+   (reel() в js/app.js не тронут), изменились только размеры и состав.
+   Что НЕ переехало — стеклянная плашка с заголовком и пилюля «Подробнее»:
+   заголовки уже стоят в левой колонке, дублировать их в кадре незачем, а
+   «Подробнее» вело как раз на эту секцию. Остались только стрелки, точки,
+   свайп и клавиши — то, чем кадры листают. */
 .reel{position:relative}
+/* 4:3 — компромисс между двумя пропорциями в одной рамке: снимок «Крыши»
+   почти квадратный (1.09:1), общий план — панорама (1.78:1). Квадрат резал бы
+   у панорамы 44% ширины вместе с цветком и концом пандуса */
 .reel-frame{
   position:relative;
-  aspect-ratio:21/9;
+  aspect-ratio:4/3;
   border-radius:var(--r);
   overflow:hidden;
   border:1px solid var(--line);
   box-shadow:var(--shadow);
   background:var(--panel);
 }
+/* pan-y: вертикальную прокрутку отдаём странице, горизонтальный жест забираем
+   себе — иначе на телефоне свайп по кадру то листает, то скроллит */
+.reel-frame{touch-action:pan-y}
 .reel-track{display:flex;height:100%;transition:transform .5s cubic-bezier(.4,0,.2,1)}
 .reel-slide{position:relative;flex:0 0 100%;min-width:0;height:100%}
-/* исходники сняты 16:9, кадр — 21:9: обрезаем снизу, а не по центру,
-   иначе у построек срезает пол вместе с ковром */
 .reel-shot{position:absolute;inset:0}
-.reel-shot img,.reel-shot video{
+.reel-shot img,
+.reel-shot video{
   width:100%;height:100%;display:block;
-  object-fit:cover;object-position:var(--reel-pos, center 60%);
+  object-fit:cover;object-position:var(--reel-pos, center);
+  /* без этого браузер видит в протяжке по картинке native drag-and-drop:
+     хватает <img> «на буксир», глотает pointerup и шлёт pointercancel —
+     свайп мышью не срабатывал вовсе */
+  -webkit-user-drag:none;user-select:none;-webkit-user-select:none;
 }
-/* у первого кадра запаса стены над постройкой почти нет — прижимаем к низу,
-   иначе 21:9 срезает пол вместе с ковром. У третьего запас большой, там
-   наоборот важно не обрезать конёк крыши-домика */
-.reel-slide:nth-child(1){--reel-pos:center bottom}
-.reel-slide:nth-child(3){--reel-pos:center 62%}
-/* верхний левый угол кадра: стеклянная плашка с текстом и ОТДЕЛЬНАЯ кнопка
-   под ней. Раньше кнопка жила внутри плашки и растила её вниз — в кадре 21:9
-   стекло начинало налезать на постройку. Колонка выравнивает их по левому краю */
-.reel-lead{
-  position:absolute;top:16px;left:16px;z-index:2;
-  max-width:min(520px, 56%);
-  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
-}
-.reel-cap{
-  padding:12px 16px 14px;
-  border:1px solid color-mix(in srgb, var(--ink) 22%, transparent);
-  border-radius:16px;
-  background:color-mix(in srgb, var(--panel) 74%, transparent);
-  backdrop-filter:blur(7px) saturate(1.15);
-  -webkit-backdrop-filter:blur(7px) saturate(1.15);
-  box-shadow:var(--shadow);
-}
-.reel-cap h2{font-size:clamp(18px,2.1vw,25px);margin:0;color:var(--ink)}
-.reel-cap p{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--muted)}
-/* кнопка стоит прямо на фото, поэтому носит своё стекло: без подложки
-   тонкий контур --aka терялся на светлой стене */
-.reel-more{
-  display:inline-block;
-  border:1.5px solid var(--aka);border-radius:99px;
-  padding:6px 16px;min-height:40px;line-height:26px;
-  color:var(--aka);text-decoration:none;font-weight:800;font-size:13.5px;
-  background:color-mix(in srgb, var(--panel) 78%, transparent);
-  backdrop-filter:blur(7px) saturate(1.15);
-  -webkit-backdrop-filter:blur(7px) saturate(1.15);
-  box-shadow:var(--shadow);
-  transition:background .15s ease, color .15s ease;
-}
-.reel-more:hover{background:var(--aka);color:#FFFBF3}
-/* стрелки — в нижних углах кадра, в стиле .momo-fab */
+/* режем каждый кадр по-своему: у «Крыши» рамка забирает высоту — сдвигаем вниз,
+   иначе сверху остаётся пустая стена, а снизу срезает ковёр. У панорамы уходит
+   ширина, но постройка стоит по центру и влезает целиком. У ролика (16:9) тоже
+   уходит ширина — и его смещаем влево: домик стоит у левого края кадра, при
+   центральной обрезке ему срезает крайний куб */
+.reel-slide:nth-child(1){--reel-pos:center 78%}
+.reel-slide:nth-child(2){--reel-pos:center 60%}
+.reel-slide:nth-child(3){--reel-pos:34% center}
+/* стрелки — в нижних углах кадра, в стиле .momo-fab. В колонке ~480px кадр
+   вдвое меньше прежней панорамы, поэтому и кружки мельче: 46px закрывали собой
+   угол постройки */
 .reel-arw{
-  position:absolute;bottom:16px;z-index:3;
-  width:46px;height:46px;border-radius:50%;padding:0 0 4px;
+  position:absolute;bottom:12px;z-index:3;
+  width:38px;height:38px;border-radius:50%;padding:0 0 3px;
   border:2px solid var(--ink);background:var(--panel);color:var(--ink);
-  box-shadow:3px 3px 0 var(--aka);
-  font-size:26px;font-weight:700;line-height:1;cursor:pointer;
+  box-shadow:2px 2px 0 var(--aka);
+  font-size:21px;font-weight:700;line-height:1;cursor:pointer;
   display:grid;place-items:center;
   transition:transform .15s ease, background .15s ease, color .15s ease;
 }
-.reel-prev{left:16px}
-.reel-next{right:16px}
+.reel-prev{left:12px}
+.reel-next{right:12px}
 .reel-arw:hover{transform:scale(1.08);background:var(--aka);color:#FFFBF3;border-color:var(--aka)}
 /* точки — ПОД кадром и по центру; неактивные на --line (белые не видны на бумаге) */
-.reel-dots{display:flex;justify-content:center;gap:8px;margin-top:14px}
+.reel-dots{display:flex;justify-content:center;gap:8px;margin-top:12px}
 .reel-dots button{
-  position:relative;width:34px;height:8px;padding:0;
+  position:relative;width:30px;height:7px;padding:0;
   border:none;border-radius:99px;background:var(--line);cursor:pointer;
   transition:background .2s ease;
 }
@@ -218,31 +203,10 @@ button{font-family:inherit}
 .reel-dots button:hover{background:color-mix(in srgb, var(--aka) 45%, var(--line))}
 .reel-dots button.is-on{background:var(--aka)}
 @media (prefers-reduced-motion: reduce){ .reel-track{transition:none} }
+/* на узком экране колонки схлопываются в одну и кадр становится шире, чем был
+   на десктопе, — пропорцию 4:3 не трогаем, добираем только палец на стрелках */
 @media (max-width:860px){
-  /* кадр ниже, подпись переезжает под него обычным блоком, стрелки — поверх фото сверху */
-  .reel-frame{aspect-ratio:auto}
-  .reel-slide{display:flex;flex-direction:column;height:auto}
-  .reel-shot{position:relative;inset:auto;aspect-ratio:16/9;flex:none}
-  /* под кадром стекло не нужно: подпись и кнопка ложатся обычным блоком
-     на панель, поэтому снимаем и рамку, и backdrop-filter у обеих */
-  .reel-lead{
-    position:static;max-width:none;
-    background:var(--panel);padding:14px 16px 16px;gap:12px;
-  }
-  .reel-cap{
-    border:none;border-radius:0;box-shadow:none;background:none;
-    backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;
-  }
-  /* на таче кнопке нужен полноценный палец — на десктопе плашка компактнее */
-  .reel-cap h2{font-size:20px}
-  .reel-more{
-    min-height:44px;padding:8px 17px;
-    background:none;box-shadow:none;
-    backdrop-filter:none;-webkit-backdrop-filter:none;
-  }
-  .reel-arw{bottom:auto;top:12px}
-  .reel-prev{left:12px}
-  .reel-next{right:12px}
+  .reel-arw{width:44px;height:44px;font-size:24px}
 }
 
 /* ============ hero: заголовок слева (как в ранней версии), ролик справа ============ */
@@ -270,11 +234,12 @@ button{font-family:inherit}
 .hero-points p{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--muted)}
 .hero-cta{display:inline-block;margin-top:24px;text-decoration:none}
 
-/* ============ hero: интерактивный кадр «выбери ткань» вместо ролика ============ */
-/* Ролик уехал в карусель наверх, тройка макро-снимков — в один кадр: модуль
-   «Крыша» с плоской подушкой, три цвета ковролина. Снимки сняты в одной
-   точке и различаются только тоном ткани, поэтому переключение читается как
-   смена материала на одном предмете, а не как смена картинки. */
+/* ============ одиночный кадр «выбери ткань» — ПАРКОВКА ============
+   Правая колонка секции «Продукт» теперь галерея (.reel-* выше), поэтому ни
+   .shot, ни .color-shot/.cs-* на странице никого не одевают. Всё это — один
+   и тот же снятый переключатель ткани: .shot был его рамкой. Держим блок
+   целиком, чтобы вернуть переключатель одним куском; разметка — в истории
+   index.html, поведение — colorShot() в js/app.js. */
 .shot{
   position:relative;margin:0;overflow:hidden;
   border-radius:var(--r);
@@ -297,7 +262,8 @@ button{font-family:inherit}
     color-mix(in srgb, var(--wood) 22%, var(--panel)) 0 9px,
     color-mix(in srgb, var(--wood) 34%, var(--panel)) 9px 18px);
 }
-/* Кадры сняты по одному референсу, но терракотовый чуть отличается посадкой
+/* ---------------------------------------------------------------------------
+   Кадры сняты по одному референсу, но терракотовый чуть отличается посадкой
    предмета: снимать заново ради этого дороже, чем оно того стоит, поэтому
    разницу гасим перекрёстным затуханием. Уходящий кадр держит .cs-prev, пока
    новый уже стоит в <img>, — простая смена src давала вспышку фона между
@@ -874,11 +840,17 @@ button{font-family:inherit}
   .build-guide{transition:none}
 }
 
-/* подсказка над полкой модулей */
+/* подсказка над полкой модулей: две равные половины — слева текст,
+   справа зона «убрать» (.remove-zone, см. ниже) */
 .hint-bar{
-  display:flex;align-items:center;justify-content:center;gap:10px;
+  display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:14px;
   text-align:center;font-size:14px;color:var(--muted);font-weight:600;
-  padding:2px 16px 12px;
+  padding:8px 16px 12px;
+}
+.hint-txt{text-wrap:balance}
+/* узко — половинки не разъехались бы по-человечески, кладём их друг под друга */
+@media (max-width:720px){
+  .hint-bar{grid-template-columns:1fr;gap:9px}
 }
 
 /* меню лаза одного куба — всплывает у куба (position:absolute внутри .scene-wrap);
@@ -1001,39 +973,50 @@ button{font-family:inherit}
 :root[data-theme="light"] .chip .nm{color:var(--ink)}
 :root[data-theme="light"] .chip .nm .nm-jp,:root[data-theme="light"] .chip .pr{color:var(--muted)}
 
-/* полка + действия под сценой — относительный контейнер для .remove-zone поверх них */
+/* полка модулей + действия под сценой */
 .lower-panel{position:relative}
 
-/* подсветка «убрать перетаскиванием»: перекрывает всю полку (hint-bar…studio-actions)
-   пунктирной рамкой в цвете акцента — визуально совсем не похоже на подсветку
-   ячейки ковра (та — сплошной силуэт модуля прямо в сцене), чтобы не путать
-   «переставить» с «убрать». Показывается только когда тянут УЖЕ стоящий в
-   сборке модуль (drag.origin), не новый из лотка — см. beginDrag/updateHot */
+/* зона «убрать перетаскиванием» — правая половина .hint-bar. Три состояния:
+     покой  — пунктирный контур в цвете подсказки: цель видно заранее, но она
+              не спорит за внимание с самой сборкой;
+     .show  — тянут УЖЕ стоящий в сборке модуль (drag.origin), не новый из
+              лотка: контур и подпись оживают в акценте, фон чуть теплеет;
+     .armed — курсор внутри: сплошная рамка и заметная заливка, отпустить
+              здесь и правда уберёт модуль.
+   Пунктир нарочно не похож на подсветку ячейки ковра (та — сплошной силуэт
+   модуля прямо в сцене), чтобы не путать «переставить» с «убрать».
+   Классы вешает js/configurator.js, beginDrag/updateHot */
 .remove-zone{
-  position:absolute;inset:6px;z-index:15;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  border-radius:18px;
-  background:color-mix(in srgb, var(--aka) 10%, var(--panel) 90%);
-  border:2px dashed color-mix(in srgb, var(--aka) 55%, var(--line));
-  color:var(--aka);font-weight:800;font-size:14.5px;text-align:center;
-  opacity:0;transform:scale(.97);pointer-events:none;
-  transition:opacity .16s ease, transform .16s ease, background .16s ease, border-color .16s ease;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  min-height:46px;padding:7px 14px;
+  border-radius:14px;
+  border:1.5px dashed color-mix(in srgb, var(--muted) 42%, transparent);
+  background:transparent;
+  color:var(--muted);font-weight:700;font-size:13.5px;line-height:1.25;text-align:left;
+  pointer-events:none;user-select:none;-webkit-user-select:none;
+  transition:background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
-.remove-zone.show{opacity:1;transform:none}
-/* курсор наведён внутри полки — «взведена», отпустить здесь и правда уберёт модуль */
+.remove-zone.show{
+  border-color:color-mix(in srgb, var(--aka) 50%, transparent);
+  background:color-mix(in srgb, var(--aka) 7%, transparent);
+  color:var(--aka);
+}
+/* «свечение» даём box-shadow, а не transform: масштаб менял бы
+   getBoundingClientRect, а по нему js уже проверяет попадание курсора */
 .remove-zone.armed{
-  background:color-mix(in srgb, var(--aka) 24%, var(--panel) 76%);
   border-style:solid;border-color:var(--aka);
+  background:color-mix(in srgb, var(--aka) 20%, var(--panel) 80%);
+  color:var(--aka);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--aka) 20%, transparent);
 }
-.remove-zone .rz-ico{width:21px;height:21px;flex:none}
+.remove-zone .rz-ico{width:19px;height:19px;flex:none}
 .remove-zone .rz-ico path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .remove-zone.armed .rz-ico{animation:rz-shake .32s ease}
 @keyframes rz-shake{0%,100%{transform:none}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
 @media (prefers-reduced-motion: reduce){
-  .remove-zone{transition:opacity .16s ease}
   .remove-zone.armed .rz-ico{animation:none}
 }
-@media (max-width:560px){ .remove-zone{font-size:13px;gap:7px} }
+@media (max-width:560px){ .remove-zone{font-size:12.5px;gap:7px;min-height:42px} }
 
 /* панель действий */
 .studio-actions{
@@ -1564,7 +1547,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 
 /* .film-frame / .smart-film / .modes-note удалены вместе с секцией про игровые
-   сценарии: последний видео-кадр на странице живёт в карусели (.reel-frame) */
+   сценарии: единственный ролик страницы живёт третьим кадром галереи в секции
+   «Продукт» (.reel-shot video) */
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}

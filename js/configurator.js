@@ -55,6 +55,10 @@ function say(text, dur){
      затемнение (KD.guideShown задаёт app.js; первая реплика автосборки
      и так ждёт закрытия интро через KD.onIntroDone) */
   if (KD.guideShown && KD.guideShown()) return;
+  /* баббл припаркован вместе с кнопкой чата (см. index.html) — реплики просто
+     некуда показывать. Молча выходим: say() зовут отовсюду, и падение здесь
+     утащило бы за собой всю обработку действия, а не только подсказку */
+  if (!momoSay || !momoTxt) return;
   clearTimeout(sayTimer);
   /* реплика поверх реплики: баббл «выныривает» заново, а не подменяет текст
      на лету — подмена посреди показа выглядела мерцанием */
@@ -68,7 +72,7 @@ function say(text, dur){
 }
 KD.say = say;
 /* открытый чат прячет независимую реплику — вместе они путают */
-KD.hideSay = () => { clearTimeout(sayTimer); momoSay.classList.remove("show"); };
+KD.hideSay = () => { clearTimeout(sayTimer); if (momoSay) momoSay.classList.remove("show"); };
 
 /* ---------- правила ---------- */
 function supBelow(i){
@@ -188,14 +192,13 @@ function snapshot(){ undoStack.push(grid.slice()); if (undoStack.length > 40) un
    сборка» с карточки плана в сайдбаре: план в сцене уже не совпадает с ней */
 function notifyEdit(){ if (KD.onUserEdit) KD.onUserEdit(); }
 
-/* тоннель: с соседом в ряду — вдоль ряда, одиночный — входом к зрителю */
-function tunnelAxis(i){
-  const col = i % COLS;
-  const left = col > 0 && grid[i - 1];
-  const right = col < COLS - 1 && grid[i + 1];
-  return (left || right) ? "x" : "z";
+/* тоннель всегда лежит вдоль ряда; меняются только торцы — утоплен в соседний
+   куб или встык по границе ячейки. Правило одно на всех, живёт в KD.scene */
+function tunnelKey(i){
+  const e = KD.scene.tunnelExt(grid, i);
+  return (e.tunnelExtL ? "L" : "-") + (e.tunnelExtR ? "R" : "-");
 }
-const tunnelAxes = {};
+const tunnelEnds = {};
 /* когтеточка-пандус по умолчанию встаёт скатом К ближнему кубу (пандус-заезд на
    модуль): куб справа → dir 1 (высокая кромка слева/снаружи, скат спускается
    вправо к кубу), куб слева → dir 3 (высокая кромка справа/снаружи, скат к кубу
@@ -206,11 +209,19 @@ function defaultScratchDir(i){
   const R = col < COLS - 1 ? grid[i + 1] : null;
   const L = col > 0 ? grid[i - 1] : null;
   const cube = t => t === "base";
-  const mod  = t => t && t !== EXT && MODULES[t];
-  if (cube(R)) return 1;
-  if (cube(L)) return 3;
-  if (mod(R))  return 1;
-  if (mod(L))  return 3;
+  /* Заезд имеет смысл только на соседа, который (1) сам что-то держит сверху —
+     на тоннель, чашу или другую когтеточку с пандуса не заберёшься, и
+     (2) не НИЖЕ высокой кромки пандуса: лежанка вдвое ниже него, пандус бы
+     перемахнул через неё, а его верхняя рейка повисла бы в воздухе над
+     подушкой. Оба условия заодно чинят стыки: раньше кромка упиралась в
+     круглый бок тоннеля и торчала сквозь него насквозь.
+     Остаются ровно те, на кого пандус и рассчитан: куб и башня. */
+  const climb = t => t && t !== EXT && MODULES[t] && MODULES[t].supportsAbove
+                  && KD.scene.moduleTopLocal(t) <= KD.scene.SCRATCH_RIDGE;
+  if (cube(R))  return 1;
+  if (cube(L))  return 3;
+  if (climb(R)) return 1;
+  if (climb(L)) return 3;
   return 0;
 }
 /* авто-подиум: после каждого изменения сборки доворачиваем НЕ повёрнутые вручную
@@ -223,14 +234,17 @@ function reorientScratches(){
     if (KD.scene.getScratchDir(i) !== d) KD.scene.setScratchDir(i, d);
   }
 }
+/* сосед у тоннеля мог появиться или уехать уже после него — пересобираем те
+   тоннели, у которых изменился «замок» торцов */
 function syncTunnels(){
   for (let i = 0; i < N; i++){
-    if (grid[i] !== "tunnel"){ delete tunnelAxes[i]; continue; }
-    const want = tunnelAxis(i);
-    if (tunnelAxes[i] !== want){
+    if (grid[i] !== "tunnel"){ delete tunnelEnds[i]; continue; }
+    const want = tunnelKey(i);
+    if (tunnelEnds[i] !== want){
       KD.scene.remove(i);
-      KD.scene.place(i, "tunnel", true, { tunnelAxis: want, below: i >= COLS ? grid[i - COLS] : null });
-      tunnelAxes[i] = want;
+      KD.scene.place(i, "tunnel", true, Object.assign(
+        { below: i >= COLS ? grid[i - COLS] : null }, KD.scene.tunnelExt(grid, i)));
+      tunnelEnds[i] = want;
     }
   }
 }
@@ -244,8 +258,8 @@ function place(i, type, opts){
   if (w > 1) sceneOpts.below2 = i >= COLS ? grid[i - COLS + 1] : null;
   if (opts && opts.entryShape) sceneOpts.entryShape = opts.entryShape; // форма лаза едет с кубом
   if (type === "tunnel"){
-    tunnelAxes[i] = tunnelAxis(i);
-    sceneOpts.tunnelAxis = tunnelAxes[i];
+    tunnelEnds[i] = tunnelKey(i);
+    Object.assign(sceneOpts, KD.scene.tunnelExt(grid, i));
   }
   if (type === "scratch"){ delete scratchManual[i]; sceneOpts.scratchDir = defaultScratchDir(i); } // свежая постановка — авто-подиум
   KD.scene.place(i, type, opts && opts.instant, sceneOpts);
@@ -296,7 +310,7 @@ function refreshTrayIcons(){
 
 /* ---------- меню настройки модуля ----------
    Меню только настраивает: у куба — форма лаза, у когтеточки — поворот пандуса.
-   Убрать модуль отсюда нельзя, для этого его тянут на полку (см. removeZone в
+   Убрать модуль отсюда нельзя, для этого его тянут в зону под сценой (removeZone,
    onDragUp) — клик по модулю ничего не удаляет.
    Лаз выбирается на каждый куб отдельно, наведение подсвечивает его
    (KD.scene.setEntryHover); см. index.html #entryMenu. Форма — отделка (в undo
@@ -414,8 +428,8 @@ function beginDrag(e, type, el, origin, valid){
   const cellPx = Math.hypot(b.x - a.x, b.y - a.y);
   drag = { type, valid, pos, hot: null, trash: false, thresh: Math.max(cellPx * 0.72, 26),
            origin, w, el, pointerId: e.pointerId,
-           /* полка «убрать» имеет смысл только для модуля, который уже стоял в
-              сборке (origin) — новый модуль из лотка ронять там нечего убирать */
+           /* зона «убрать» имеет смысл только для модуля, который уже стоял в
+              сборке (origin) — у нового из лотка убирать нечего */
            zoneRect: origin ? removeZone.getBoundingClientRect() : null };
   ghostEl.innerHTML = ICON_SRC[type]
     ? `<img src="${ICON_SRC[type]}" alt="" draggable="false">`
@@ -453,7 +467,7 @@ function updateHot(e){
     removeZone.classList.toggle("armed", overZone);
     if (overZone) blip(320, 260, 0.05, 0.025);
   }
-  /* курсор над полкой «убрать» — ячейки ковра больше не подсвечиваем: это
+  /* курсор над зоной «убрать» — ячейки ковра больше не подсвечиваем: это
      альтернативная цель, а не ещё одна ячейка для переноса */
   let best = null, bd = drag.thresh;
   if (!overZone){
@@ -478,7 +492,7 @@ function onDragUp(e){
   if (!drag || e.pointerId !== drag.pointerId) return;
   const d = drag;
   endDrag();
-  /* отпустили над полкой «убрать» — модуль (d.origin) уже снят со сцены при
+  /* отпустили над зоной «убрать» — модуль (d.origin) уже снят со сцены при
      подхвате (см. canvas pointermove ниже), тут только фиксируем это как
      необратимое действие: в историю отмен и с репликой.
      Это ЕДИНСТВЕННЫЙ способ убрать модуль поштучно (кроме «Очистить») — клик по
@@ -588,7 +602,7 @@ canvas.addEventListener("pointerup", e => {
   let best = cellAt(e.clientX, e.clientY);
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
-  /* клик НИЧЕГО не убирает — убрать модуль можно только перетаскиванием на полку
+  /* клик НИЧЕГО не убирает — убрать модуль можно только перетаскиванием в зону
      (см. removeZone в onDragUp). Меню открывается лишь тем модулям, которым есть
      что настроить: кубу — форма лаза, когтеточке — поворот пандуса. У крыши и
      остальных настраивать нечего, поэтому клик по ним просто закрывает открытое

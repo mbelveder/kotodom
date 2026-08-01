@@ -82,10 +82,14 @@ function setOnline(v){
 }
 
 /* ---------- панель: аватар разворачивается в чат, ✕ сворачивает обратно ---------- */
+/* Кнопка-аватар может быть припаркована в разметке (см. index.html) — тогда
+   открывать чат нечем, но панель и весь код остаются рабочими: сюда ещё можно
+   попасть через KD.openChat(). Поэтому не сама функция отваливается, а только
+   обращения к кнопке. */
 function openChat(){
   panel.classList.add("open");
   studioMain.classList.add("chat-open");
-  fab.setAttribute("aria-expanded", "true");
+  if (fab) fab.setAttribute("aria-expanded", "true");
   /* чат открыли — ярлык у аватара своё отслужил, убираем навсегда */
   if (chatTip && !chatTip.classList.contains("done")){
     chatTip.classList.add("done");
@@ -102,9 +106,9 @@ function openChat(){
 function closeChat(){
   panel.classList.remove("open");
   studioMain.classList.remove("chat-open");
-  fab.setAttribute("aria-expanded", "false");
+  if (fab) fab.setAttribute("aria-expanded", "false");
 }
-fab.addEventListener("click", openChat);
+if (fab) fab.addEventListener("click", openChat);
 closeBtn.addEventListener("click", closeChat);
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && panel.classList.contains("open")) closeChat();
