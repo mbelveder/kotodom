@@ -897,8 +897,8 @@ button{font-family:inherit}
   color:var(--aka);border-color:var(--aka);
   background:color-mix(in srgb, var(--aka) 12%, var(--panel));
 }
-/* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
-.em-rot{
+/* поворот когтеточки и «Инфо» — те же габариты, что у кнопок-формы лаза */
+.em-rot,.em-info{
   display:none;align-items:center;justify-content:center;
   width:34px;height:34px;padding:0;
   color:var(--muted);
@@ -907,10 +907,21 @@ button{font-family:inherit}
 }
 .em-rot svg{width:17px;height:17px}
 .em-rot svg path{fill:currentColor}
-.em-rot:hover{border-color:var(--aka);color:var(--aka)}
-/* меню когтеточки: только поворот — прячем формы лаза */
-.entry-menu.scratch-only .ep-b{ display:none }
-.entry-menu.scratch-only .em-rot{ display:inline-flex }
+.em-rot:hover,.em-info:hover{border-color:var(--aka);color:var(--aka)}
+/* «Инфо» рисуем обводкой, а не заливкой (в отличие от .ep-b): сплошной кружок
+   в ряду с формами лаза читался бы как ещё одна форма */
+.em-info svg{
+  width:18px;height:18px;
+  fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;
+}
+.em-info svg .ei-dot{fill:currentColor;stroke:none}
+/* Что показано, зависит от модуля — класс kind-* вешает openEntryMenu.
+   «Инфо» есть всегда, в том числе у модуля без настроек (.kind-plain):
+   ради неё меню ему и открывается. */
+.entry-menu .ep-b{display:none}
+.entry-menu.kind-cube .ep-b{display:inline-flex}
+.entry-menu.kind-scratch .em-rot{display:inline-flex}
+.entry-menu .em-info{display:inline-flex}
 
 /* выбор цвета когтеточки и ковра — одна глобальная коллекция (когтеточка = ковёр);
    визуально примыкает к лотку (общий фон и верхняя граница — одна панель) */

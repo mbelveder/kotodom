@@ -377,6 +377,16 @@ function openModule(type, card, trigger){
     ]
   });
 }
+/* Ту же развёрнутую карточку открывает конструктор — кнопкой «Инфо» в меню
+   модуля (см. .em-info в configurator.js). Описание, габариты и цена живут в
+   одном месте: показывать их по второму разу отдельной вёрсткой внутри сцены
+   значило бы держать два текста про один модуль. */
+KD.openModuleCard = (type, trigger) => {
+  const c = KD.CATALOG.find(c => c.type === type);
+  if (!c || !KD.MODULES[type]) return false;
+  openModule(type, c.card, trigger || null);
+  return true;
+};
 
 /* ---------- выбор цвета ткани на снимке модуля (секция «Продукт») ---------- */
 /* ПАРКОВКА: разметка #colorShot из index.html снята — в секции стоит один

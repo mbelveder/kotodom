@@ -107,7 +107,11 @@ let ghostShapes = [];
 let dirty = true;
 let catSettled = false;
 let popAnims = [];         // {anchor, t0, dur}
-let dimLabels = [];        // подписи размеров ковра: {m, e, text, oy}
+/* Подписи размеров на полу: {m, e, text, oy}. Сейчас НИКТО их не заполняет —
+   у зоны застройки размеры не подписаны (глубина контура и глубина постройки
+   не совпадают). Механику рисования (drawDimLabels в конце файла) оставляем:
+   выноски на сцене уже дважды то появлялись, то уходили. */
+let dimLabels = [];
 
 /* ---------- helpers ---------- */
 function box(a, o){ return new Zdog.Box(Object.assign({ addTo:a, stroke:1 }, o)); }
@@ -626,39 +630,22 @@ function makeRoom(parent){
   new Zdog.Shape({ addTo:scroll, stroke:3.5, color:calm(P.akaDeep), path:[{ y:-18 }] });
   new Zdog.Shape({ addTo:scroll, stroke:1.8, color:P.floorSide, closed:false,
     path:[ { x:-7, y:0 }, { bezier:[ { x:7, y:5 }, { x:-5, y:13 }, { x:7, y:19 } ] } ] });
-  // татами-коврик под домиком — с запасом под большие постройки
-  const RW = COLS*CELL + 160, RD = CELL + 140;
+  /* татами-коврик под домиком. Запас по краям сузили со 160 до 90: зона
+     застройки выросла с пяти ячеек до восьми, и прежний коврик уезжал под
+     торшер слева и под растение справа */
+  const RW = COLS*CELL + 90, RD = CELL + 140;
   new Zdog.RoundedRect({ addTo:room, width:RW, height:RD, cornerRadius:18,
     fill:true, stroke:4, color:P.rug, rotate:{ x:TAU/4 }, translate:{ y:GROUND-1, z:4 } });
-  /* Светлый контур — ровно зона застройки, ни на единицу больше: COLS ячеек в
-     ширину и одна в глубину, центр там же, где сетка (z:0, а не z:4, как у
-     татами). Раньше он был заметно шире и глубже сетки — выглядел как место,
-     куда можно поставить модуль, а поставить туда было нельзя; и глубина
-     130 см ничему в постройке не соответствовала. Теперь по контуру читается
-     и то, сколько модулей влезает в ряд (COLS штук по 40 см), и настоящая
-     глубина домика — 40 см. */
-  const BW = COLS*CELL, BD = CELL;
-  new Zdog.RoundedRect({ addTo:room, width:BW, height:BD, cornerRadius:10,
-    stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:0 } });
-  /* размеры ЗОНЫ ЗАСТРОЙКИ (не татами — его габарит покупателю ни о чём не
-     говорит): тонкие выноски у передней и правой кромок контура, подписи
-     рисует drawDimLabels поверх кадра. Масштаб: куб-нора 40 см = CELL единиц,
-     поэтому обе цифры получаются круглыми — 200 × 40 см */
-  const dimZ = BD/2 + 15, dimX = BW/2 + 15;
-  const cm = u => Math.round(u * 40 / CELL / 10) * 10 + " см";
-  const dline = (p1, p2) => new Zdog.Shape({ addTo:room, stroke:1.6, color:P.note,
-    closed:false, path:[p1, p2] });
-  dline({ x:-BW/2, y:GROUND-1, z:dimZ }, { x:BW/2, y:GROUND-1, z:dimZ });
-  [-1,1].forEach(s => dline({ x:s*BW/2, y:GROUND-1, z:dimZ-6 }, { x:s*BW/2, y:GROUND-1, z:dimZ+6 }));
-  dline({ x:dimX, y:GROUND-1, z:-BD/2 }, { x:dimX, y:GROUND-1, z:BD/2 });
-  [-1,1].forEach(s => dline({ x:dimX-6, y:GROUND-1, z:s*BD/2 }, { x:dimX+6, y:GROUND-1, z:s*BD/2 }));
-  const dAnchor = (x, z) => new Zdog.Anchor({ addTo:room, translate:{ x, y:GROUND-1, z } });
-  dimLabels = [
-    { m:dAnchor(0, dimZ), e:dAnchor(60, dimZ), text:cm(BW), oy:10 },
-    { m:dAnchor(dimX, 0), e:dAnchor(dimX, 60), text:cm(BD), oy:10 }
-  ];
+  /* Светлый контур — зона застройки. По ШИРИНЕ он ровно по сетке: COLS ячеек
+     по 40 см, то есть 320 см, и ряд из восьми модулей закрывает его без
+     остатка. По ГЛУБИНЕ намеренно с запасом (домик всего 40 см): контур в одну
+     ячейку глубиной вырождался в узкую полоску и читался как черта на полу, а
+     не как площадка. Размеры не подписаны — глубина у контура и у постройки
+     разная, и цифра рядом вводила бы в заблуждение. */
+  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL, height:CELL+106, cornerRadius:14,
+    stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:4 } });
   // растение справа
-  const plant = new Zdog.Anchor({ addTo:room, translate:{ x:330, y:GROUND, z:64 } });
+  const plant = new Zdog.Anchor({ addTo:room, translate:{ x:352, y:GROUND, z:64 } });
   new Zdog.Cylinder({ addTo:plant, diameter:44, length:34, rotate:{ x:TAU/4 },
     translate:{ y:-17 }, color:calm(P.pot), frontFace:calm(P.pot), backface:calm(P.matchaDark), stroke:false });
   [[0,-0.1],[-0.45,0.25],[0.5,0.2],[-0.2,0.6],[0.25,-0.55]].forEach(([rz,ry],k) => {
@@ -669,15 +656,15 @@ function makeRoom(parent){
   new Zdog.Shape({ addTo:plant, stroke:4, color:calm(P.matchaDark), closed:false,
     path:[ { y:-34 }, { y:-70 } ] });
   // бумажный торшер слева
-  const lamp = new Zdog.Anchor({ addTo:room, translate:{ x:-300, y:GROUND, z:-70 } });
+  const lamp = new Zdog.Anchor({ addTo:room, translate:{ x:-344, y:GROUND, z:-70 } });
   new Zdog.Cylinder({ addTo:lamp, diameter:36, length:8, rotate:{ x:TAU/4 },
     translate:{ y:-4 }, color:calm(P.stand), frontFace:calm(P.stand), backface:calm(P.stand), stroke:false });
   new Zdog.Shape({ addTo:lamp, stroke:3.4, color:calm(P.stand), closed:false, path:[ { y:-6 }, { y:-58 } ] });
   new Zdog.Shape({ addTo:lamp, stroke:52, color:calm(P.lamp), closed:false,
     path:[ { y:-72 }, { y:-176 } ] });
   new Zdog.Shape({ addTo:lamp, stroke:64, color:P.lampGlow, path:[{ y:-124 }] });
-  // миска у передней кромки — обжитой угол (сдвинута левее выноски размеров)
-  const bowl = new Zdog.Anchor({ addTo:room, translate:{ x:-278, y:GROUND, z:118 } });
+  // миска у передней кромки — обжитой угол, перед ковриком
+  const bowl = new Zdog.Anchor({ addTo:room, translate:{ x:-300, y:GROUND, z:118 } });
   new Zdog.Cylinder({ addTo:bowl, diameter:34, length:12, rotate:{ x:TAU/4 },
     translate:{ y:-6 }, color:calm(P.aka), frontFace:calm(P.akaDeep), backface:calm(P.aka), stroke:false });
   new Zdog.Ellipse({ addTo:bowl, diameter:22, rotate:{ x:TAU/4 },

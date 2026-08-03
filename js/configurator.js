@@ -252,10 +252,15 @@ function refreshTrayIcons(){
   });
 }
 
-/* ---------- меню настройки модуля ----------
-   Меню только настраивает: у куба — форма лаза, у когтеточки — поворот пандуса.
-   Убрать модуль отсюда нельзя, для этого его тянут в зону под сценой (removeZone,
-   onDragUp) — клик по модулю ничего не удаляет.
+/* ---------- меню модуля ----------
+   Открывается кликом ЛЮБОМУ модулю в сцене. Что внутри — зависит от типа:
+   у куба форма лаза, у когтеточки поворот пандуса, «Инфо» есть у всех и
+   открывает развёрнутую карточку из каталога (KD.openModuleCard в app.js).
+   Раньше меню получали только куб и когтеточка, а по крыше, гамаку и прочим
+   клик просто не делал ничего — посмотреть, что это за модуль и какой он
+   величины, из сцены было нельзя.
+   Убрать модуль отсюда нельзя, для этого его тянут в зону под сценой
+   (removeZone, onDragUp) — клик по модулю ничего не удаляет.
    Лаз выбирается на каждый куб отдельно, наведение подсвечивает его
    (KD.scene.setEntryHover); см. index.html #entryMenu. Форма — отделка (в undo
    не пишем, состав и цену не трогает); в сцене живёт по индексу ячейки. */
@@ -266,7 +271,15 @@ const ENTRY_SAY = {
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
 let menuCell = null;   // ячейка открытого меню (или null)
-let menuKind = "cube"; // "cube" — куб (форма лаза); "scratch" — когтеточка (поворот пандуса)
+/* "cube" — куб (форма лаза), "scratch" — когтеточка (поворот пандуса),
+   "plain" — настраивать нечего, в меню одна кнопка «Инфо» */
+let menuKind = "cube";
+const MENU_KINDS = ["cube", "scratch", "plain"];
+const MENU_LABEL = {
+  cube: "Форма лаза этого куба",
+  scratch: "Поворот когтеточки",
+  plain: "Об этом модуле"
+};
 const ROT_SAY = ["Развернул пандус. Так удобнее заходить.", "Крутанул когтеточку — новый угол атаки.", "Повернул. Подиум смотрит куда надо."];
 
 function positionMenu(i){
@@ -287,9 +300,8 @@ function markMenuShape(i){
 function openEntryMenu(i, kind){
   menuCell = i;
   menuKind = kind || "cube";
-  entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот
-  entryMenu.setAttribute("aria-label",
-    menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
+  MENU_KINDS.forEach(k => entryMenu.classList.toggle("kind-" + k, k === menuKind));
+  entryMenu.setAttribute("aria-label", MENU_LABEL[menuKind]);
   markMenuShape(i);
   positionMenu(i);
   entryMenu.classList.add("show");
@@ -304,6 +316,15 @@ KD.closeEntryMenu = closeEntryMenu;
 if (entryMenu){
   entryMenu.addEventListener("click", e => {
     if (menuCell === null || animating) return;
+    if (e.target.closest(".em-info")){
+      /* тип читаем ДО закрытия: closeEntryMenu обнуляет menuCell.
+         Меню убираем — карточка открывается модалкой поверх всей страницы,
+         и всплывашка над модулем осталась бы висеть под затемнением */
+      const t = grid[menuCell];
+      closeEntryMenu();
+      if (KD.openModuleCard) KD.openModuleCard(t);
+      return;
+    }
     if (e.target.closest(".em-rot") && menuKind === "scratch"){  // поворот пандуса (отделка, не в undo)
       const nd = (KD.scene.getScratchDir(menuCell) + 1) % 4;
       if (KD.scene.setScratchDir(menuCell, nd)){
@@ -545,19 +566,18 @@ canvas.addEventListener("pointerup", e => {
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
   /* клик НИЧЕГО не убирает — убрать модуль можно только перетаскиванием в зону
-     (см. removeZone в onDragUp). Меню открывается лишь тем модулям, которым есть
-     что настроить: кубу — форма лаза, когтеточке — поворот пандуса. У крыши и
-     остальных настраивать нечего, поэтому клик по ним просто закрывает открытое
-     меню. «roof» проверяем ПЕРВЫМ: лаз у него есть (hasEntry === true), но это
-     не выбор. */
-  if (grid[best] !== "roof" && KD.scene.hasEntry(best)){
-    if (menuCell === best && menuKind === "cube") closeEntryMenu(); else openEntryMenu(best, "cube");
-    return;
-  }
-  if (grid[best] === "scratch"){   // когтеточка: клик открывает меню поворота
-    if (menuCell === best && menuKind === "scratch") closeEntryMenu(); else openEntryMenu(best, "scratch");
-    return;
-  }
+     (см. removeZone в onDragUp). Меню открывается ЛЮБОМУ модулю: настройки в нём
+     свои у куба и у когтеточки, а «Инфо» есть у всех — по крыше или гамаку
+     клик тоже должен что-то давать. Повторный клик по тому же модулю закрывает.
+     «roof» проверяем ПЕРВЫМ: лаз у него есть (hasEntry === true), но это не
+     выбор — крыше достаётся меню без настроек. */
+  const toggle = kind => {
+    if (menuCell === best && menuKind === kind) closeEntryMenu();
+    else openEntryMenu(best, kind);
+  };
+  if (grid[best] !== "roof" && KD.scene.hasEntry(best)) return toggle("cube");
+  if (grid[best] === "scratch") return toggle("scratch");
+  if (MODULES[grid[best]]) return toggle("plain");
   closeEntryMenu();
 });
 
