@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=88">
-<link rel="stylesheet" href="css/style.css?v=88">
-<script defer src="config.js?v=88"></script>
-<script defer src="js/zdog.dist.min.js?v=88"></script>
-<script defer src="js/catalog.js?v=88"></script>
-<script defer src="js/scene.js?v=88"></script>
-<script defer src="js/configurator.js?v=88"></script>
-<script defer src="js/chat.js?v=88"></script>
-<script defer src="js/app.js?v=88"></script>
+<link rel="stylesheet" href="css/fonts.css?v=89">
+<link rel="stylesheet" href="css/style.css?v=89">
+<script defer src="config.js?v=89"></script>
+<script defer src="js/zdog.dist.min.js?v=89"></script>
+<script defer src="js/catalog.js?v=89"></script>
+<script defer src="js/scene.js?v=89"></script>
+<script defer src="js/configurator.js?v=89"></script>
+<script defer src="js/chat.js?v=89"></script>
+<script defer src="js/app.js?v=89"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -170,10 +170,15 @@
           <button class="reel-arw reel-prev" id="reelPrev" type="button" aria-label="Предыдущий кадр">‹</button>
           <button class="reel-arw reel-next" id="reelNext" type="button" aria-label="Следующий кадр">›</button>
         </div>
+        <!-- .rd-fill — заливка активной точки: она же индикатор времени до
+             смены кадра. Анимацию заводит reel() в js/app.js ровно на ту же
+             паузу, по которой листает, и замирает вместе с ней. Без js (и при
+             «поменьше движения») заливка просто стоит закрашенной — точка
+             выглядит так же, как выглядела до появления шкалы. -->
         <div class="reel-dots" id="reelDots" role="tablist" aria-label="Кадры">
-          <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Кадр 1"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 2"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 3"></button>
+          <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Кадр 1"><i class="rd-fill"></i></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 2"><i class="rd-fill"></i></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 3"><i class="rd-fill"></i></button>
         </div>
       </div>
     </div>
@@ -207,13 +212,10 @@
     <div class="rail" id="moduleRail"></div>
     <button class="rail-nav rail-next" id="railNext" type="button" aria-label="Прокрутить каталог вправо">›</button>
   </div>
-  <!-- прямые покупки видны только в модалке заказа — без этой плашки клик
-       «В корзину» уходил бы в пустоту -->
-  <div class="cart-bar" id="cartBar" role="status">
-    <span class="cb-t">Отдельные модули в заказе:</span>
-    <span class="cb-n" id="cartNote"></span>
-    <button class="btn btn-aka" id="cartOrder" type="button">Оформить заказ</button>
-  </div>
+  <!-- Здесь была плашка «отдельные модули в заказе»: сводка корзины, которую
+       набирали кнопками «В корзину» на карточках. Кнопки и корзина сняты —
+       из каталога ведёт один путь, «В конструктор», и заказ оформляется
+       кнопкой под сценой. -->
 </section>
 
 <section id="builder">

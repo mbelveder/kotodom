@@ -73,18 +73,45 @@ button{font-family:inherit}
   backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);
 }
-.site-head .wrap{display:flex;align-items:center;gap:14px;padding:10px 20px}
+.site-head .wrap{
+  display:flex;align-items:center;gap:14px;padding:10px 20px;
+  transition:padding .2s ease;
+}
 .hanko{
   width:74px;height:74px;border-radius:50%;
   background:transparent;
   display:grid;place-items:center;
   flex:none;cursor:pointer;text-decoration:none;
-  transition:transform .15s ease;
+  transition:transform .15s ease, width .2s ease, height .2s ease;
 }
 .hanko:hover{transform:scale(1.06)}
 .hanko img{width:100%;height:100%;object-fit:contain}
-.brand{font-size:22px;letter-spacing:.01em}
-.brand small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.brand{font-size:22px;letter-spacing:.01em;transition:font-size .2s ease}
+.brand small{
+  display:block;font-size:11px;font-weight:600;color:var(--muted);
+  letter-spacing:.14em;text-transform:uppercase;
+  /* прячется в компактной шапке — не display:none, чтобы уезжала плавно
+     вместе с остальной высотой, а не пропадала рывком. max-height с запасом:
+     на узком экране «домики для кошек» переносится на две строки, и по
+     высоте одной строки вторая обрезалась бы прямо на первом экране */
+  overflow:hidden;max-height:60px;
+  transition:max-height .2s ease, opacity .16s ease;
+}
+
+/* ---- компактная шапка ----
+   Класс вешает headShrink() в js/app.js, когда первый экран уже прокручен.
+   Шапка липкая, и в полный рост (95px) она весь остальной сайт держит под
+   собой полосу в десятую часть экрана. Ужимаем то, что нужно только на
+   входе: знак и подпись под названием. Навигация не трогается — за ней
+   сюда и смотрят. Высота съезжает с переходом, иначе содержимое страницы
+   дёрнулось бы вверх на 40px рывком (шапка стоит в обычном потоке). */
+.site-head.compact .wrap{padding:5px 20px}
+.site-head.compact .hanko{width:42px;height:42px}
+.site-head.compact .brand{font-size:18px}
+.site-head.compact .brand small{max-height:0;opacity:0}
+@media (prefers-reduced-motion: reduce){
+  .site-head .wrap,.hanko,.brand,.brand small{transition:none}
+}
 /* штрих над второй «о»: катакана ノ — один взмах кисти; зеркалим (scaleX:-1),
    чтобы наклон совпадал с привычным русским знаком ударения о́ */
 .brand .jo{position:relative;display:inline-block}
@@ -196,12 +223,28 @@ button{font-family:inherit}
 .reel-dots button{
   position:relative;width:30px;height:7px;padding:0;
   border:none;border-radius:99px;background:var(--line);cursor:pointer;
-  transition:background .2s ease;
+  transition:background .2s ease, width .24s ease;
 }
 /* сама точка низкая — расширяем зону нажатия до 44px, не раздувая вид */
 .reel-dots button::before{content:"";position:absolute;inset:-18px -5px}
 .reel-dots button:hover{background:color-mix(in srgb, var(--aka) 45%, var(--line))}
-.reel-dots button.is-on{background:var(--aka)}
+/* Активная точка — шкала времени до смены кадра: по ней слева направо ползёт
+   заливка .rd-fill. Шкала намеренно негромкая: подложка та же, что у спящих
+   точек (никакой лишней подсветки), заливка — приглушённый, а не фирменный
+   алый, и длины прибавляем немного. Активность читается уже по самой длине,
+   так что цветом можно не давить: полоса ползёт 15 секунд подряд, и яркая
+   она тянула бы взгляд с кадра, ради которого всё и затевалось */
+.reel-dots button.is-on{width:40px}
+.reel-dots .rd-fill{
+  position:absolute;inset:0;border-radius:inherit;
+  background:color-mix(in srgb, var(--aka) 55%, var(--line));
+  /* по умолчанию — сплошная заливка: без js и при «поменьше движения»
+     автолистания нет, показывать нечего, и точка просто закрашена.
+     Двигает её только reel(): clip-path, а не scaleX, — масштаб сплющил бы
+     скруглённые торцы пилюли в линзу */
+  clip-path:inset(0 0 0 0);
+}
+.reel-dots button:not(.is-on) .rd-fill{display:none}
 @media (prefers-reduced-motion: reduce){ .reel-track{transition:none} }
 /* на узком экране колонки схлопываются в одну и кадр становится шире, чем был
    на десктопе, — пропорцию 4:3 не трогаем, добираем только палец на стрелках */
@@ -503,8 +546,8 @@ button{font-family:inherit}
   box-shadow:var(--shadow);
   transition:transform .24s ease, box-shadow .24s ease, border-color .24s ease;
 }
-/* :has(:focus-visible), а не :focus-within — иначе после клика мышью по
-   «В корзину» карточка навсегда оставалась приподнятой (см. .sc-card) */
+/* :has(:focus-visible), а не :focus-within — иначе после клика мышью по кнопке
+   в карточке она навсегда оставалась приподнятой (см. .sc-card) */
 .mc-card:hover,.mc-card:has(:focus-visible){
   transform:translateY(-5px);
   box-shadow:0 16px 34px color-mix(in srgb, var(--ink) 20%, transparent);
@@ -613,24 +656,6 @@ button{font-family:inherit}
 .rail-nav:hover{transform:translateY(-50%) scale(1.08);background:var(--aka);color:#FFFBF3;border-color:var(--aka)}
 .rail-nav[disabled]{opacity:0;pointer-events:none}
 @media (hover:none){ .rail-nav{display:none} }
-
-/* сводка прямых покупок: появляется под лентой, когда что-то положили в заказ.
-   Иначе «В корзину» уходило бы в пустоту — состав виден только в модалке */
-.cart-bar{
-  display:none;align-items:center;gap:12px;flex-wrap:wrap;
-  margin:6px auto 0;max-width:1080px;
-  padding:12px 16px;
-  border:1.5px dashed var(--aka);border-radius:16px;
-  background:color-mix(in srgb, var(--aka) 7%, var(--panel));
-}
-.cart-bar.show{display:flex}
-.cart-bar .cb-t{font-weight:800;font-size:14.5px}
-.cart-bar .cb-n{color:var(--muted);font-weight:700;font-size:13.5px}
-.cart-bar .btn{margin-left:auto;padding:9px 18px;font-size:13.5px;min-height:44px}
-@media (max-width:640px){
-  .cart-bar{margin-inline:20px}
-  .cart-bar .btn{margin-left:0;width:100%}
-}
 
 /* ============ студия (конструктор домиков) ============ */
 .studio{
@@ -1369,27 +1394,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .order-lines li.total{font-weight:800;font-size:16px;border-bottom:none}
 .order-lines .n{font-variant-numeric:tabular-nums;white-space:nowrap}
-/* заказ ОДИН, но состав разделён на две категории: собранное в конструкторе
-   и модули, купленные напрямую из каталога (у вторых — счётчик количества) */
-.og-t{
-  display:flex;align-items:center;gap:9px;
-  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--muted);margin:14px 0 0;
-}
-.og-t:first-child{margin-top:0}
-.og-t::after{content:"";height:1px;background:var(--line);flex:1}
 .order-lines li .nm{flex:1;min-width:0}
-.qty{display:inline-flex;align-items:center;gap:2px;flex:none}
-.qty button{
-  width:26px;height:26px;padding:0;border-radius:8px;cursor:pointer;
-  border:1.5px solid var(--line);background:var(--panel);color:var(--muted);
-  font-size:15px;font-weight:800;line-height:1;
-  transition:border-color .14s ease, color .14s ease;
-}
-.qty button:hover{border-color:var(--aka);color:var(--aka)}
-.qty .q{min-width:22px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
-.qty .rm{margin-left:4px;border-color:transparent;font-size:13px}
-.qty .rm:hover{border-color:var(--aka);color:var(--aka)}
+/* Здесь были .og-t (заголовок группы состава) и .qty (счётчик количества):
+   состав заказа делился на «сборку из конструктора» и «отдельные модули»
+   из корзины, и у вторых можно было менять количество прямо в модалке.
+   Корзины больше нет — группа одна, и правит её только конструктор. */
 .f-row{margin-bottom:12px}
 .f-row label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
 .f-row input,.f-row textarea{

@@ -28,25 +28,11 @@ const removeZone = $("#removeZone");
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-/* ---------- звук ---------- */
-let actx = null;
-function blip(f0, f1, dur, vol){
-  try{
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type = "triangle";
-    o.frequency.setValueAtTime(f0, actx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(f1, actx.currentTime + dur);
-    g.gain.setValueAtTime(vol, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(); o.stop(actx.currentTime + dur);
-  }catch(e){ /* без звука */ }
-}
-/* короткий «тик» при перетаскивании модуля между валидными ячейками — единственный
-   оставленный звук (см. blip на drag hot-change); остальные сигналы отключены как
-   слишком «игрушечные». popSound теперь молчит, чтобы не трогать все места вызова */
-const popSound  = () => {};
+/* Звуков в конструкторе нет. Были: «поп» на постановку модуля и короткие
+   тики при перетаскивании между валидными ячейками (WebAudio-осциллятор).
+   Сняты целиком — на своей странице человек не ждёт, что она начнёт пищать,
+   а обратной связи и без них хватает: подсветка ячейки, анимация и реплики
+   Момо. Разметка/история — в git, если сигналы понадобятся снова. */
 
 /* ---------- Момо говорит ---------- */
 let sayTimer = null;
@@ -115,66 +101,26 @@ const NO_SLOT_HINTS = {
   play: "Чаше-лежанке нужен пол или верх модуля — всё занято.",
 };
 
-/* ---------- прямые покупки модулей из каталога ---------- */
-/* Второй источник состава заказа: модуль можно взять из каталога напрямую,
-   минуя сцену. Заказ ОДИН — состав просто складывается со сценой при
-   оформлении (см. app.js), а правила скидки и отправки не меняются.
-   totals() ниже остаётся ПРО СЦЕНУ: ценник-бирка висит внутри конструктора
-   и должна показывать именно то, что стоит в комнате. Полную сумму заказа
-   считает orderTotals(). */
-const cart = {};                                        // тип -> количество
-const cartCount = () => Object.values(cart).reduce((s, n) => s + n, 0);
-KD.cart = {
-  add(type, n){
-    if (!MODULES[type]) return false;
-    cart[type] = (cart[type] || 0) + (n || 1);
-    refresh();
-    return true;
-  },
-  set(type, n){
-    if (!MODULES[type]) return;
-    if (n > 0) cart[type] = n; else delete cart[type];
-    refresh();
-  },
-  count: cartCount,
-  lines(){
-    return Object.entries(cart).map(([t, n]) => ({
-      type: t, name: MODULES[t].name, n, price: MODULES[t].price, sum: MODULES[t].price * n
-    }));
-  },
-  onChange: null      // app.js подписывается, чтобы обновлять плашку под лентой
-};
-
 /* ---------- цена ---------- */
+/* Заказ = сцена, и только сцена. Раньше рядом жила корзина: модуль можно было
+   взять из каталога кнопкой «В корзину», минуя конструктор, и сумма считалась
+   по двум источникам сразу (totals() — про сцену, orderTotals() — про всё).
+   Кнопки сняты, второго источника нет — остался один totals(). */
 function totals(){
   const items = grid.filter(t => MODULES[t]); // без маркеров широких модулей
   const sum = items.reduce((s, t) => s + MODULES[t].price, 0);
   const disc = items.length >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
   return { count: items.length, sum, disc, total: sum - disc };
 }
-/* полная сумма заказа: сцена + отдельные модули. Скидка считается по ОБЩЕМУ
-   числу модулей — правило «от пяти модулей» то же самое, просто источников два */
-function orderTotals(){
-  const items = grid.filter(t => MODULES[t]);
-  const sum = items.reduce((s, t) => s + MODULES[t].price, 0)
-            + KD.cart.lines().reduce((s, l) => s + l.sum, 0);
-  const count = items.length + cartCount();
-  const disc = count >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
-  return { count, sum, disc, total: sum - disc, sceneCount: items.length, cartCount: cartCount() };
-}
-KD.orderTotals = orderTotals;
 let hadDiscount = false;
 function refresh(){
   syncTunnels();
   reorientScratches();
-  const t = totals();          // сцена — для бирки внутри конструктора
-  const o = orderTotals();     // весь заказ — для кнопки оформления
+  const t = totals();
   sumOut.textContent = fmt(t.total);
   discOut.textContent = t.disc ? `скидка 5% (−${fmt(t.disc)}) 🎉` : (t.count ? `модулей: ${t.count}` : "");
-  btnOrder.textContent = o.count ? `Оформить заказ · ${fmt(o.total)}` : "Оформить заказ";
-  /* заказ можно оформить и с пустой сценой — если модули взяли прямо из каталога.
-     А вот «Очистить»/«Отменить» — про сцену, их состояние от корзины не зависит */
-  btnOrder.disabled = o.count === 0 || animating;
+  btnOrder.textContent = t.count ? `Оформить заказ · ${fmt(t.total)}` : "Оформить заказ";
+  btnOrder.disabled = t.count === 0 || animating;
   btnUndo.disabled = !undoStack.length || animating;
   btnClear.disabled = t.count === 0 || animating;
   if (t.disc && !hadDiscount){
@@ -182,7 +128,6 @@ function refresh(){
     hadDiscount = true;
   }
   if (!t.disc) hadDiscount = false;
-  if (KD.cart.onChange) KD.cart.onChange(o);
 }
 
 /* ---------- операции ---------- */
@@ -264,7 +209,6 @@ function place(i, type, opts){
   if (type === "scratch"){ delete scratchManual[i]; sceneOpts.scratchDir = defaultScratchDir(i); } // свежая постановка — авто-подиум
   KD.scene.place(i, type, opts && opts.instant, sceneOpts);
   if (!opts || !opts.silent){
-    popSound();
     say(opts && opts.moved ? pick(SAY.moved) : pick(MODULES[type].say));
   }
   refresh();
@@ -365,7 +309,7 @@ if (entryMenu){
       if (KD.scene.setScratchDir(menuCell, nd)){
         scratchManual[menuCell] = true;   // ручной поворот — авто-подиум больше не трогает этот пандус
         positionMenu(menuCell);           // высота могла измениться незначительно — переякорим
-        popSound(); say(pick(ROT_SAY));
+        say(pick(ROT_SAY));
       }
       return;
     }
@@ -374,7 +318,7 @@ if (entryMenu){
       const s = b.dataset.shape;
       if (KD.scene.setEntryShapeAt(menuCell, s)){
         markMenuShape(menuCell);
-        popSound(); say(ENTRY_SAY[s] || "Готово.");
+        say(ENTRY_SAY[s] || "Готово.");
       }
     }
   });
@@ -465,7 +409,6 @@ function updateHot(e){
   if (overZone !== drag.trash){
     drag.trash = overZone;
     removeZone.classList.toggle("armed", overZone);
-    if (overZone) blip(320, 260, 0.05, 0.025);
   }
   /* курсор над зоной «убрать» — ячейки ковра больше не подсвечиваем: это
      альтернативная цель, а не ещё одна ячейка для переноса */
@@ -480,7 +423,6 @@ function updateHot(e){
   if (best !== drag.hot){
     drag.hot = best;
     KD.scene.showGhosts(drag.valid, best, drag.w);
-    if (best !== null) blip(600, 620, 0.04, 0.02);
   }
 }
 function onDragMove(e){
@@ -722,7 +664,6 @@ function applyCells(cells, doneSay, entrySh){
       const ok = validCells(t).includes(i);        // нет опоры/занято — пропускаем, но запоминаем
       if (ok) place(i, t, { silent: true, entryShape: t === "base" ? shapeAt(i) : undefined }); else skipped.push(t);
       if (step === entries.length - 1){
-        popSound();
         if (skipped.length){
           const names = [...new Set(skipped)].map(x => (MODULES[x] && MODULES[x].name) || x).join(", ");
           say(`Не поместилось: ${names} — не хватило опоры или места. Передвиньте модули вручную, чтобы освободить место.`, 6500);
@@ -789,7 +730,6 @@ if (collectionPick){
     if (KD.scene.setCollection(b.dataset.col)){
       markCollection();
       refreshTrayIcons();
-      popSound();
     }
   });
 }
