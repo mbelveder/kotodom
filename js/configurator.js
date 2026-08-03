@@ -621,7 +621,7 @@ KD.addModule = function(type){
   const valid = validCells(type);
   if (!valid.length) return { ok: false, hint: NO_SLOT_HINTS[type] || pick(SAY.noSlot) };
   const i = valid[0];
-  KD.studioBooted = true;      // человек начал собирать сам — автосборка «Проныры» не нужна
+  KD.studioBooted = true;      // человек начал собирать сам — стартовая связка уже не нужна
   snapshot();
   notifyEdit();
   place(i, type);              // place() сам зовёт say() — Момо комментирует модуль
@@ -744,15 +744,16 @@ if (collectionPick){
 ["scroll", "resize"].forEach(ev => window.addEventListener(ev, closeEntryMenu, true));
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", closeEntryMenu);
 
-/* конструктор домиков оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
-   но МОЛЧА — первая реплика Момо ждёт, пока посетитель сам возьмётся за сборку
-   (перетащит модуль, уберёт его или выберет план). Ждём и закрытия гида, чтобы
-   сборка не анимировалась за затемнением (см. KD.onIntroDone в app.js) */
+/* конструктор домиков оживает, когда доезжаешь до него: ставим стартовую связку
+   (KD.START_CELLS — куб и когтеточка), но МОЛЧА — первая реплика Момо ждёт,
+   пока посетитель сам возьмётся за сборку (перетащит модуль, уберёт его или
+   выберет план). Ждём и закрытия гида, чтобы сборка не анимировалась за
+   затемнением (см. KD.onIntroDone в app.js) */
 const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    const boot = () => { if (!KD.studioBooted) applyCells(PRESETS.wide.cells); };
+    const boot = () => { if (!KD.studioBooted) applyCells(KD.START_CELLS); };
     if (KD.onIntroDone) KD.onIntroDone(boot); else boot();
   }
 }, { threshold: 0.35 });

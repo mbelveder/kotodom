@@ -630,22 +630,32 @@ function makeRoom(parent){
   const RW = COLS*CELL + 160, RD = CELL + 140;
   new Zdog.RoundedRect({ addTo:room, width:RW, height:RD, cornerRadius:18,
     fill:true, stroke:4, color:P.rug, rotate:{ x:TAU/4 }, translate:{ y:GROUND-1, z:4 } });
-  new Zdog.RoundedRect({ addTo:room, width:COLS*CELL+124, height:CELL+106, cornerRadius:14,
-    stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:4 } });
-  /* размеры ковра: тонкие выноски у передней и правой кромок; подписи
-     рисует drawDimLabels поверх кадра. Масштаб: куб-нора 40 см = CELL единиц */
-  const dimZ = 4 + RD/2 + 16, dimX = RW/2 + 18;
+  /* Светлый контур — ровно зона застройки, ни на единицу больше: COLS ячеек в
+     ширину и одна в глубину, центр там же, где сетка (z:0, а не z:4, как у
+     татами). Раньше он был заметно шире и глубже сетки — выглядел как место,
+     куда можно поставить модуль, а поставить туда было нельзя; и глубина
+     130 см ничему в постройке не соответствовала. Теперь по контуру читается
+     и то, сколько модулей влезает в ряд (COLS штук по 40 см), и настоящая
+     глубина домика — 40 см. */
+  const BW = COLS*CELL, BD = CELL;
+  new Zdog.RoundedRect({ addTo:room, width:BW, height:BD, cornerRadius:10,
+    stroke:2.5, color:P.rugIn, rotate:{ x:TAU/4 }, translate:{ y:GROUND-2, z:0 } });
+  /* размеры ЗОНЫ ЗАСТРОЙКИ (не татами — его габарит покупателю ни о чём не
+     говорит): тонкие выноски у передней и правой кромок контура, подписи
+     рисует drawDimLabels поверх кадра. Масштаб: куб-нора 40 см = CELL единиц,
+     поэтому обе цифры получаются круглыми — 200 × 40 см */
+  const dimZ = BD/2 + 15, dimX = BW/2 + 15;
   const cm = u => Math.round(u * 40 / CELL / 10) * 10 + " см";
   const dline = (p1, p2) => new Zdog.Shape({ addTo:room, stroke:1.6, color:P.note,
     closed:false, path:[p1, p2] });
-  dline({ x:-RW/2, y:GROUND-1, z:dimZ }, { x:RW/2, y:GROUND-1, z:dimZ });
-  [-1,1].forEach(s => dline({ x:s*RW/2, y:GROUND-1, z:dimZ-6 }, { x:s*RW/2, y:GROUND-1, z:dimZ+6 }));
-  dline({ x:dimX, y:GROUND-1, z:4-RD/2 }, { x:dimX, y:GROUND-1, z:4+RD/2 });
-  [-1,1].forEach(s => dline({ x:dimX-6, y:GROUND-1, z:4+s*RD/2 }, { x:dimX+6, y:GROUND-1, z:4+s*RD/2 }));
+  dline({ x:-BW/2, y:GROUND-1, z:dimZ }, { x:BW/2, y:GROUND-1, z:dimZ });
+  [-1,1].forEach(s => dline({ x:s*BW/2, y:GROUND-1, z:dimZ-6 }, { x:s*BW/2, y:GROUND-1, z:dimZ+6 }));
+  dline({ x:dimX, y:GROUND-1, z:-BD/2 }, { x:dimX, y:GROUND-1, z:BD/2 });
+  [-1,1].forEach(s => dline({ x:dimX-6, y:GROUND-1, z:s*BD/2 }, { x:dimX+6, y:GROUND-1, z:s*BD/2 }));
   const dAnchor = (x, z) => new Zdog.Anchor({ addTo:room, translate:{ x, y:GROUND-1, z } });
   dimLabels = [
-    { m:dAnchor(0, dimZ), e:dAnchor(60, dimZ), text:cm(RW), oy:10 },
-    { m:dAnchor(dimX, 4), e:dAnchor(dimX, 64), text:cm(RD), oy:10 }
+    { m:dAnchor(0, dimZ), e:dAnchor(60, dimZ), text:cm(BW), oy:10 },
+    { m:dAnchor(dimX, 0), e:dAnchor(dimX, 60), text:cm(BD), oy:10 }
   ];
   // растение справа
   const plant = new Zdog.Anchor({ addTo:room, translate:{ x:330, y:GROUND, z:64 } });

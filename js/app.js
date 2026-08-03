@@ -6,7 +6,8 @@ const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
 /* ---------- готовые сборки: витрина над hero + выдвижная панель у конструктора домиков ---------- */
-/* три сфотографированы, три — сложнее, ещё без съёмки (см. .sc-mock в css) */
+/* у всех шести есть рендер в assets/render_*.jpg; ветка с .sc-mock (иероглиф
+   вместо фото) в витрине осталась на случай новой сборки без съёмки */
 const SHOWCASE = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
@@ -26,30 +27,31 @@ const presetPanel = $("#presetPanel"), presetTab = $("#presetTab"),
       showcaseGrid = $("#showcaseGrid"), builderSec = $("#builder");
 const presetPrice = key => Object.values(KD.PRESETS[key].cells)
   .reduce((s, t) => s + KD.MODULES[t].price, 0);
+/* Карточка плана — целиком одна кнопка. Раньше внутри неё жили описание
+   «жидким стеклом» на ховере и отдельная кнопка «Собрать в конструкторе
+   домиков»; и то и другое съедало высоту в узкой панели, а кнопка вдобавок
+   повторяла то, что делает вся карточка. Осталось фото, имя и цена; что
+   карточка кликабельна, видно по ховеру — она приподнимается, а на фото
+   проявляется «Собрать». Описание сборки читается в витрине над hero. */
 SHOWCASE.forEach(g => {
-  const el = document.createElement("div");
+  const el = document.createElement("button");
+  el.type = "button";
   el.className = "preset-card";
   el.dataset.key = g.preset;
-  /* описание переехало на фото «жидким стеклом» (проявляется на ховере) —
-     карточка стала ниже, в узкой панели помещается больше сборок.
-     Для трёх сборок без фото (см. SHOWCASE) — тот же мокап с иероглифом, что в витрине над hero */
-  const pcMedia = g.img
-    ? `<img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-         onerror="this.closest('.pc-media').classList.add('no-img')">`
-    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
+  el.setAttribute("aria-label", `Собрать сборку ${g.nm} в конструкторе`);
   el.innerHTML = `
-    <div class="pc-media"${g.img ? ` style="--pc-img:url('${g.img}')"` : ""}>
-      ${pcMedia}
-      <div class="pc-hover">${g.ds}</div>
+    <div class="pc-media">
+      <img src="${g.img}" alt="" loading="lazy"
+           onerror="this.closest('.pc-media').classList.add('no-img')">
+      <span class="pc-go" aria-hidden="true">Собрать</span>
     </div>
     <div class="pc-body">
       <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе домиков</button>
     </div>`;
   presetList.appendChild(el);
   /* без прокрутки и закрытия панели: посетитель уже у конструктора домиков,
      а планы удобно примерять один за другим */
-  el.querySelector("button").addEventListener("click", () => {
+  el.addEventListener("click", () => {
     if (KD.loadPreset(g.preset)) markChosen(g.preset);
   });
 });
@@ -246,7 +248,7 @@ SHOWCASE.forEach(g => {
        </button>`
     : "";
   el.innerHTML = `
-    <div class="sc-media"${g.img ? ` style="--sc-img:url('${g.img}')"` : ""}>
+    <div class="sc-media">
       ${media}
       ${zoom}
     </div>

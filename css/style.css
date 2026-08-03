@@ -435,37 +435,22 @@ button{font-family:inherit}
   transform:translateY(-4px);
   box-shadow:0 18px 40px color-mix(in srgb, var(--ink) 20%, transparent);
 }
-.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);--sc-zoom:1.34;
+.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);
   border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
-/* Масштаб сборки в витрине.
-   Рендеры сняты «в размер кадра»: маленький «Новичок» (2 ячейки, 5 220 ₽) занимал
-   столько же места, сколько «Дозорный» (5 ячеек, 26 840 ₽), и в сетке дешёвые
-   сборки выглядели крупнее дорогих. Кадр 16:9 в окне 4:3 обрезается по бокам
-   (object-fit:cover), поэтому масштаб задаём явно: 1.34 — «cover» (обрезка по
-   бокам, максимальный размер), 1.0 — весь кадр целиком с полями сверху/снизу.
-   Значения подобраны по РЕАЛЬНОЙ ширине сборки в ячейках сетки.
-   Поля закрывает та же картинка, увеличенная и размытая, — без жёсткого стыка. */
-.sc-media::before{
-  content:"";position:absolute;inset:0;
-  background:var(--sc-img) center/cover no-repeat;
-  transform:scale(1.35);filter:blur(28px) saturate(.85) brightness(1.05);
-}
-.sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:contain;
-  transform:scale(var(--sc-zoom));transform-origin:center;transition:transform .3s ease}
+/* Фото заполняет карточку. Здесь был тот же приём, что и в сайдбаре: сборку
+   ужимали пропорционально её размеру в ячейках (--sc-zoom), а освободившиеся
+   поля закрывала та же картинка в размытии — фоном ::before из --sc-img.
+   Подложка не работала никогда: url() в custom property резолвится
+   относительно css/, а не документа, и все шесть запросов уходили в 404
+   (css/assets/render_*.jpg). А сам --sc-zoom со временем выровнялся в 1.34 у
+   всех шести, то есть в обычный cover, — поля исчезли, и прятать стало
+   нечего. Осталось то, что и делалось на самом деле: cover. */
+.sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:cover;
+  transform-origin:center;transition:transform .3s ease}
 /* на ховере фото реально становится крупнее — не «стекло» поверх, а сам кадр */
 .sc-card:hover .sc-media img,.sc-card:has(:focus-visible) .sc-media img{
-  transform:scale(calc(var(--sc-zoom) + .1));
+  transform:scale(1.07);
 }
-.sc-card[data-key="watch"]   .sc-media{--sc-zoom:1.34}  /* 5 ячеек — эталон */
-.sc-card[data-key="manor"]   .sc-media{--sc-zoom:1.34}  /* 4 ячейки, запас снят в рендере */
-.sc-card[data-key="zoomies"] .sc-media{--sc-zoom:1.34}  /* блок 2×2, высокий */
-.sc-card[data-key="wide"]    .sc-media{--sc-zoom:1.34}  /* 3 ячейки, запас снят в рендере */
-/* «Вальяжный» — вертикальная сборка: кадрируем «в упор» (cover), чтобы домик
-   занял всю высоту карточки и читался высоким рядом с широкими сборками */
-.sc-card[data-key="tower"]   .sc-media{--sc-zoom:1.34}
-/* «Новичок» — запас воздуха уже заложен в самом рендере, поэтому в карточке
-   кадрируем «в упор» (cover): фото занимает всю высоту, без полей */
-.sc-card[data-key="start"]   .sc-media{--sc-zoom:1.34}
 /* три сборки ещё без фотосъёмки — вместо неё мокап с иероглифом темы, честно без притворства */
 /* иероглиф держим в верхней трети: нижняя часть карточки уходит под подпись-стекло */
 .sc-mock{width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;padding-top:16%;
@@ -1183,58 +1168,57 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   flex:1 1 0;overflow-y:auto;
   padding:12px;display:flex;flex-direction:column;gap:12px;
 }
+/* вся карточка — одна кнопка (см. app.js), поэтому сбрасываем кнопочные
+   умолчания: шрифт, выравнивание и внутренние отступы задаём сами */
 .preset-card{
+  display:block;width:100%;padding:0;text-align:left;font:inherit;color:inherit;
   background:color-mix(in srgb, var(--paper) 55%, var(--panel));
   border:1px solid var(--line);border-radius:16px;
-  overflow:hidden;flex:none;
+  overflow:hidden;flex:none;cursor:pointer;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-/* aspect-ratio на самом media: три сборки без фото (см. SHOWCASE) кладут сюда
-   .sc-mock вместо img, а он высоты не задаёт — контейнер иначе схлопнется */
-.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9;--pc-zoom:1}
-/* Масштаб сборки в карточке.
-   Рендеры сняты «в размер кадра»: маленький «Новичок» (2 модуля) занимал столько
-   же места, сколько «Дозорный» (11 модулей), и в сетке дешёвые сборки выглядели
-   крупнее дорогих. Уменьшаем фото пропорционально РЕАЛЬНОМУ размеру сборки —
-   ширине в ячейках сетки: 5 ячеек («Дозорный») = 1, дальше по убыванию.
-   Освободившиеся поля закрывает та же картинка, увеличенная и размытая, —
-   без жёсткого стыка с фоном карточки. */
-.preset-card .pc-media::before{
-  content:"";position:absolute;inset:0;
-  background:var(--pc-img) center/cover no-repeat;
-  transform:scale(1.3);filter:blur(26px) saturate(.85) brightness(1.04);
+/* кликабельность показываем движением карточки и подписью на фото — описания
+   и отдельной кнопки в карточке больше нет */
+.preset-card:hover,.preset-card:focus-visible{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb, var(--aka) 45%, var(--line));
+  box-shadow:0 10px 22px color-mix(in srgb, var(--ink) 14%, transparent);
 }
-.preset-card .pc-media.no-img::before{display:none}
-.preset-card img{position:relative;width:100%;height:auto;display:block;aspect-ratio:16/9;
-  object-fit:cover;transform:scale(var(--pc-zoom));transform-origin:center}
-.preset-card[data-key="start"]   .pc-media{--pc-zoom:.70}  /* 2 ячейки, 5 220 ₽ */
-.preset-card[data-key="tower"]   .pc-media{--pc-zoom:.82}  /* 2 ячейки, но высокая */
-.preset-card[data-key="wide"]    .pc-media{--pc-zoom:.80}  /* 3 ячейки */
-.preset-card[data-key="zoomies"] .pc-media{--pc-zoom:.88}  /* блок 2×2 */
-.preset-card[data-key="manor"]   .pc-media{--pc-zoom:.92}  /* 4 ячейки */
-.preset-card[data-key="watch"]   .pc-media{--pc-zoom:1}    /* 5 ячеек — эталон */
-/* описание поверх фото: «жидкое стекло» проявляется на ховере/фокусе —
-   так карточка ниже, и в узкой панели помещается больше сборок */
-.preset-card .pc-hover{
-  position:absolute;inset:0;display:flex;align-items:flex-end;
-  padding:12px;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--ink);
-  background:linear-gradient(to top,
-    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
-    color-mix(in srgb, var(--panel) 40%, transparent) 85%, transparent);
-  backdrop-filter:blur(10px) saturate(1.25);
-  -webkit-backdrop-filter:blur(10px) saturate(1.25);
-  opacity:0;transition:opacity .28s ease;pointer-events:none;
+/* aspect-ratio на самом media, а не на img: если фото не догрузилось
+   (.no-img), контейнер не должен схлопнуться в полоску */
+.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9}
+/* фото заполняет кадр целиком. Раньше оно ужималось (--pc-zoom) пропорционально
+   размеру сборки, чтобы «Новичок» из двух модулей не выглядел крупнее
+   «Дозорного» из одиннадцати, а поля закрывались той же картинкой в размытии.
+   Приём не сработал: url() в custom property резолвился относительно css/, а не
+   документа, — подложка не грузилась вовсе (404 на css/assets/render_*.jpg), и
+   вместо неё вокруг фото стояли пустые поля. Размер сборки и так виден по цене
+   рядом с именем. */
+.preset-card img{
+  display:block;width:100%;height:100%;object-fit:cover;object-position:center;
 }
-.preset-card:hover .pc-hover,.preset-card:focus-within .pc-hover{opacity:1}
-@media (prefers-reduced-motion: reduce){ .preset-card .pc-hover{transition:none} }
-/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу */
-@media (hover:none){
-  .preset-card .pc-hover{position:static;opacity:1;padding:8px 12px 10px;
-    backdrop-filter:none;-webkit-backdrop-filter:none;background:none;color:var(--muted)}
+/* «Собрать» проявляется на фото при наведении — короткая подсказка, что
+   карточка сама и есть кнопка. aria-label кнопки говорит то же словами,
+   поэтому в разметке она aria-hidden */
+.preset-card .pc-go{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
+  padding:6px 14px;border-radius:99px;
+  background:color-mix(in srgb, var(--aka) 92%, transparent);color:#FFFBF3;
+  font-size:12.5px;font-weight:800;white-space:nowrap;
+  opacity:0;transition:opacity .2s ease, transform .2s ease;pointer-events:none;
 }
-.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.preset-card:hover .pc-go,.preset-card:focus-visible .pc-go{
+  opacity:1;transform:translate(-50%,-50%) scale(1);
+}
+/* на тач-экранах ховера нет — подсказка не появится никогда, и это нормально:
+   там по карточке просто нажимают */
+@media (prefers-reduced-motion: reduce){
+  .preset-card,.preset-card .pc-go{transition:none}
+  .preset-card:hover,.preset-card:focus-visible{transform:none}
+}
+.preset-card .pc-body{padding:9px 12px 11px}
 .preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%}
 /* выбранная сборка: план из витрины загружен в конструктор и ещё не изменён
    руками — метка держится, пока конфигурацию не поправят (см. app.js) */
 .preset-card.chosen{
