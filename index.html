@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=89">
-<link rel="stylesheet" href="css/style.css?v=89">
-<script defer src="config.js?v=89"></script>
-<script defer src="js/zdog.dist.min.js?v=89"></script>
-<script defer src="js/catalog.js?v=89"></script>
-<script defer src="js/scene.js?v=89"></script>
-<script defer src="js/configurator.js?v=89"></script>
-<script defer src="js/chat.js?v=89"></script>
-<script defer src="js/app.js?v=89"></script>
+<link rel="stylesheet" href="css/fonts.css?v=90">
+<link rel="stylesheet" href="css/style.css?v=90">
+<script defer src="config.js?v=90"></script>
+<script defer src="js/zdog.dist.min.js?v=90"></script>
+<script defer src="js/catalog.js?v=90"></script>
+<script defer src="js/scene.js?v=90"></script>
+<script defer src="js/configurator.js?v=90"></script>
+<script defer src="js/chat.js?v=90"></script>
+<script defer src="js/app.js?v=90"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -118,9 +118,10 @@
     </div>
     <!-- Галерея на три кадра: модуль «Крыша» крупным планом (фактура берёзы,
          ковролин на скате, джутовый конёк), затем общий план собранного домика,
-         затем ролик — деталь, целое и живой кот. Кадры сменяются сами раз в
-         15 секунд; условия, при которых автолистание замирает, описаны в reel()
-         в js/app.js.
+         затем ролик — деталь, целое и живой кот. Кадры сменяются сами: фото
+         стоят по 7 секунд, ролик — 15 (его длина). Сколько кадру осталось,
+         видно по заливке активной точки под галереей; условия, при которых
+         автолистание замирает, описаны в reel() в js/app.js.
          Разметка и id — те же, что были у карусели на первом экране, поэтому
          reel() в js/app.js подхватывает её без единой правки. Слайды видны и
          без js: без него виден первый кадр, остальные просто уезжают за край
@@ -151,10 +152,13 @@
               </div>
             </div>
 
-            <!-- ролик длится ровно 15 секунд — столько же, сколько кадр стоит
-                 на автолистании, так что за один показ он успевает пройти цикл
-                 целиком и не обрывается на середине. preload="metadata": сам
-                 файл тянется, только когда до кадра доходит очередь -->
+            <!-- ролик длится ровно 15 секунд, и его кадру на автолистании
+                 отведено столько же (соседним фото — по 7): за один показ он
+                 успевает пройти цикл целиком и не обрывается на середине.
+                 reel() узнаёт этот кадр по самому <video>, так что менять
+                 длительность при перестановке слайдов не придётся.
+                 preload="metadata": сам файл тянется, только когда до кадра
+                 доходит очередь -->
             <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="3 из 3">
               <div class="reel-shot">
                 <video id="filmVid" autoplay muted loop playsinline preload="metadata"
@@ -489,7 +493,6 @@
   <div class="wrap">
     <span>© Котоши, 2026</span>
     <span>Демо-прототип: заказы и оплата не настоящие.</span>
-    <span>Момо — ИИ-консультант; сложные вопросы он передаёт человеку.</span>
   </div>
 </footer>
 
