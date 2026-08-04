@@ -73,18 +73,45 @@ button{font-family:inherit}
   backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);
 }
-.site-head .wrap{display:flex;align-items:center;gap:14px;padding:10px 20px}
+.site-head .wrap{
+  display:flex;align-items:center;gap:14px;padding:10px 20px;
+  transition:padding .2s ease;
+}
 .hanko{
   width:74px;height:74px;border-radius:50%;
   background:transparent;
   display:grid;place-items:center;
   flex:none;cursor:pointer;text-decoration:none;
-  transition:transform .15s ease;
+  transition:transform .15s ease, width .2s ease, height .2s ease;
 }
 .hanko:hover{transform:scale(1.06)}
 .hanko img{width:100%;height:100%;object-fit:contain}
-.brand{font-size:22px;letter-spacing:.01em}
-.brand small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.brand{font-size:22px;letter-spacing:.01em;transition:font-size .2s ease}
+.brand small{
+  display:block;font-size:11px;font-weight:600;color:var(--muted);
+  letter-spacing:.14em;text-transform:uppercase;
+  /* прячется в компактной шапке — не display:none, чтобы уезжала плавно
+     вместе с остальной высотой, а не пропадала рывком. max-height с запасом:
+     на узком экране «домики для кошек» переносится на две строки, и по
+     высоте одной строки вторая обрезалась бы прямо на первом экране */
+  overflow:hidden;max-height:60px;
+  transition:max-height .2s ease, opacity .16s ease;
+}
+
+/* ---- компактная шапка ----
+   Класс вешает headShrink() в js/app.js, когда первый экран уже прокручен.
+   Шапка липкая, и в полный рост (95px) она весь остальной сайт держит под
+   собой полосу в десятую часть экрана. Ужимаем то, что нужно только на
+   входе: знак и подпись под названием. Навигация не трогается — за ней
+   сюда и смотрят. Высота съезжает с переходом, иначе содержимое страницы
+   дёрнулось бы вверх на 40px рывком (шапка стоит в обычном потоке). */
+.site-head.compact .wrap{padding:5px 20px}
+.site-head.compact .hanko{width:42px;height:42px}
+.site-head.compact .brand{font-size:18px}
+.site-head.compact .brand small{max-height:0;opacity:0}
+@media (prefers-reduced-motion: reduce){
+  .site-head .wrap,.hanko,.brand,.brand small{transition:none}
+}
 /* штрих над второй «о»: катакана ノ — один взмах кисти; зеркалим (scaleX:-1),
    чтобы наклон совпадал с привычным русским знаком ударения о́ */
 .brand .jo{position:relative;display:inline-block}
@@ -196,12 +223,28 @@ button{font-family:inherit}
 .reel-dots button{
   position:relative;width:30px;height:7px;padding:0;
   border:none;border-radius:99px;background:var(--line);cursor:pointer;
-  transition:background .2s ease;
+  transition:background .2s ease, width .24s ease;
 }
 /* сама точка низкая — расширяем зону нажатия до 44px, не раздувая вид */
 .reel-dots button::before{content:"";position:absolute;inset:-18px -5px}
 .reel-dots button:hover{background:color-mix(in srgb, var(--aka) 45%, var(--line))}
-.reel-dots button.is-on{background:var(--aka)}
+/* Активная точка — шкала времени до смены кадра: по ней слева направо ползёт
+   заливка .rd-fill. Шкала намеренно негромкая: подложка та же, что у спящих
+   точек (никакой лишней подсветки), заливка — приглушённый, а не фирменный
+   алый, и длины прибавляем немного. Активность читается уже по самой длине,
+   так что цветом можно не давить: полоса ползёт 15 секунд подряд, и яркая
+   она тянула бы взгляд с кадра, ради которого всё и затевалось */
+.reel-dots button.is-on{width:40px}
+.reel-dots .rd-fill{
+  position:absolute;inset:0;border-radius:inherit;
+  background:color-mix(in srgb, var(--aka) 55%, var(--line));
+  /* по умолчанию — сплошная заливка: без js и при «поменьше движения»
+     автолистания нет, показывать нечего, и точка просто закрашена.
+     Двигает её только reel(): clip-path, а не scaleX, — масштаб сплющил бы
+     скруглённые торцы пилюли в линзу */
+  clip-path:inset(0 0 0 0);
+}
+.reel-dots button:not(.is-on) .rd-fill{display:none}
 @media (prefers-reduced-motion: reduce){ .reel-track{transition:none} }
 /* на узком экране колонки схлопываются в одну и кадр становится шире, чем был
    на десктопе, — пропорцию 4:3 не трогаем, добираем только палец на стрелках */
@@ -392,37 +435,29 @@ button{font-family:inherit}
   transform:translateY(-4px);
   box-shadow:0 18px 40px color-mix(in srgb, var(--ink) 20%, transparent);
 }
-.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);--sc-zoom:1.34;
-  border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
-/* Масштаб сборки в витрине.
-   Рендеры сняты «в размер кадра»: маленький «Новичок» (2 ячейки, 5 220 ₽) занимал
-   столько же места, сколько «Дозорный» (5 ячеек, 26 840 ₽), и в сетке дешёвые
-   сборки выглядели крупнее дорогих. Кадр 16:9 в окне 4:3 обрезается по бокам
-   (object-fit:cover), поэтому масштаб задаём явно: 1.34 — «cover» (обрезка по
-   бокам, максимальный размер), 1.0 — весь кадр целиком с полями сверху/снизу.
-   Значения подобраны по РЕАЛЬНОЙ ширине сборки в ячейках сетки.
-   Поля закрывает та же картинка, увеличенная и размытая, — без жёсткого стыка. */
-.sc-media::before{
-  content:"";position:absolute;inset:0;
-  background:var(--sc-img) center/cover no-repeat;
-  transform:scale(1.35);filter:blur(28px) saturate(.85) brightness(1.05);
-}
-.sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:contain;
-  transform:scale(var(--sc-zoom));transform-origin:center;transition:transform .3s ease}
+/* clip-path дублирует border-radius не для красоты: скруглённой обрезке от
+   overflow:hidden браузер не подчиняет слои, которые ушли на видеокарту, — а
+   внутри кадра их два: фото едет transform:scale на ховере и пилюля
+   «Развернуть» с backdrop-filter. В этот момент углы фото щёлкали в прямые,
+   и выглядело это как сбой отрисовки. clip-path применяется на отрисовке, и
+   его composited-слои соблюдают. Радиусы двух свойств держим одинаковыми. */
+.sc-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper);
+  border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;
+  clip-path:inset(0 round calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0)}
+/* Фото заполняет карточку. Здесь был тот же приём, что и в сайдбаре: сборку
+   ужимали пропорционально её размеру в ячейках (--sc-zoom), а освободившиеся
+   поля закрывала та же картинка в размытии — фоном ::before из --sc-img.
+   Подложка не работала никогда: url() в custom property резолвится
+   относительно css/, а не документа, и все шесть запросов уходили в 404
+   (css/assets/render_*.jpg). А сам --sc-zoom со временем выровнялся в 1.34 у
+   всех шести, то есть в обычный cover, — поля исчезли, и прятать стало
+   нечего. Осталось то, что и делалось на самом деле: cover. */
+.sc-media img{position:relative;width:100%;height:100%;display:block;object-fit:cover;
+  transform-origin:center;transition:transform .3s ease}
 /* на ховере фото реально становится крупнее — не «стекло» поверх, а сам кадр */
 .sc-card:hover .sc-media img,.sc-card:has(:focus-visible) .sc-media img{
-  transform:scale(calc(var(--sc-zoom) + .1));
+  transform:scale(1.07);
 }
-.sc-card[data-key="watch"]   .sc-media{--sc-zoom:1.34}  /* 5 ячеек — эталон */
-.sc-card[data-key="manor"]   .sc-media{--sc-zoom:1.34}  /* 4 ячейки, запас снят в рендере */
-.sc-card[data-key="zoomies"] .sc-media{--sc-zoom:1.34}  /* блок 2×2, высокий */
-.sc-card[data-key="wide"]    .sc-media{--sc-zoom:1.34}  /* 3 ячейки, запас снят в рендере */
-/* «Вальяжный» — вертикальная сборка: кадрируем «в упор» (cover), чтобы домик
-   занял всю высоту карточки и читался высоким рядом с широкими сборками */
-.sc-card[data-key="tower"]   .sc-media{--sc-zoom:1.34}
-/* «Новичок» — запас воздуха уже заложен в самом рендере, поэтому в карточке
-   кадрируем «в упор» (cover): фото занимает всю высоту, без полей */
-.sc-card[data-key="start"]   .sc-media{--sc-zoom:1.34}
 /* три сборки ещё без фотосъёмки — вместо неё мокап с иероглифом темы, честно без притворства */
 /* иероглиф держим в верхней трети: нижняя часть карточки уходит под подпись-стекло */
 .sc-mock{width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;padding-top:16%;
@@ -503,16 +538,19 @@ button{font-family:inherit}
   box-shadow:var(--shadow);
   transition:transform .24s ease, box-shadow .24s ease, border-color .24s ease;
 }
-/* :has(:focus-visible), а не :focus-within — иначе после клика мышью по
-   «В корзину» карточка навсегда оставалась приподнятой (см. .sc-card) */
+/* :has(:focus-visible), а не :focus-within — иначе после клика мышью по кнопке
+   в карточке она навсегда оставалась приподнятой (см. .sc-card) */
 .mc-card:hover,.mc-card:has(:focus-visible){
   transform:translateY(-5px);
   box-shadow:0 16px 34px color-mix(in srgb, var(--ink) 20%, transparent);
   border-color:color-mix(in srgb, var(--aka) 40%, var(--line));
 }
+/* clip-path — по той же причине, что и у .sc-media: фото на ховере
+   масштабируется, а лента описания идёт с backdrop-filter */
 .mc-media{
   position:relative;aspect-ratio:1/1;overflow:hidden;
   border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;
+  clip-path:inset(0 round calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0);
   background:var(--paper);
 }
 .mc-media img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .3s ease}
@@ -613,24 +651,6 @@ button{font-family:inherit}
 .rail-nav:hover{transform:translateY(-50%) scale(1.08);background:var(--aka);color:#FFFBF3;border-color:var(--aka)}
 .rail-nav[disabled]{opacity:0;pointer-events:none}
 @media (hover:none){ .rail-nav{display:none} }
-
-/* сводка прямых покупок: появляется под лентой, когда что-то положили в заказ.
-   Иначе «В корзину» уходило бы в пустоту — состав виден только в модалке */
-.cart-bar{
-  display:none;align-items:center;gap:12px;flex-wrap:wrap;
-  margin:6px auto 0;max-width:1080px;
-  padding:12px 16px;
-  border:1.5px dashed var(--aka);border-radius:16px;
-  background:color-mix(in srgb, var(--aka) 7%, var(--panel));
-}
-.cart-bar.show{display:flex}
-.cart-bar .cb-t{font-weight:800;font-size:14.5px}
-.cart-bar .cb-n{color:var(--muted);font-weight:700;font-size:13.5px}
-.cart-bar .btn{margin-left:auto;padding:9px 18px;font-size:13.5px;min-height:44px}
-@media (max-width:640px){
-  .cart-bar{margin-inline:20px}
-  .cart-bar .btn{margin-left:0;width:100%}
-}
 
 /* ============ студия (конструктор домиков) ============ */
 .studio{
@@ -887,8 +907,8 @@ button{font-family:inherit}
   color:var(--aka);border-color:var(--aka);
   background:color-mix(in srgb, var(--aka) 12%, var(--panel));
 }
-/* кнопка поворота когтеточки — как кнопки-формы лаза, видна только в меню когтеточки */
-.em-rot{
+/* поворот когтеточки и «Инфо» — те же габариты, что у кнопок-формы лаза */
+.em-rot,.em-info{
   display:none;align-items:center;justify-content:center;
   width:34px;height:34px;padding:0;
   color:var(--muted);
@@ -897,10 +917,21 @@ button{font-family:inherit}
 }
 .em-rot svg{width:17px;height:17px}
 .em-rot svg path{fill:currentColor}
-.em-rot:hover{border-color:var(--aka);color:var(--aka)}
-/* меню когтеточки: только поворот — прячем формы лаза */
-.entry-menu.scratch-only .ep-b{ display:none }
-.entry-menu.scratch-only .em-rot{ display:inline-flex }
+.em-rot:hover,.em-info:hover{border-color:var(--aka);color:var(--aka)}
+/* «Инфо» рисуем обводкой, а не заливкой (в отличие от .ep-b): сплошной кружок
+   в ряду с формами лаза читался бы как ещё одна форма */
+.em-info svg{
+  width:18px;height:18px;
+  fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;
+}
+.em-info svg .ei-dot{fill:currentColor;stroke:none}
+/* Что показано, зависит от модуля — класс kind-* вешает openEntryMenu.
+   «Инфо» есть всегда, в том числе у модуля без настроек (.kind-plain):
+   ради неё меню ему и открывается. */
+.entry-menu .ep-b{display:none}
+.entry-menu.kind-cube .ep-b{display:inline-flex}
+.entry-menu.kind-scratch .em-rot{display:inline-flex}
+.entry-menu .em-info{display:inline-flex}
 
 /* выбор цвета когтеточки и ковра — одна глобальная коллекция (когтеточка = ковёр);
    визуально примыкает к лотку (общий фон и верхняя граница — одна панель) */
@@ -1158,58 +1189,64 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   flex:1 1 0;overflow-y:auto;
   padding:12px;display:flex;flex-direction:column;gap:12px;
 }
+/* вся карточка — одна кнопка (см. app.js), поэтому сбрасываем кнопочные
+   умолчания: шрифт, выравнивание и внутренние отступы задаём сами */
 .preset-card{
+  display:block;width:100%;padding:0;text-align:left;font:inherit;color:inherit;
   background:color-mix(in srgb, var(--paper) 55%, var(--panel));
   border:1px solid var(--line);border-radius:16px;
-  overflow:hidden;flex:none;
+  overflow:hidden;flex:none;cursor:pointer;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-/* aspect-ratio на самом media: три сборки без фото (см. SHOWCASE) кладут сюда
-   .sc-mock вместо img, а он высоты не задаёт — контейнер иначе схлопнется */
-.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9;--pc-zoom:1}
-/* Масштаб сборки в карточке.
-   Рендеры сняты «в размер кадра»: маленький «Новичок» (2 модуля) занимал столько
-   же места, сколько «Дозорный» (11 модулей), и в сетке дешёвые сборки выглядели
-   крупнее дорогих. Уменьшаем фото пропорционально РЕАЛЬНОМУ размеру сборки —
-   ширине в ячейках сетки: 5 ячеек («Дозорный») = 1, дальше по убыванию.
-   Освободившиеся поля закрывает та же картинка, увеличенная и размытая, —
-   без жёсткого стыка с фоном карточки. */
-.preset-card .pc-media::before{
-  content:"";position:absolute;inset:0;
-  background:var(--pc-img) center/cover no-repeat;
-  transform:scale(1.3);filter:blur(26px) saturate(.85) brightness(1.04);
+/* кликабельность показываем движением карточки и подписью на фото — описания
+   и отдельной кнопки в карточке больше нет */
+.preset-card:hover,.preset-card:focus-visible{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb, var(--aka) 45%, var(--line));
+  box-shadow:0 10px 22px color-mix(in srgb, var(--ink) 14%, transparent);
 }
-.preset-card .pc-media.no-img::before{display:none}
-.preset-card img{position:relative;width:100%;height:auto;display:block;aspect-ratio:16/9;
-  object-fit:cover;transform:scale(var(--pc-zoom));transform-origin:center}
-.preset-card[data-key="start"]   .pc-media{--pc-zoom:.70}  /* 2 ячейки, 5 220 ₽ */
-.preset-card[data-key="tower"]   .pc-media{--pc-zoom:.82}  /* 2 ячейки, но высокая */
-.preset-card[data-key="wide"]    .pc-media{--pc-zoom:.80}  /* 3 ячейки */
-.preset-card[data-key="zoomies"] .pc-media{--pc-zoom:.88}  /* блок 2×2 */
-.preset-card[data-key="manor"]   .pc-media{--pc-zoom:.92}  /* 4 ячейки */
-.preset-card[data-key="watch"]   .pc-media{--pc-zoom:1}    /* 5 ячеек — эталон */
-/* описание поверх фото: «жидкое стекло» проявляется на ховере/фокусе —
-   так карточка ниже, и в узкой панели помещается больше сборок */
-.preset-card .pc-hover{
-  position:absolute;inset:0;display:flex;align-items:flex-end;
-  padding:12px;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--ink);
-  background:linear-gradient(to top,
-    color-mix(in srgb, var(--panel) 82%, transparent) 55%,
-    color-mix(in srgb, var(--panel) 40%, transparent) 85%, transparent);
-  backdrop-filter:blur(10px) saturate(1.25);
-  -webkit-backdrop-filter:blur(10px) saturate(1.25);
-  opacity:0;transition:opacity .28s ease;pointer-events:none;
+/* aspect-ratio на самом media, а не на img: если фото не догрузилось
+   (.no-img), контейнер не должен схлопнуться в полоску */
+/* Верхние углы скругляем здесь, а не полагаемся на overflow:hidden самой
+   карточки: карточка на ховере уезжает transform'ом, её обрезку браузер в этот
+   момент считает по прямоугольнику, и у фото щёлкали прямые углы (то же, что и
+   в .sc-media). Радиус — 15px: 16px у карточки минус её рамка в 1px.
+   clip-path карточке не годится — он обрезал бы и её тень на ховере. */
+.preset-card .pc-media{position:relative;overflow:hidden;aspect-ratio:16/9;
+  border-radius:15px 15px 0 0;
+  clip-path:inset(0 round 15px 15px 0 0)}
+/* фото заполняет кадр целиком. Раньше оно ужималось (--pc-zoom) пропорционально
+   размеру сборки, чтобы «Новичок» из двух модулей не выглядел крупнее
+   «Дозорного» из одиннадцати, а поля закрывались той же картинкой в размытии.
+   Приём не сработал: url() в custom property резолвился относительно css/, а не
+   документа, — подложка не грузилась вовсе (404 на css/assets/render_*.jpg), и
+   вместо неё вокруг фото стояли пустые поля. Размер сборки и так виден по цене
+   рядом с именем. */
+.preset-card img{
+  display:block;width:100%;height:100%;object-fit:cover;object-position:center;
 }
-.preset-card:hover .pc-hover,.preset-card:focus-within .pc-hover{opacity:1}
-@media (prefers-reduced-motion: reduce){ .preset-card .pc-hover{transition:none} }
-/* без ховера (тач) описание не спрятать за наведение — показываем постоянно снизу */
-@media (hover:none){
-  .preset-card .pc-hover{position:static;opacity:1;padding:8px 12px 10px;
-    backdrop-filter:none;-webkit-backdrop-filter:none;background:none;color:var(--muted)}
+/* «Собрать» проявляется на фото при наведении — короткая подсказка, что
+   карточка сама и есть кнопка. aria-label кнопки говорит то же словами,
+   поэтому в разметке она aria-hidden */
+.preset-card .pc-go{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
+  padding:6px 14px;border-radius:99px;
+  background:color-mix(in srgb, var(--aka) 92%, transparent);color:#FFFBF3;
+  font-size:12.5px;font-weight:800;white-space:nowrap;
+  opacity:0;transition:opacity .2s ease, transform .2s ease;pointer-events:none;
 }
-.preset-card .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.preset-card:hover .pc-go,.preset-card:focus-visible .pc-go{
+  opacity:1;transform:translate(-50%,-50%) scale(1);
+}
+/* на тач-экранах ховера нет — подсказка не появится никогда, и это нормально:
+   там по карточке просто нажимают */
+@media (prefers-reduced-motion: reduce){
+  .preset-card,.preset-card .pc-go{transition:none}
+  .preset-card:hover,.preset-card:focus-visible{transform:none}
+}
+.preset-card .pc-body{padding:9px 12px 11px}
 .preset-card .pc-nm{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .preset-card .pc-pr{font-weight:800;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.preset-card .btn{padding:7px 12px;font-size:12.5px;width:100%}
 /* выбранная сборка: план из витрины загружен в конструктор и ещё не изменён
    руками — метка держится, пока конфигурацию не поправят (см. app.js) */
 .preset-card.chosen{
@@ -1369,27 +1406,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center}
 }
 .order-lines li.total{font-weight:800;font-size:16px;border-bottom:none}
 .order-lines .n{font-variant-numeric:tabular-nums;white-space:nowrap}
-/* заказ ОДИН, но состав разделён на две категории: собранное в конструкторе
-   и модули, купленные напрямую из каталога (у вторых — счётчик количества) */
-.og-t{
-  display:flex;align-items:center;gap:9px;
-  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--muted);margin:14px 0 0;
-}
-.og-t:first-child{margin-top:0}
-.og-t::after{content:"";height:1px;background:var(--line);flex:1}
 .order-lines li .nm{flex:1;min-width:0}
-.qty{display:inline-flex;align-items:center;gap:2px;flex:none}
-.qty button{
-  width:26px;height:26px;padding:0;border-radius:8px;cursor:pointer;
-  border:1.5px solid var(--line);background:var(--panel);color:var(--muted);
-  font-size:15px;font-weight:800;line-height:1;
-  transition:border-color .14s ease, color .14s ease;
-}
-.qty button:hover{border-color:var(--aka);color:var(--aka)}
-.qty .q{min-width:22px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
-.qty .rm{margin-left:4px;border-color:transparent;font-size:13px}
-.qty .rm:hover{border-color:var(--aka);color:var(--aka)}
+/* Здесь были .og-t (заголовок группы состава) и .qty (счётчик количества):
+   состав заказа делился на «сборку из конструктора» и «отдельные модули»
+   из корзины, и у вторых можно было менять количество прямо в модалке.
+   Корзины больше нет — группа одна, и правит её только конструктор. */
 .f-row{margin-bottom:12px}
 .f-row label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
 .f-row input,.f-row textarea{

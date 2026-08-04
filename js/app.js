@@ -6,7 +6,8 @@ const back = $("#modalBack"), body = $("#modalBody"), xBtn = $("#modalX");
 const fmt = KD.fmt;
 
 /* ---------- готовые сборки: витрина над hero + выдвижная панель у конструктора домиков ---------- */
-/* три сфотографированы, три — сложнее, ещё без съёмки (см. .sc-mock в css) */
+/* у всех шести есть рендер в assets/render_*.jpg; ветка с .sc-mock (иероглиф
+   вместо фото) в витрине осталась на случай новой сборки без съёмки */
 const SHOWCASE = [
   { img: "assets/render_start.jpg", preset: "start", nm: "«Новичок»",
     ds: "Первый куб-нора и когтеточка. С этого начинается любой Котоши — остальное докупается, когда захочется." },
@@ -26,30 +27,31 @@ const presetPanel = $("#presetPanel"), presetTab = $("#presetTab"),
       showcaseGrid = $("#showcaseGrid"), builderSec = $("#builder");
 const presetPrice = key => Object.values(KD.PRESETS[key].cells)
   .reduce((s, t) => s + KD.MODULES[t].price, 0);
+/* Карточка плана — целиком одна кнопка. Раньше внутри неё жили описание
+   «жидким стеклом» на ховере и отдельная кнопка «Собрать в конструкторе
+   домиков»; и то и другое съедало высоту в узкой панели, а кнопка вдобавок
+   повторяла то, что делает вся карточка. Осталось фото, имя и цена; что
+   карточка кликабельна, видно по ховеру — она приподнимается, а на фото
+   проявляется «Собрать». Описание сборки читается в витрине над hero. */
 SHOWCASE.forEach(g => {
-  const el = document.createElement("div");
+  const el = document.createElement("button");
+  el.type = "button";
   el.className = "preset-card";
   el.dataset.key = g.preset;
-  /* описание переехало на фото «жидким стеклом» (проявляется на ховере) —
-     карточка стала ниже, в узкой панели помещается больше сборок.
-     Для трёх сборок без фото (см. SHOWCASE) — тот же мокап с иероглифом, что в витрине над hero */
-  const pcMedia = g.img
-    ? `<img src="${g.img}" alt="Конфигурация ${g.nm} в интерьере" loading="lazy"
-         onerror="this.closest('.pc-media').classList.add('no-img')">`
-    : `<div class="sc-mock"><span>${g.kanji}</span></div>`;
+  el.setAttribute("aria-label", `Собрать сборку ${g.nm} в конструкторе`);
   el.innerHTML = `
-    <div class="pc-media"${g.img ? ` style="--pc-img:url('${g.img}')"` : ""}>
-      ${pcMedia}
-      <div class="pc-hover">${g.ds}</div>
+    <div class="pc-media">
+      <img src="${g.img}" alt="" loading="lazy"
+           onerror="this.closest('.pc-media').classList.add('no-img')">
+      <span class="pc-go" aria-hidden="true">Собрать</span>
     </div>
     <div class="pc-body">
       <div class="pc-nm">${g.nm}<span class="pc-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе домиков</button>
     </div>`;
   presetList.appendChild(el);
   /* без прокрутки и закрытия панели: посетитель уже у конструктора домиков,
      а планы удобно примерять один за другим */
-  el.querySelector("button").addEventListener("click", () => {
+  el.addEventListener("click", () => {
     if (KD.loadPreset(g.preset)) markChosen(g.preset);
   });
 });
@@ -201,16 +203,32 @@ function highlightPreset(key){
      на вложенном элементе задевает и document-скролл, гоняя всю страницу */
   presetList.scrollTo({ top: card.offsetTop - 8, behavior: "smooth" });
 }
-/* клик по «Собрать» в витрине: сюда ведёт настоящий переход в конструктор домиков —
-   в отличие от кнопок сборки внутри самого конструктора домиков, тут прокрутка уместна.
-   Скроллим до заголовка конструктора домиков на сцене, а не до верха секции — так студия
-   видна сразу. Сайдбар НЕ открываем — план и так виден в сцене; его карточку
-   помечаем и прокручиваем к ней список, чтобы открывший сайдбар сразу увидел
-   выбранную сборку */
+/* Переход в конструктор из витрины и из каталога — один и тот же жест, поэтому
+   и едем одинаково: до заголовка конструктора, а не до верха секции, — так
+   студия видна сразу. (Кнопки сборки ВНУТРИ самого конструктора никуда не
+   скроллят: посетитель уже на месте.) */
+function goToBuilder(){
+  ($("#builderHead") || builderSec).scrollIntoView({ behavior: "smooth", block: "start" });
+}
+/* клик по «Собрать в конструкторе» в витрине. Сайдбар НЕ открываем — план и так
+   виден в сцене; его карточку помечаем и прокручиваем к ней список, чтобы
+   открывший сайдбар сразу увидел выбранную сборку */
 function buildFromShowcase(key){
-  const head = $("#builderHead");
-  (head || builderSec).scrollIntoView({ behavior: "smooth", block: "start" });
+  goToBuilder();
   if (KD.loadPreset(key)) markChosen(key);
+}
+/* клик по «Добавить в конструктор» в каталоге. Отличие от витрины ровно одно и
+   намеренное: сборка встаёт всегда, а отдельному модулю может не найтись места —
+   тогда никуда не едем, а объясняем прямо на кнопке, что случилось.
+   before() зовут из развёрнутого просмотра, чтобы закрыть его ДО прокрутки:
+   пока оверлей открыт, body заперт (overflow:hidden) и ехать некуда. Закрываем
+   только после успеха — иначе «Нет места» вспыхнуло бы на уже снятой кнопке */
+function addFromCatalog(type, btn, before){
+  const r = KD.addModule(type);
+  if (!r.ok){ flash(btn, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return false; }
+  if (before) before();
+  goToBuilder();
+  return true;
 }
 SHOWCASE.forEach(g => {
   const el = document.createElement("div");
@@ -230,13 +248,13 @@ SHOWCASE.forEach(g => {
        </button>`
     : "";
   el.innerHTML = `
-    <div class="sc-media"${g.img ? ` style="--sc-img:url('${g.img}')"` : ""}>
+    <div class="sc-media">
       ${media}
       ${zoom}
     </div>
     <div class="sc-ft">
       <div class="sc-nm">${g.nm}<span class="sc-pr">${fmt(presetPrice(g.preset))}</span></div>
-      <button class="btn btn-ghost" data-p="${g.preset}">Собрать</button>
+      <button class="btn btn-ghost" data-p="${g.preset}">Собрать в конструкторе</button>
     </div>`;
   showcaseGrid.appendChild(el);
   el.querySelector(".sc-ft button").addEventListener("click", () => buildFromShowcase(g.preset));
@@ -350,17 +368,25 @@ function openModule(type, card, trigger){
     meta: `<span class="lb-jp">${m.jp}</span><span class="lb-pr">${fmt(m.price)}</span>
            <span class="lb-size">${m.size}<span class="mc-prelim">предварительно</span></span>`,
     desc: m.desc,
+    /* в развёрнутом просмотре кнопка залита (btn-aka), а на карточке — ghost:
+       здесь она одна на весь экран и ей положено быть главной. У сборки в
+       витрине ровно так же — см. openShowcase() */
     actions: [
-      { label: "В конструктор", cls: "btn-aka", on: b => {
-          const r = KD.addModule(type);
-          if (!r.ok){ flash(b, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return; }
-          lightbox.close();
-          ($("#builderHead") || $("#builder")).scrollIntoView({ behavior: "smooth", block: "start" });
-        } },
-      { label: "В корзину", cls: "btn-ghost", on: b => { KD.cart.add(type); flash(b, "Добавлено ✓"); } }
+      { label: "Добавить в конструктор", cls: "btn-aka",
+        on: b => addFromCatalog(type, b, lightbox.close) }
     ]
   });
 }
+/* Ту же развёрнутую карточку открывает конструктор — кнопкой «Инфо» в меню
+   модуля (см. .em-info в configurator.js). Описание, габариты и цена живут в
+   одном месте: показывать их по второму разу отдельной вёрсткой внутри сцены
+   значило бы держать два текста про один модуль. */
+KD.openModuleCard = (type, trigger) => {
+  const c = KD.CATALOG.find(c => c.type === type);
+  if (!c || !KD.MODULES[type]) return false;
+  openModule(type, c.card, trigger || null);
+  return true;
+};
 
 /* ---------- выбор цвета ткани на снимке модуля (секция «Продукт») ---------- */
 /* ПАРКОВКА: разметка #colorShot из index.html снята — в секции стоит один
@@ -457,10 +483,10 @@ function openModule(type, card, trigger){
 
 /* ---------- галерея кадров в секции «Продукт» ---------- */
 /* Раньше это была панорамная карусель на первом экране; секция снята, а код
-   переехал вместе с разметкой в правую колонку hero и не изменился ни на
-   строку — id и классы там те же. Разметка слайдов статическая, первый кадр
-   виден и без js; здесь только поведение: стрелки, точки, свайп, клавиатура
-   и автолистание раз в 15 секунд. */
+   переехал вместе с разметкой в правую колонку hero — id и классы там те же.
+   Разметка слайдов статическая, первый кадр виден и без js; здесь только
+   поведение: стрелки, точки, свайп, клавиатура и автолистание (фото 7 секунд,
+   ролик 15 — см. msOf ниже). */
 (function reel(){
   const root = $("#reel");
   if (!root) return;
@@ -481,8 +507,8 @@ function openModule(type, card, trigger){
        читалок, иначе Tab уводит курсор в невидимую подпись */
     slides.forEach((s, i) => s.toggleAttribute("inert", i !== cur));
     /* ролик играет только на своём кадре и всегда с начала: за краем рамки его
-       всё равно не видно, а 15 секунд показа ровно равны его длине — так он
-       каждый раз проходит цикл целиком, а не подхватывает с середины */
+       всё равно не видно, а его кадру отведено ровно 15 секунд — его длина, —
+       так он каждый раз проходит цикл целиком, а не подхватывает с середины */
     slides.forEach((s, i) => {
       const v = s.querySelector("video");
       if (!v) return;
@@ -495,12 +521,18 @@ function openModule(type, card, trigger){
     /* любое листание — хоть руками, хоть по таймеру — отсчитывает паузу
        заново: иначе кадр, который только что выбрали кликом, мог смениться
        через полсекунды остатком прошлого интервала */
+    rewind();
     arm();
   }
 
   /* ---------- автолистание ----------
-     15 секунд — длина ролика на третьем кадре: за один показ он успевает
-     пройти цикл целиком. Раньше автосмены здесь не было намеренно, потому что
+     Кадр стоит столько, сколько его правда смотрят. Фотографию схватывают
+     за пару секунд — ей 7; ролику нужно 15, ровно его длина, чтобы за один
+     показ он прошёл цикл целиком, а не обрывался на середине. Один общий
+     интервал пришлось бы выбирать между «фото висит вдвое дольше нужного»
+     и «ролик режется» — поэтому длительность у каждого кадра своя, и шкала
+     под кадром показывает именно её.
+     Раньше автосмены здесь не было намеренно, потому что
      она уводит кадр из-под курсора, — поэтому таймер замирает во всех случаях,
      когда человек смотрит именно сюда или не смотрит вообще:
        • галереи нет на экране — крутить нечего;
@@ -514,19 +546,67 @@ function openModule(type, card, trigger){
      При prefers-reduced-motion автолистания нет вовсе: сама смена кадра в этом
      режиме мгновенная (css гасит transition), и подпрыгивающая без спроса
      картинка — ровно то движение, от которого человек отказался. */
-  const SLIDE_MS = 15000;
+  const PHOTO_MS = 7000, FILM_MS = 15000;
+  /* «кадр с роликом» узнаём по самому ролику, а не по номеру слайда: слайды
+     верстаются в index.html, и порядок там могут поменять */
+  const msOf = i => slides[i].querySelector("video") ? FILM_MS : PHOTO_MS;
   const still = matchMedia("(prefers-reduced-motion: reduce)");
   let timer = null, hover = false, onScreen = false;
+  let span = msOf(0);               // сколько отведено ТЕКУЩЕМУ кадру
+  let left = span, since = 0;       // остаток паузы и момент, с которого он тикает
+  let fill = null;                  // анимация заливки активной точки — она же шкала
 
   function keyFocusInside(){
     try { return !!root.querySelector(":focus-visible"); }
     catch(e){ return false; }        // старые браузеры без :focus-visible
   }
-  function arm(){
-    clearTimeout(timer);
-    if (still.matches || !onScreen || hover || document.hidden || keyFocusInside()) return;
-    timer = setTimeout(() => go(cur + 1), SLIDE_MS);
+  function canRun(){
+    return !(still.matches || !onScreen || hover || document.hidden || keyFocusInside());
   }
+
+  /* ---------- шкала под кадром ----------
+     Активная точка в .reel-dots заодно показывает, сколько кадру осталось.
+     Заливку ведёт WAAPI, а не css-анимация: анимацию-объект можно ставить на
+     паузу и снимать ровно там же, где пауза у таймера, — так шкала не считает
+     время отдельно от него и не может с ним разойтись. Нет WAAPI (или движение
+     отключено) — точка просто остаётся закрашенной, как была до шкалы. */
+  function paint(){
+    const f = dots[cur].querySelector(".rd-fill");
+    if (!f || !f.animate) return;
+    /* длительность — span, а не общая константа: у ролика шкала ползёт вдвое
+       медленнее, и это честно, ему и стоять вдвое дольше */
+    fill = f.animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }],
+                     { duration: span, easing: "linear", fill: "forwards" });
+    fill.currentTime = span - left;
+    fill.pause();                    // играть начнём из run(), если сейчас вообще можно
+  }
+  /* новый кадр: своя длительность, отсчёт с нуля и пустая шкала */
+  function rewind(){
+    clearTimeout(timer); timer = null;
+    span = msOf(cur);
+    left = span;
+    if (fill){ fill.cancel(); fill = null; }
+    if (!still.matches) paint();
+  }
+  /* Остановка НЕ обнуляет отсчёт: раньше arm() при каждом событии заводил
+     полный интервал заново, и наведение мышью незаметно продлевало кадр.
+     Теперь остаток запоминается — иначе шкала врала бы о том, сколько ждать */
+  function hold(){
+    if (timer){
+      clearTimeout(timer); timer = null;
+      left = Math.max(0, left - (Date.now() - since));
+    }
+    if (still.matches && fill){ fill.cancel(); fill = null; return; }  // движение выключили на ходу
+    if (fill) fill.pause();
+  }
+  function run(){
+    if (timer) return;               // уже тикает — второй таймер обрезал бы кадр
+    since = Date.now();
+    timer = setTimeout(() => go(cur + 1), left);
+    if (!fill) paint();              // движение включили на ходу
+    if (fill) fill.play();
+  }
+  function arm(){ canRun() ? run() : hold(); }
 
   /* «поменьше движения»: ролик не запускается сам — но и не пропадает. Отдаём
      человеку обычные элементы управления, чтобы он посмотрел его по своей воле;
@@ -618,9 +698,11 @@ if (rail){
         <div class="mc-nm">${m.name}<span class="mc-jp">${m.jp}</span></div>
         <div class="mc-size">${m.size}<span class="mc-prelim">предварительно</span></div>
         <div class="mc-pr">${fmt(m.price)}</div>
+        <!-- btn-ghost, а не btn-aka: у витрины готовых сборок кнопка на карточке
+             ровно такая же, и это один и тот же жест — «положить в конструктор».
+             Заливкой в ленте из шести карточек кричал бы каждый модуль сразу -->
         <div class="mc-acts">
-          <button class="btn btn-aka" type="button" data-act="build">В конструктор</button>
-          <button class="btn btn-ghost" type="button" data-act="cart">В корзину</button>
+          <button class="btn btn-ghost" type="button" data-act="build">Добавить в конструктор</button>
         </div>
       </div>`;
     rail.appendChild(el);
@@ -635,17 +717,9 @@ if (rail){
       openModule(type, KD.CATALOG.find(c => c.type === type).card, b);
       return;
     }
-    if (b.dataset.act === "cart"){
-      KD.cart.add(type);
-      flash(b, "Добавлено ✓");
-      return;
-    }
-    /* «В конструктор» — кладём модуль в сцену и едем к ней; подсветку места
-       делает сам configurator (KD.scene.pulse) */
-    const r = KD.addModule(type);
-    if (!r.ok){ flash(b, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return; }
-    const head = $("#builderHead");
-    (head || $("#builder")).scrollIntoView({ behavior: "smooth", block: "start" });
+    /* «Добавить в конструктор» — кладём модуль в сцену и едем к ней; подсветку
+       места делает сам configurator (KD.scene.pulse) */
+    addFromCatalog(type, b);
   });
 
   /* стрелки-скроллеры: прокручиваем на пару карточек, гасим на краях */
@@ -672,21 +746,31 @@ if (rail){
   syncNav();
 }
 
-/* плашка «отдельные модули в заказе» под лентой */
-const cartBar = $("#cartBar"), cartNote = $("#cartNote");
-if (cartBar){
-  const plural = n => n % 10 === 1 && n % 100 !== 11 ? "модуль"
-    : ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100) ? "модуля" : "модулей");
-  KD.cart.onChange = () => {
-    const lines = KD.cart.lines();
-    const n = KD.cart.count();
-    cartBar.classList.toggle("show", n > 0);
-    if (!n) return;
-    cartNote.textContent = `${n} ${plural(n)} · ${fmt(lines.reduce((s, l) => s + l.sum, 0))}`;
-  };
-  KD.cart.onChange();
-  $("#cartOrder").addEventListener("click", () => openCheckout());
-}
+/* ---------- компактная шапка на прокрутке ---------- */
+/* Липкая шапка в полный рост занимает ~95px и сопровождает человека до самого
+   футера. Как только первый экран пролистан, ужимаем её вдвое: знак меньше,
+   подпись под названием уезжает (см. .site-head.compact в css/style.css).
+   Навигация и переключатель темы не меняются — именно ими и пользуются.
+   Два порога, а не один: у единственной границы класс мигал бы туда-сюда,
+   потому что сжатие само меняет высоту документа и «подтягивает» страницу. */
+(function headShrink(){
+  const head = document.querySelector(".site-head");
+  if (!head) return;
+  const ON = 120, OFF = 40;
+  let compact = false, queued = false;
+  function check(){
+    queued = false;
+    const y = window.scrollY;
+    if (!compact && y > ON) head.classList.add("compact"), compact = true;
+    else if (compact && y < OFF) head.classList.remove("compact"), compact = false;
+  }
+  window.addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(check);
+  }, { passive: true });
+  check();   // страницу могли открыть по якорю — уже прокрученной
+})();
 
 /* ---------- переключатель темы: авто / светлая / тёмная ---------- */
 /* Атрибут data-theme на <html> уже мог быть выставлен инлайн-скриптом в <head>
@@ -765,38 +849,19 @@ function linesTotals(lines){
   const disc = count >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
   return { count, sum, disc, total: sum - disc };
 }
-/* Состав заказа приходит из ДВУХ источников: сцена конструктора и модули,
-   купленные напрямую из каталога. Заказ при этом один — правила суммы,
-   скидки и отправки не меняются, разделены только строки состава. */
-const composition = () => ({
-  scene: KD.configurator.orderLines(),
-  cart: KD.cart.lines()
-});
-const allLines = c => c.scene.concat(c.cart);
+/* Состав заказа — ровно то, что стоит в конструкторе. Раньше источников было
+   два: рядом с этим шли модули, купленные из каталога кнопкой «В корзину».
+   Кнопки сняты (прототипу хватает одного пути «собери и закажи»), поэтому
+   корзины больше нет — ни здесь, ни в configurator.js. */
+const composition = () => KD.configurator.orderLines();
 
 const lineRow = l => `<li><span class="nm">${l.name} × ${l.n}</span><span class="n">${fmt(l.sum)}</span></li>`;
-/* у прямых покупок есть счётчик: одну позицию можно взять несколько раз
-   и убрать, не выходя из модалки */
-const cartRow = l => `<li>
-    <span class="nm">${l.name}</span>
-    <span class="qty" data-t="${l.type}">
-      <button type="button" data-d="-1" aria-label="Убрать один ${l.name}">−</button>
-      <span class="q">${l.n}</span>
-      <button type="button" data-d="1" aria-label="Добавить один ${l.name}">+</button>
-      <button type="button" class="rm" data-d="0" aria-label="Убрать «${l.name}» из заказа">✕</button>
-    </span>
-    <span class="n">${fmt(l.sum)}</span>
-  </li>`;
 
 function compositionHTML(){
-  const c = composition();
-  const t = linesTotals(allLines(c));
-  const two = c.scene.length && c.cart.length;   // заголовки групп нужны только когда групп правда две
+  const lines = composition();
+  const t = linesTotals(lines);
   return `
-    ${c.scene.length ? `${two ? `<div class="og-t">Сборка из конструктора</div>` : ""}
-      <ul class="order-lines">${c.scene.map(lineRow).join("")}</ul>` : ""}
-    ${c.cart.length ? `${two ? `<div class="og-t">Отдельные модули</div>` : ""}
-      <ul class="order-lines">${c.cart.map(cartRow).join("")}</ul>` : ""}
+    <ul class="order-lines">${lines.map(lineRow).join("")}</ul>
     <ul class="order-lines">
       ${t.disc ? `<li><span>Скидка 5% (от ${KD.DISCOUNT_FROM} модулей)</span><span class="n">−${fmt(t.disc)}</span></li>` : ""}
       <li class="total"><span>Итого</span><span class="n">${fmt(t.total)}</span></li>
@@ -804,12 +869,12 @@ function compositionHTML(){
 }
 
 function openCheckout(subtitle){
-  const t0 = linesTotals(allLines(composition()));
+  const t0 = linesTotals(composition());
   if (!t0.count) return;
   open(`
     <h3>Ваш Котоши</h3>
     <p class="m-sub">${subtitle || "Проверьте состав и оставьте контакты — Момо примет заказ."}</p>
-    <div id="orderComp">${compositionHTML()}</div>
+    <div>${compositionHTML()}</div>
     <form id="orderForm">
       <div class="f-row"><label for="fNm">Как вас зовут</label>
         <input id="fNm" required maxlength="80" placeholder="Имя"></div>
@@ -823,29 +888,15 @@ function openCheckout(subtitle){
       <div class="err-note" id="orderErr"></div>
     </form>
   `);
-  /* счётчик количества перерисовывает ТОЛЬКО состав: поля формы уже могут быть
-     заполнены, полная перерисовка модалки стирала бы введённое */
-  const comp = $("#orderComp");
-  comp.addEventListener("click", e => {
-    const b = e.target.closest("button[data-d]");
-    if (!b) return;
-    const type = b.closest(".qty").dataset.t;
-    const d = +b.dataset.d;
-    const cur = (KD.cart.lines().find(l => l.type === type) || {}).n || 0;
-    KD.cart.set(type, d === 0 ? 0 : cur + d);
-    comp.innerHTML = compositionHTML();
-    /* корзину могли обнулить до пустого заказа — тогда закрываем модалку */
-    if (!linesTotals(allLines(composition())).count) close();
-  });
   $("#orderForm").addEventListener("submit", e => {
     e.preventDefault();
-    const c = composition();
-    const t = linesTotals(allLines(c));
+    const lines = composition();
+    const t = linesTotals(lines);
     payStep({
-      /* lines — прежний плоский формат для сервера (его трогать рано);
-         groups отдаём рядом, чтобы владелец видел, что собрано, а что докуплено */
-      lines: allLines(c), total: t.total, disc: t.disc,
-      groups: { build: c.scene, extra: c.cart },
+      /* lines — плоский формат для сервера; groups тоже остаётся, хотя группа
+         теперь ровно одна: формат письма владельцу на этом завязан */
+      lines, total: t.total, disc: t.disc,
+      groups: { build: lines, extra: [] },
       customer: {
         name: $("#fNm").value.trim(),
         contact: $("#fCt").value.trim(),

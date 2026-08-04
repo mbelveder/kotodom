@@ -28,25 +28,11 @@ const removeZone = $("#removeZone");
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-/* ---------- звук ---------- */
-let actx = null;
-function blip(f0, f1, dur, vol){
-  try{
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type = "triangle";
-    o.frequency.setValueAtTime(f0, actx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(f1, actx.currentTime + dur);
-    g.gain.setValueAtTime(vol, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(); o.stop(actx.currentTime + dur);
-  }catch(e){ /* без звука */ }
-}
-/* короткий «тик» при перетаскивании модуля между валидными ячейками — единственный
-   оставленный звук (см. blip на drag hot-change); остальные сигналы отключены как
-   слишком «игрушечные». popSound теперь молчит, чтобы не трогать все места вызова */
-const popSound  = () => {};
+/* Звуков в конструкторе нет. Были: «поп» на постановку модуля и короткие
+   тики при перетаскивании между валидными ячейками (WebAudio-осциллятор).
+   Сняты целиком — на своей странице человек не ждёт, что она начнёт пищать,
+   а обратной связи и без них хватает: подсветка ячейки, анимация и реплики
+   Момо. Разметка/история — в git, если сигналы понадобятся снова. */
 
 /* ---------- Момо говорит ---------- */
 let sayTimer = null;
@@ -115,66 +101,26 @@ const NO_SLOT_HINTS = {
   play: "Чаше-лежанке нужен пол или верх модуля — всё занято.",
 };
 
-/* ---------- прямые покупки модулей из каталога ---------- */
-/* Второй источник состава заказа: модуль можно взять из каталога напрямую,
-   минуя сцену. Заказ ОДИН — состав просто складывается со сценой при
-   оформлении (см. app.js), а правила скидки и отправки не меняются.
-   totals() ниже остаётся ПРО СЦЕНУ: ценник-бирка висит внутри конструктора
-   и должна показывать именно то, что стоит в комнате. Полную сумму заказа
-   считает orderTotals(). */
-const cart = {};                                        // тип -> количество
-const cartCount = () => Object.values(cart).reduce((s, n) => s + n, 0);
-KD.cart = {
-  add(type, n){
-    if (!MODULES[type]) return false;
-    cart[type] = (cart[type] || 0) + (n || 1);
-    refresh();
-    return true;
-  },
-  set(type, n){
-    if (!MODULES[type]) return;
-    if (n > 0) cart[type] = n; else delete cart[type];
-    refresh();
-  },
-  count: cartCount,
-  lines(){
-    return Object.entries(cart).map(([t, n]) => ({
-      type: t, name: MODULES[t].name, n, price: MODULES[t].price, sum: MODULES[t].price * n
-    }));
-  },
-  onChange: null      // app.js подписывается, чтобы обновлять плашку под лентой
-};
-
 /* ---------- цена ---------- */
+/* Заказ = сцена, и только сцена. Раньше рядом жила корзина: модуль можно было
+   взять из каталога кнопкой «В корзину», минуя конструктор, и сумма считалась
+   по двум источникам сразу (totals() — про сцену, orderTotals() — про всё).
+   Кнопки сняты, второго источника нет — остался один totals(). */
 function totals(){
   const items = grid.filter(t => MODULES[t]); // без маркеров широких модулей
   const sum = items.reduce((s, t) => s + MODULES[t].price, 0);
   const disc = items.length >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
   return { count: items.length, sum, disc, total: sum - disc };
 }
-/* полная сумма заказа: сцена + отдельные модули. Скидка считается по ОБЩЕМУ
-   числу модулей — правило «от пяти модулей» то же самое, просто источников два */
-function orderTotals(){
-  const items = grid.filter(t => MODULES[t]);
-  const sum = items.reduce((s, t) => s + MODULES[t].price, 0)
-            + KD.cart.lines().reduce((s, l) => s + l.sum, 0);
-  const count = items.length + cartCount();
-  const disc = count >= KD.DISCOUNT_FROM ? Math.round(sum * KD.DISCOUNT) : 0;
-  return { count, sum, disc, total: sum - disc, sceneCount: items.length, cartCount: cartCount() };
-}
-KD.orderTotals = orderTotals;
 let hadDiscount = false;
 function refresh(){
   syncTunnels();
   reorientScratches();
-  const t = totals();          // сцена — для бирки внутри конструктора
-  const o = orderTotals();     // весь заказ — для кнопки оформления
+  const t = totals();
   sumOut.textContent = fmt(t.total);
   discOut.textContent = t.disc ? `скидка 5% (−${fmt(t.disc)}) 🎉` : (t.count ? `модулей: ${t.count}` : "");
-  btnOrder.textContent = o.count ? `Оформить заказ · ${fmt(o.total)}` : "Оформить заказ";
-  /* заказ можно оформить и с пустой сценой — если модули взяли прямо из каталога.
-     А вот «Очистить»/«Отменить» — про сцену, их состояние от корзины не зависит */
-  btnOrder.disabled = o.count === 0 || animating;
+  btnOrder.textContent = t.count ? `Оформить заказ · ${fmt(t.total)}` : "Оформить заказ";
+  btnOrder.disabled = t.count === 0 || animating;
   btnUndo.disabled = !undoStack.length || animating;
   btnClear.disabled = t.count === 0 || animating;
   if (t.disc && !hadDiscount){
@@ -182,7 +128,6 @@ function refresh(){
     hadDiscount = true;
   }
   if (!t.disc) hadDiscount = false;
-  if (KD.cart.onChange) KD.cart.onChange(o);
 }
 
 /* ---------- операции ---------- */
@@ -264,7 +209,6 @@ function place(i, type, opts){
   if (type === "scratch"){ delete scratchManual[i]; sceneOpts.scratchDir = defaultScratchDir(i); } // свежая постановка — авто-подиум
   KD.scene.place(i, type, opts && opts.instant, sceneOpts);
   if (!opts || !opts.silent){
-    popSound();
     say(opts && opts.moved ? pick(SAY.moved) : pick(MODULES[type].say));
   }
   refresh();
@@ -308,10 +252,15 @@ function refreshTrayIcons(){
   });
 }
 
-/* ---------- меню настройки модуля ----------
-   Меню только настраивает: у куба — форма лаза, у когтеточки — поворот пандуса.
-   Убрать модуль отсюда нельзя, для этого его тянут в зону под сценой (removeZone,
-   onDragUp) — клик по модулю ничего не удаляет.
+/* ---------- меню модуля ----------
+   Открывается кликом ЛЮБОМУ модулю в сцене. Что внутри — зависит от типа:
+   у куба форма лаза, у когтеточки поворот пандуса, «Инфо» есть у всех и
+   открывает развёрнутую карточку из каталога (KD.openModuleCard в app.js).
+   Раньше меню получали только куб и когтеточка, а по крыше, гамаку и прочим
+   клик просто не делал ничего — посмотреть, что это за модуль и какой он
+   величины, из сцены было нельзя.
+   Убрать модуль отсюда нельзя, для этого его тянут в зону под сценой
+   (removeZone, onDragUp) — клик по модулю ничего не удаляет.
    Лаз выбирается на каждый куб отдельно, наведение подсвечивает его
    (KD.scene.setEntryHover); см. index.html #entryMenu. Форма — отделка (в undo
    не пишем, состав и цену не трогает); в сцене живёт по индексу ячейки. */
@@ -322,7 +271,15 @@ const ENTRY_SAY = {
   square:  "Квадратный лаз! Строго. По-самурайски."
 };
 let menuCell = null;   // ячейка открытого меню (или null)
-let menuKind = "cube"; // "cube" — куб (форма лаза); "scratch" — когтеточка (поворот пандуса)
+/* "cube" — куб (форма лаза), "scratch" — когтеточка (поворот пандуса),
+   "plain" — настраивать нечего, в меню одна кнопка «Инфо» */
+let menuKind = "cube";
+const MENU_KINDS = ["cube", "scratch", "plain"];
+const MENU_LABEL = {
+  cube: "Форма лаза этого куба",
+  scratch: "Поворот когтеточки",
+  plain: "Об этом модуле"
+};
 const ROT_SAY = ["Развернул пандус. Так удобнее заходить.", "Крутанул когтеточку — новый угол атаки.", "Повернул. Подиум смотрит куда надо."];
 
 function positionMenu(i){
@@ -343,9 +300,8 @@ function markMenuShape(i){
 function openEntryMenu(i, kind){
   menuCell = i;
   menuKind = kind || "cube";
-  entryMenu.classList.toggle("scratch-only", menuKind === "scratch");  // только поворот
-  entryMenu.setAttribute("aria-label",
-    menuKind === "scratch" ? "Поворот когтеточки" : "Форма лаза этого куба");
+  MENU_KINDS.forEach(k => entryMenu.classList.toggle("kind-" + k, k === menuKind));
+  entryMenu.setAttribute("aria-label", MENU_LABEL[menuKind]);
   markMenuShape(i);
   positionMenu(i);
   entryMenu.classList.add("show");
@@ -360,12 +316,21 @@ KD.closeEntryMenu = closeEntryMenu;
 if (entryMenu){
   entryMenu.addEventListener("click", e => {
     if (menuCell === null || animating) return;
+    if (e.target.closest(".em-info")){
+      /* тип читаем ДО закрытия: closeEntryMenu обнуляет menuCell.
+         Меню убираем — карточка открывается модалкой поверх всей страницы,
+         и всплывашка над модулем осталась бы висеть под затемнением */
+      const t = grid[menuCell];
+      closeEntryMenu();
+      if (KD.openModuleCard) KD.openModuleCard(t);
+      return;
+    }
     if (e.target.closest(".em-rot") && menuKind === "scratch"){  // поворот пандуса (отделка, не в undo)
       const nd = (KD.scene.getScratchDir(menuCell) + 1) % 4;
       if (KD.scene.setScratchDir(menuCell, nd)){
         scratchManual[menuCell] = true;   // ручной поворот — авто-подиум больше не трогает этот пандус
         positionMenu(menuCell);           // высота могла измениться незначительно — переякорим
-        popSound(); say(pick(ROT_SAY));
+        say(pick(ROT_SAY));
       }
       return;
     }
@@ -374,7 +339,7 @@ if (entryMenu){
       const s = b.dataset.shape;
       if (KD.scene.setEntryShapeAt(menuCell, s)){
         markMenuShape(menuCell);
-        popSound(); say(ENTRY_SAY[s] || "Готово.");
+        say(ENTRY_SAY[s] || "Готово.");
       }
     }
   });
@@ -465,7 +430,6 @@ function updateHot(e){
   if (overZone !== drag.trash){
     drag.trash = overZone;
     removeZone.classList.toggle("armed", overZone);
-    if (overZone) blip(320, 260, 0.05, 0.025);
   }
   /* курсор над зоной «убрать» — ячейки ковра больше не подсвечиваем: это
      альтернативная цель, а не ещё одна ячейка для переноса */
@@ -480,7 +444,6 @@ function updateHot(e){
   if (best !== drag.hot){
     drag.hot = best;
     KD.scene.showGhosts(drag.valid, best, drag.w);
-    if (best !== null) blip(600, 620, 0.04, 0.02);
   }
 }
 function onDragMove(e){
@@ -603,19 +566,18 @@ canvas.addEventListener("pointerup", e => {
   if (best === null){ closeEntryMenu(); return; }
   best = mainOf(best);
   /* клик НИЧЕГО не убирает — убрать модуль можно только перетаскиванием в зону
-     (см. removeZone в onDragUp). Меню открывается лишь тем модулям, которым есть
-     что настроить: кубу — форма лаза, когтеточке — поворот пандуса. У крыши и
-     остальных настраивать нечего, поэтому клик по ним просто закрывает открытое
-     меню. «roof» проверяем ПЕРВЫМ: лаз у него есть (hasEntry === true), но это
-     не выбор. */
-  if (grid[best] !== "roof" && KD.scene.hasEntry(best)){
-    if (menuCell === best && menuKind === "cube") closeEntryMenu(); else openEntryMenu(best, "cube");
-    return;
-  }
-  if (grid[best] === "scratch"){   // когтеточка: клик открывает меню поворота
-    if (menuCell === best && menuKind === "scratch") closeEntryMenu(); else openEntryMenu(best, "scratch");
-    return;
-  }
+     (см. removeZone в onDragUp). Меню открывается ЛЮБОМУ модулю: настройки в нём
+     свои у куба и у когтеточки, а «Инфо» есть у всех — по крыше или гамаку
+     клик тоже должен что-то давать. Повторный клик по тому же модулю закрывает.
+     «roof» проверяем ПЕРВЫМ: лаз у него есть (hasEntry === true), но это не
+     выбор — крыше достаётся меню без настроек. */
+  const toggle = kind => {
+    if (menuCell === best && menuKind === kind) closeEntryMenu();
+    else openEntryMenu(best, kind);
+  };
+  if (grid[best] !== "roof" && KD.scene.hasEntry(best)) return toggle("cube");
+  if (grid[best] === "scratch") return toggle("scratch");
+  if (MODULES[grid[best]]) return toggle("plain");
   closeEntryMenu();
 });
 
@@ -679,7 +641,7 @@ KD.addModule = function(type){
   const valid = validCells(type);
   if (!valid.length) return { ok: false, hint: NO_SLOT_HINTS[type] || pick(SAY.noSlot) };
   const i = valid[0];
-  KD.studioBooted = true;      // человек начал собирать сам — автосборка «Проныры» не нужна
+  KD.studioBooted = true;      // человек начал собирать сам — стартовая связка уже не нужна
   snapshot();
   notifyEdit();
   place(i, type);              // place() сам зовёт say() — Момо комментирует модуль
@@ -722,7 +684,6 @@ function applyCells(cells, doneSay, entrySh){
       const ok = validCells(t).includes(i);        // нет опоры/занято — пропускаем, но запоминаем
       if (ok) place(i, t, { silent: true, entryShape: t === "base" ? shapeAt(i) : undefined }); else skipped.push(t);
       if (step === entries.length - 1){
-        popSound();
         if (skipped.length){
           const names = [...new Set(skipped)].map(x => (MODULES[x] && MODULES[x].name) || x).join(", ");
           say(`Не поместилось: ${names} — не хватило опоры или места. Передвиньте модули вручную, чтобы освободить место.`, 6500);
@@ -789,7 +750,6 @@ if (collectionPick){
     if (KD.scene.setCollection(b.dataset.col)){
       markCollection();
       refreshTrayIcons();
-      popSound();
     }
   });
 }
@@ -804,15 +764,16 @@ if (collectionPick){
 ["scroll", "resize"].forEach(ev => window.addEventListener(ev, closeEntryMenu, true));
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", closeEntryMenu);
 
-/* конструктор домиков оживает, когда доезжаешь до него: собираем стартовую «Проныру»,
-   но МОЛЧА — первая реплика Момо ждёт, пока посетитель сам возьмётся за сборку
-   (перетащит модуль, уберёт его или выберет план). Ждём и закрытия гида, чтобы
-   сборка не анимировалась за затемнением (см. KD.onIntroDone в app.js) */
+/* конструктор домиков оживает, когда доезжаешь до него: ставим стартовую связку
+   (KD.START_CELLS — куб и когтеточка), но МОЛЧА — первая реплика Момо ждёт,
+   пока посетитель сам возьмётся за сборку (перетащит модуль, уберёт его или
+   выберет план). Ждём и закрытия гида, чтобы сборка не анимировалась за
+   затемнением (см. KD.onIntroDone в app.js) */
 const io = new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
   io.disconnect();
   if (!KD.studioBooted){
-    const boot = () => { if (!KD.studioBooted) applyCells(PRESETS.wide.cells); };
+    const boot = () => { if (!KD.studioBooted) applyCells(KD.START_CELLS); };
     if (KD.onIntroDone) KD.onIntroDone(boot); else boot();
   }
 }, { threshold: 0.35 });

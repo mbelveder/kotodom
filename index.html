@@ -16,15 +16,15 @@
 <link rel="preload" href="fonts/mplusrounded1c-800-jp.woff2" as="font" type="font/woff2" crossorigin>
 <!-- ?v= на стилях и скриптах: кэш Pages/браузера обновляется вместе с index.html,
      а не живёт своей жизнью до 10 минут после деплоя -->
-<link rel="stylesheet" href="css/fonts.css?v=88">
-<link rel="stylesheet" href="css/style.css?v=88">
-<script defer src="config.js?v=88"></script>
-<script defer src="js/zdog.dist.min.js?v=88"></script>
-<script defer src="js/catalog.js?v=88"></script>
-<script defer src="js/scene.js?v=88"></script>
-<script defer src="js/configurator.js?v=88"></script>
-<script defer src="js/chat.js?v=88"></script>
-<script defer src="js/app.js?v=88"></script>
+<link rel="stylesheet" href="css/fonts.css?v=94">
+<link rel="stylesheet" href="css/style.css?v=94">
+<script defer src="config.js?v=94"></script>
+<script defer src="js/zdog.dist.min.js?v=94"></script>
+<script defer src="js/catalog.js?v=94"></script>
+<script defer src="js/scene.js?v=94"></script>
+<script defer src="js/configurator.js?v=94"></script>
+<script defer src="js/chat.js?v=94"></script>
+<script defer src="js/app.js?v=94"></script>
 <!-- Тема применяется ДО первой отрисовки: иначе при сохранённой тёмной теме
      страница успевала мигнуть светлой. Скрипт намеренно синхронный и без defer.
      Приоритет: ?theme=light|dark (служебный режим для съёмки рендеров) →
@@ -118,9 +118,10 @@
     </div>
     <!-- Галерея на три кадра: модуль «Крыша» крупным планом (фактура берёзы,
          ковролин на скате, джутовый конёк), затем общий план собранного домика,
-         затем ролик — деталь, целое и живой кот. Кадры сменяются сами раз в
-         15 секунд; условия, при которых автолистание замирает, описаны в reel()
-         в js/app.js.
+         затем ролик — деталь, целое и живой кот. Кадры сменяются сами: фото
+         стоят по 7 секунд, ролик — 15 (его длина). Сколько кадру осталось,
+         видно по заливке активной точки под галереей; условия, при которых
+         автолистание замирает, описаны в reel() в js/app.js.
          Разметка и id — те же, что были у карусели на первом экране, поэтому
          reel() в js/app.js подхватывает её без единой правки. Слайды видны и
          без js: без него виден первый кадр, остальные просто уезжают за край
@@ -151,10 +152,13 @@
               </div>
             </div>
 
-            <!-- ролик длится ровно 15 секунд — столько же, сколько кадр стоит
-                 на автолистании, так что за один показ он успевает пройти цикл
-                 целиком и не обрывается на середине. preload="metadata": сам
-                 файл тянется, только когда до кадра доходит очередь -->
+            <!-- ролик длится ровно 15 секунд, и его кадру на автолистании
+                 отведено столько же (соседним фото — по 7): за один показ он
+                 успевает пройти цикл целиком и не обрывается на середине.
+                 reel() узнаёт этот кадр по самому <video>, так что менять
+                 длительность при перестановке слайдов не придётся.
+                 preload="metadata": сам файл тянется, только когда до кадра
+                 доходит очередь -->
             <div class="reel-slide" role="group" aria-roledescription="слайд" aria-label="3 из 3">
               <div class="reel-shot">
                 <video id="filmVid" autoplay muted loop playsinline preload="metadata"
@@ -170,10 +174,15 @@
           <button class="reel-arw reel-prev" id="reelPrev" type="button" aria-label="Предыдущий кадр">‹</button>
           <button class="reel-arw reel-next" id="reelNext" type="button" aria-label="Следующий кадр">›</button>
         </div>
+        <!-- .rd-fill — заливка активной точки: она же индикатор времени до
+             смены кадра. Анимацию заводит reel() в js/app.js ровно на ту же
+             паузу, по которой листает, и замирает вместе с ней. Без js (и при
+             «поменьше движения») заливка просто стоит закрашенной — точка
+             выглядит так же, как выглядела до появления шкалы. -->
         <div class="reel-dots" id="reelDots" role="tablist" aria-label="Кадры">
-          <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Кадр 1"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 2"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 3"></button>
+          <button type="button" role="tab" class="is-on" aria-selected="true"  aria-label="Кадр 1"><i class="rd-fill"></i></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 2"><i class="rd-fill"></i></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Кадр 3"><i class="rd-fill"></i></button>
         </div>
       </div>
     </div>
@@ -207,13 +216,10 @@
     <div class="rail" id="moduleRail"></div>
     <button class="rail-nav rail-next" id="railNext" type="button" aria-label="Прокрутить каталог вправо">›</button>
   </div>
-  <!-- прямые покупки видны только в модалке заказа — без этой плашки клик
-       «В корзину» уходил бы в пустоту -->
-  <div class="cart-bar" id="cartBar" role="status">
-    <span class="cb-t">Отдельные модули в заказе:</span>
-    <span class="cb-n" id="cartNote"></span>
-    <button class="btn btn-aka" id="cartOrder" type="button">Оформить заказ</button>
-  </div>
+  <!-- Здесь была плашка «отдельные модули в заказе»: сводка корзины, которую
+       набирали кнопками «В корзину» на карточках. Кнопки и корзина сняты —
+       из каталога ведёт один путь, «В конструктор», и заказ оформляется
+       кнопкой под сценой. -->
 </section>
 
 <section id="builder">
@@ -222,11 +228,13 @@
     <div class="studio-main" id="studioMain">
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene" width="980" height="540"></canvas>
-        <!-- меню настройки модуля: всплывает по клику (см. js/configurator.js).
-             У куба — три формы лаза, у когтеточки — поворот пандуса (.scratch-only).
-             Кнопки «убрать» здесь НЕТ: модуль убирается только перетаскиванием в
-             зону под сценой (.remove-zone), клик сам по себе ничего не удаляет. Крыша и
-             прочие модули меню не открывают — настраивать у них нечего. -->
+        <!-- меню модуля: всплывает по клику (см. js/configurator.js). Состав
+             зависит от модуля — класс kind-* вешает openEntryMenu: у куба три
+             формы лаза (.kind-cube), у когтеточки поворот пандуса
+             (.kind-scratch), «Инфо» есть у всех. Меню открывается ЛЮБОМУ
+             модулю: даже когда настраивать нечего, остаётся «Инфо».
+             Кнопки «убрать» здесь НЕТ: модуль убирается только перетаскиванием
+             в зону под сценой (.remove-zone), клик сам по себе ничего не удаляет. -->
         <div class="entry-menu" id="entryMenu" role="menu" aria-label="Форма лаза этого куба">
           <button type="button" class="ep-b" data-shape="circle" role="menuitemradio" aria-checked="false" title="Круглый лаз" aria-label="Круглый лаз">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg>
@@ -237,9 +245,20 @@
           <button type="button" class="ep-b" data-shape="pentagon" role="menuitemradio" aria-checked="false" title="Лаз-домик" aria-label="Лаз-домик">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V10l8-6.4 8 6.4v11Z"/></svg>
           </button>
-          <!-- поворот когтеточки-пандуса (виден только в меню когтеточки, .scratch-only) -->
+          <!-- поворот когтеточки-пандуса (виден только в меню когтеточки, .kind-scratch) -->
           <button type="button" class="em-rot" title="Повернуть когтеточку" aria-label="Повернуть когтеточку">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6V3L8 7l4 4V8a4 4 0 1 1-4 4H6a6 6 0 1 0 6-6Z"/></svg>
+          </button>
+          <!-- «Инфо» — есть у ЛЮБОГО модуля и открывает ту же развёрнутую
+               карточку, что и каталог (KD.openModuleCard в js/app.js):
+               описание, габариты и цена. Ради неё меню теперь открывается и
+               тем модулям, у которых настраивать нечего. -->
+          <button type="button" class="em-info" title="О модуле" aria-label="Подробнее об этом модуле">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 11.4v4.9"/>
+              <circle class="ei-dot" cx="12" cy="7.9" r="1.1"/>
+            </svg>
           </button>
         </div>
         <!-- заголовок конструктора домиков — оверлей в левом верхнем углу сцены, стоит поверх
@@ -257,7 +276,7 @@
                  материала и каталог модулей — представлять продукт заново не нужно -->
             <p class="scene-sub-lead">Любым способом или обоими сразу:</p>
             <ul class="scene-sub">
-              <li>Перетащите модули из полки внизу; чтобы убрать — потяните модуль в пунктирную рамку под сценой. Клик по кубу — форма лаза, по когтеточке — поворот</li>
+              <li>Перетащите модули из полки внизу; чтобы убрать — потяните модуль в пунктирную рамку под сценой. Клик по модулю открывает «Инфо», у куба ещё форма лаза, у когтеточки — поворот</li>
               <li>Возьмите готовую сборку во вкладке слева</li>
               <!-- третий способ (чат с Момо) снят вместе с кнопкой — см. парковку
                    #momoFab ниже; вернёте кнопку — верните и эту строку:
@@ -389,7 +408,7 @@
          См. .hint-bar/.remove-zone в css/style.css и beginDrag/updateHot в
          js/configurator.js -->
     <div class="hint-bar" id="hintBar">
-      <span class="hint-txt">Можно добавлять модули на свой вкус — они внизу. Клик по кубу — форма лаза, по когтеточке — поворот.</span>
+      <span class="hint-txt">Можно добавлять модули на свой вкус — они внизу. Клик по модулю — «Инфо»; у куба ещё форма лаза, у когтеточки — поворот.</span>
       <div class="remove-zone" id="removeZone">
         <svg class="rz-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.7 7V4.7h4.6V7M6.6 7l.9 12.3h9l.9-12.3M10 10.5v6M14 10.5v6"/></svg>
         <span>Перетащите модуль сюда, чтобы убрать</span>
@@ -457,24 +476,24 @@
       <div class="info-card">
         <h3>Доставка и возврат</h3>
         <ul>
-          <li>По всей России, СДЭК или Почта — 3–7 дней.</li>
-          <li>Модули приезжают плоским пакетом; сборка на шкантах и винтах, шестигранник в комплекте.</li>
-          <li>14 дней на возврат, если домик не подошёл (модули без следов когтей).</li>
+          <li>По всей России, СДЭК или Почта — 3–7 дней</li>
+          <li>Модули приезжают плоским пакетом; сборка на шкантах и винтах, шестигранник в комплекте</li>
+          <li>14 дней на возврат, если домик не подошёл (модули без следов когтей)</li>
         </ul>
       </div>
       <div class="info-card">
         <h3>Материалы и уход</h3>
         <ul>
-          <li>Берёзовая фанера с тёмной кромкой, площадки-когтеточки из плотного ковролина.</li>
-          <li>Кромки шлифованные, без острых углов — проверено на очень настойчивых котах.</li>
-          <li>Легко чистить: поверхности протираются влажной тряпкой, обивка не собирает шерсть.</li>
+          <li>Берёзовая фанера с тёмной кромкой, площадки-когтеточки из плотного ковролина</li>
+          <li>Кромки шлифованные, без острых углов</li>
+          <li>Легко чистить: поверхности протираются влажной тряпкой</li>
         </ul>
       </div>
       <div class="info-card">
         <h3>Эстетика</h3>
         <ul>
-          <li>Мы вдохновляемся японским подходом к минимализму и практичности в интерьерах.</li>
-          <li>Спокойные формы и натуральные тона — домик выглядит как мебель, а не как аксессуар из зоомагазина.</li>
+          <li>Мы вдохновляемся японским подходом к минимализму и практичности в интерьерах</li>
+          <li>Спокойные формы и натуральные тона — домик выглядит как мебель, а не как аксессуар из зоомагазина</li>
         </ul>
       </div>
     </div>
@@ -487,7 +506,6 @@
   <div class="wrap">
     <span>© Котоши, 2026</span>
     <span>Демо-прототип: заказы и оплата не настоящие.</span>
-    <span>Момо — ИИ-консультант; сложные вопросы он передаёт человеку.</span>
   </div>
 </footer>
 
