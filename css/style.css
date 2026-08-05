@@ -695,7 +695,8 @@ button{font-family:inherit}
 /* чат открыт: панель накрывает правый верхний угол — бирка переезжает в левый
    нижний. Только на десктопе: на телефоне чат — шторка поверх низа экрана */
 @media (min-width:901px){
-  .studio-main.chat-open .price-tag{top:auto;right:auto;left:16px;bottom:16px}
+  .studio-main.chat-open .price-tag,
+  .studio-main.modules-open .price-tag{top:auto;right:auto;left:16px;bottom:16px}
 }
 .price-tag .lbl{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .price-tag .sum{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;line-height:1.2}
@@ -724,28 +725,37 @@ button{font-family:inherit}
 @media (prefers-reduced-motion: reduce){ .momo-fab img{animation:none} }
 .studio-main.chat-open .momo-fab{opacity:0;pointer-events:none;transform:scale(.6)}
 
-/* реплика Момо — баббл растёт из аватара (справа) */
+/* Реплика Момо. Осталась одна на весь конструктор — объяснение, почему модуль
+   не встал (см. warn() в js/configurator.js), поэтому и выглядит как замечание:
+   рамка и тень в цвет .aka, чтобы её было видно поверх сцены.
+   Хвостик (срезанный нижний правый угол) убран: он врастал в аватар Момо, а
+   аватар припаркован — угол указывал бы в пустоту. Вернёте кнопку — верните и
+   border-bottom-right-radius:4px */
 .momo-say{
-  position:absolute;right:14px;bottom:88px;max-width:300px;
-  background:var(--panel);border:1.5px solid var(--ink);
-  border-radius:16px;border-bottom-right-radius:4px;
+  position:absolute;right:14px;bottom:20px;max-width:320px;
+  background:var(--panel);border:1.5px solid var(--aka);
+  border-radius:16px;
   padding:9px 14px;font-size:14.5px;font-weight:700;
-  box-shadow:var(--shadow);
+  box-shadow:0 10px 26px color-mix(in srgb, var(--ink) 26%, transparent);
   opacity:0;transform:translateY(8px) scale(.96);transform-origin:100% 100%;
   transition:opacity .22s ease, transform .22s ease;
   pointer-events:none;
-  z-index:5;
+  z-index:23;
 }
 /* анимация, а не только transition: повторная реплика «выныривает» заново */
 .momo-say.show{opacity:1;transform:none;animation:say-pop .22s ease}
 @keyframes say-pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
 .momo-say .who{color:var(--aka);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;display:block}
-/* чат открыт: аватар «развернулся» в панель, реплики уезжают левее панели */
-.studio-main.chat-open .momo-say{right:352px;bottom:14px}
+/* панель справа (чат или каталог модулей) накрывает угол с бабблом — уводим
+   реплику левее панели. Ровно тот же случай, что и у ценника-бирки ниже */
+.studio-main.chat-open .momo-say,
+.studio-main.modules-open .momo-say{right:352px;bottom:14px}
 @media (max-width:900px){
   .momo-fab{width:52px;height:52px;right:10px;bottom:10px}
-  .momo-say{max-width:min(300px, 66vw);bottom:72px;right:10px}
-  .studio-main.chat-open .momo-say{right:10px;bottom:72px}
+  .momo-say{max-width:min(300px, 66vw);bottom:14px;right:10px}
+  /* на телефоне обе панели — шторки снизу, уезжать «левее» некуда: поднимаем */
+  .studio-main.chat-open .momo-say,
+  .studio-main.modules-open .momo-say{right:10px;bottom:72px}
 }
 
 /* ============ приветственный гид конструктора домиков ============ */
@@ -776,8 +786,15 @@ button{font-family:inherit}
   border:1.5px solid var(--ink);border-radius:14px;
   padding:8px 14px;box-shadow:3px 3px 0 var(--aka);
 }
-.bg-arw{flex:none;overflow:visible}
-.bg-arw path{fill:none;stroke:var(--aka);stroke-width:2.6;
+/* Стрелки заметнее: линия толще (было 2.6) и обведена светлым ореолом. Красная
+   линия сама по себе тонула в затемнении .bg-scrim — особенно длинная стрелка
+   к полке модулей, которая идёт по самому тёмному месту кадра. Ореол делаем
+   двойным drop-shadow без смещения: обводки у stroke нет, а два прохода
+   фильтра дают ровный контур с обеих сторон линии */
+.bg-arw{flex:none;overflow:visible;
+  filter:drop-shadow(0 0 2px color-mix(in srgb, var(--panel) 92%, transparent))
+         drop-shadow(0 0 3px color-mix(in srgb, var(--panel) 80%, transparent))}
+.bg-arw path{fill:none;stroke:var(--aka);stroke-width:3.6;
   stroke-linecap:round;stroke-linejoin:round}
 
 /* подсветка подсказки: клик по «Готовые сборки» в шапке, когда гид ещё открыт —
@@ -797,11 +814,17 @@ button{font-family:inherit}
    поэтому стрелку зеркалим, а row-reverse ставит её перед текстом */
 .bg-tip--presets{top:44%;left:3%;flex-direction:row-reverse}
 .bg-tip--presets .bg-arw{transform:scaleX(-1)}
-/* 2. собрать самому — подсказка правее центра, длинная стрелка спускается
+/* 2. собрать самому — подсказка около центра, длинная стрелка спускается
    к нижней кромке сцены и указывает чуть выше слова «клик» в подсказке
    .hint-bar под сценой — ни один родитель не обрезает overflow вплоть
-   до .studio, так что «хвост» стрелки виден до самого низа */
-.bg-tip--self{bottom:0;left:55%;transform:translateX(-50%);flex-direction:column;gap:0}
+   до .studio, так что «хвост» стрелки виден до самого низа.
+   Подпись сдвинута левее (было 55%) и ниже (было bottom:0): справа теперь
+   вторая вкладка со своей подсказкой, и подпись налезала на её стрелку.
+   Остриё осталось на месте — svg укоротили ровно на те же 32px (см. index.html) */
+.bg-tip--self{bottom:-32px;left:50%;transform:translateX(-50%);flex-direction:column;gap:0}
+/* 3. каталог модулей — зеркало первой подсказки у правого края. Стрелка
+   нарисована «вправо», зеркалить не нужно; текст стоит перед ней */
+.bg-tip--modules{top:44%;right:3%}
 /* 3. чат — ярлык «Размеры модулей и рекомендации» слева от аватара Момо.
    Живёт вне .build-guide (сосед после него в разметке): по умолчанию —
    приглушённый вид, остаётся после закрытия гида и не тянет внимание;
@@ -853,8 +876,13 @@ button{font-family:inherit}
 @media (max-width:900px){
   .bg-txt{font-size:13px;padding:6px 10px}
   .bg-tip--presets{top:38%;left:2%}
+  .bg-tip--modules{top:38%;right:2%}
   .bg-tip--chat{right:68px;bottom:14px}
-  .bg-tip--presets .bg-arw,.bg-tip--chat .bg-arw{width:44px;height:auto}
+  .bg-tip--presets .bg-arw,.bg-tip--modules .bg-arw,.bg-tip--chat .bg-arw{width:44px;height:auto}
+  /* ИЗВЕСТНО: на телефоне гид тесен и до этих правок — сцена в такой ширине
+     всего ~215px высотой, заголовок конструктора накрывает её верх, и подписи
+     уходят под него, а длинная стрелка «соберите сами» не помещается вовсе.
+     Правится не отступами, а отдельной раскладкой гида для узкого экрана. */
 }
 @media (prefers-reduced-motion: reduce){
   .build-guide{transition:none}
@@ -1154,6 +1182,16 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 }
 .preset-tab:hover{padding-left:12px;color:var(--aka)}
 .studio-main.presets-open .preset-tab{opacity:0;pointer-events:none}
+/* вкладка каталога модулей — то же самое, отражённое к правому краю */
+.preset-tab.module-tab{
+  left:auto;right:0;
+  border:1.5px solid var(--ink);border-right:none;
+  border-radius:14px 0 0 14px;
+  box-shadow:-3px 3px 0 var(--aka);
+}
+.preset-tab.module-tab:hover{padding-left:7px;padding-right:12px}
+.studio-main.presets-open .preset-tab.module-tab{opacity:1;pointer-events:auto}
+.studio-main.modules-open .preset-tab.module-tab{opacity:0;pointer-events:none}
 .preset-panel{
   position:absolute;left:12px;top:12px;bottom:12px;width:322px;
   display:flex;flex-direction:column;overflow:hidden;
@@ -1168,6 +1206,9 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   transition:transform .28s ease, opacity .28s ease, visibility 0s linear .28s;
 }
 .preset-panel.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+/* каталог модулей — та же панель у правого края; уезжает вправо, а не влево */
+.preset-panel.module-panel{left:auto;right:12px;transform:translateX(112%)}
+.preset-panel.module-panel.open{transform:none}
 @media (max-width:900px){
   /* на телефоне панель — «шторка» снизу экрана, как чат */
   .preset-panel{
@@ -1175,6 +1216,7 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
     height:min(72vh, 560px);z-index:70;
     transform:translateY(112%);
   }
+  .preset-panel.module-panel{left:10px;right:10px;transform:translateY(112%)}
 }
 .preset-head{
   display:flex;align-items:center;gap:10px;
@@ -1200,7 +1242,8 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
 }
 /* кликабельность показываем движением карточки и подписью на фото — описания
    и отдельной кнопки в карточке больше нет */
-.preset-card:hover,.preset-card:focus-visible{
+.preset-card:hover,.preset-card:focus-visible,
+.preset-card:has(:focus-visible){
   transform:translateY(-2px);
   border-color:color-mix(in srgb, var(--aka) 45%, var(--line));
   box-shadow:0 10px 22px color-mix(in srgb, var(--ink) 14%, transparent);
@@ -1235,7 +1278,10 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   font-size:12.5px;font-weight:800;white-space:nowrap;
   opacity:0;transition:opacity .2s ease, transform .2s ease;pointer-events:none;
 }
-.preset-card:hover .pc-go,.preset-card:focus-visible .pc-go{
+/* :has(:focus-visible) — ради карточек каталога модулей: там карточка не
+   <button>, а <article> с двумя кнопками внутри, и сама сфокусироваться не может */
+.preset-card:hover .pc-go,.preset-card:focus-visible .pc-go,
+.preset-card:has(:focus-visible) .pc-go{
   opacity:1;transform:translate(-50%,-50%) scale(1);
 }
 /* на тач-экранах ховера нет — подсказка не появится никогда, и это нормально:
@@ -1259,6 +1305,59 @@ section h2{font-size:clamp(22px,3.4vw,30px);margin:10px 0 8px}
   0%,100%{box-shadow:none}
   15%{box-shadow:0 0 0 3px color-mix(in srgb, var(--aka) 55%, transparent)}
 }
+
+/* ---- каталог модулей: сетка в две колонки ---- */
+/* Планов слева шесть, и они идут одной колонкой: у сборки важно рассмотреть
+   композицию. Модулей девять, и каждый — один простой предмет; в одну колонку
+   они превращали панель в ленту, где помещалось полторы карточки. */
+/* grid-auto-rows:max-content обязателен, а не «на всякий случай»: высота панели
+   задана жёстко (.preset-list — flex:1 1 0), и авто-строки делили её поровну
+   между собой — карточки сжимались до трети своей высоты, а .preset-card с её
+   overflow:hidden срезала имя и цену. align-content:start прижимает ряды к
+   верху, когда карточек меньше, чем помещается. */
+#moduleList{display:grid;grid-template-columns:1fr 1fr;
+  grid-auto-rows:max-content;align-content:start;gap:10px}
+
+/* ---- карточка модуля ---- */
+/* Отличий от карточки сборки три: рендер модуля квадратный (кадрируем в 4/3),
+   нажимаемая область — вложенная кнопка, а не сама карточка, и в углу фото
+   есть «i». Имя и цена стоят друг под другом: в колонке ~145px «Гамак широкий»
+   и цена в одну строку не расходятся. */
+.preset-card.mod-card{position:relative}
+.mod-card .pc-body{padding:7px 9px 9px}
+.mod-card .pc-nm{display:block;font-size:13px;line-height:1.25}
+.mod-card .pc-pr{display:block;margin-top:2px;font-size:12px}
+.mod-card .mod-add{
+  display:block;width:100%;padding:0;border:none;background:none;
+  text-align:left;font:inherit;color:inherit;cursor:pointer;
+}
+.mod-card .pc-media{aspect-ratio:4/3;background:var(--paper)}
+.mod-card .mod-add:focus-visible{outline:2px solid var(--aka);outline-offset:-3px;border-radius:15px}
+/* «i» открывает развёрнутую карточку — ту же, что лента каталога над сценой.
+   В покое приглушена, чтобы не спорить с фото; на ховере карточки наливается */
+.mod-card .mod-info{
+  position:absolute;top:6px;right:6px;z-index:2;
+  width:24px;height:24px;border-radius:50%;padding:0;
+  display:grid;place-items:center;cursor:pointer;
+  font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:14px;line-height:1;
+  color:var(--ink);background:color-mix(in srgb, var(--panel) 82%, transparent);
+  border:1.5px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:.85;transition:opacity .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+}
+.mod-card:hover .mod-info,.mod-card .mod-info:focus-visible{opacity:1}
+.mod-card .mod-info:hover,.mod-card .mod-info:focus-visible{
+  background:var(--aka);color:#FFFBF3;border-color:var(--aka);
+}
+/* модулю не нашлось места: карточка коротко вздрагивает — тем же жестом, что и
+   фишка в полке под сценой (см. startDrag в js/configurator.js) */
+.mod-card.no-slot{animation:mod-shake .26s ease}
+@keyframes mod-shake{
+  0%,100%{transform:translateY(-2px)}
+  25%{transform:translate(-5px,-2px)}
+  75%{transform:translate(5px,-2px)}
+}
+@media (prefers-reduced-motion: reduce){ .mod-card.no-slot{animation:none} }
 
 /* как это работает */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
