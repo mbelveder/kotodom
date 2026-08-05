@@ -75,12 +75,14 @@ KD.onUserEdit = () => {
   chosenCard = null;
 };
 
+/* на телефоне все панели — шторки снизу экрана: две сразу не помещаются */
+const narrow = () => matchMedia("(max-width: 900px)").matches;
 function presetsOpen(on){
   presetPanel.classList.toggle("open", on);
   studioMain.classList.toggle("presets-open", on);
   presetTab.setAttribute("aria-expanded", on ? "true" : "false");
-  /* на телефоне обе панели — шторки снизу: две сразу не помещаются */
-  if (on && KD.closeChat && matchMedia("(max-width: 900px)").matches) KD.closeChat();
+  if (on && KD.closeChat && narrow()) KD.closeChat();
+  if (on && narrow()) modulesOpen(false);
   /* в конструкторе стоит нетронутый план из витрины — при открытии панели
      коротко подсвечиваем его карточку (после transition, чтобы был виден) */
   if (on && chosenCard) setTimeout(() => {
@@ -90,8 +92,81 @@ function presetsOpen(on){
 KD.closePresets = () => presetsOpen(false);
 presetTab.addEventListener("click", () => presetsOpen(true));
 $("#presetX").addEventListener("click", () => presetsOpen(false));
+
+/* ---------- каталог модулей: панель справа от сцены ---------- */
+/* Зеркало панели готовых сборок: слева берут целую сборку, справа — по одному
+   модулю. Карточки те же (.preset-card), только рендер модуля квадратный и в
+   углу фото есть «i». Список рендерится из KD.CATALOG + KD.MODULES, как и
+   лента каталога над конструктором, — цена и описание живут в js/catalog.js */
+const modulePanel = $("#modulePanel"), moduleTab = $("#moduleTab"),
+      moduleList = $("#moduleList");
+function modulesOpen(on){
+  if (!modulePanel) return;
+  modulePanel.classList.toggle("open", on);
+  studioMain.classList.toggle("modules-open", on);
+  moduleTab.setAttribute("aria-expanded", on ? "true" : "false");
+  if (on && KD.closeChat && narrow()) KD.closeChat();
+  if (on && narrow()) presetsOpen(false);
+}
+KD.closeModules = () => modulesOpen(false);
+
+if (moduleList){
+  KD.CATALOG.forEach(({ type, card }) => {
+    const m = KD.MODULES[type];
+    if (!m) return;
+    const el = document.createElement("article");
+    el.className = "preset-card mod-card";
+    el.dataset.type = type;
+    el.innerHTML = `
+      <button class="mod-add" type="button" aria-label="Добавить модуль «${m.name}» в конструктор">
+        <div class="pc-media">
+          <img src="assets/module-cards/${card}.jpg" alt="" loading="lazy" decoding="async"
+               onerror="this.closest('.pc-media').classList.add('no-img')">
+          <span class="pc-go" aria-hidden="true">Добавить</span>
+        </div>
+        <div class="pc-body">
+          <div class="pc-nm">${m.name}<span class="pc-pr">${fmt(m.price)}</span></div>
+        </div>
+      </button>
+      <button class="mod-info" type="button" aria-label="Подробнее о модуле «${m.name}»">
+        <span aria-hidden="true">i</span>
+      </button>`;
+    moduleList.appendChild(el);
+  });
+
+  moduleList.addEventListener("click", e => {
+    const cardEl = e.target.closest(".mod-card");
+    if (!cardEl) return;
+    const type = cardEl.dataset.type;
+    /* «i» — развёрнутая карточка с кнопкой «Добавить в конструктор»: сюда
+       пришли из каталога, а не от уже стоящего модуля (ср. KD.openModuleCard) */
+    if (e.target.closest(".mod-info")){
+      openModule(type, KD.CATALOG.find(c => c.type === type).card, e.target.closest(".mod-info"));
+      return;
+    }
+    if (!e.target.closest(".mod-add")) return;
+    /* Панель не закрываем и никуда не едем: посетитель уже у сцены и обычно
+       ставит несколько модулей подряд. Не нашлось места — карточка вздрагивает,
+       а баббл объясняет, почему (KD.addModule возвращает готовый текст) */
+    const r = KD.addModule(type);
+    if (r.ok) return;
+    if (KD.warn) KD.warn(r.hint, 5000);
+    cardEl.classList.remove("no-slot");
+    void cardEl.offsetWidth;              // перезапуск анимации при повторном клике
+    cardEl.classList.add("no-slot");
+  });
+  moduleList.addEventListener("animationend", e => {
+    if (e.animationName === "mod-shake") e.target.classList.remove("no-slot");
+  });
+
+  moduleTab.addEventListener("click", () => modulesOpen(true));
+  $("#moduleX").addEventListener("click", () => modulesOpen(false));
+}
+
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && presetPanel.classList.contains("open")) presetsOpen(false);
+  if (e.key !== "Escape") return;
+  if (presetPanel.classList.contains("open")) presetsOpen(false);
+  if (modulePanel && modulePanel.classList.contains("open")) modulesOpen(false);
 });
 /* «Готовые сборки» в шапке теперь ведёт на витрину над hero (#gallery, обычная
    якорная ссылка) — панель у сцены она больше не форсит, поэтому старый
@@ -225,7 +300,7 @@ function buildFromShowcase(key){
    только после успеха — иначе «Нет места» вспыхнуло бы на уже снятой кнопке */
 function addFromCatalog(type, btn, before){
   const r = KD.addModule(type);
-  if (!r.ok){ flash(btn, "Нет места"); if (KD.say) KD.say(r.hint, 5000); return false; }
+  if (!r.ok){ flash(btn, "Нет места"); if (KD.warn) KD.warn(r.hint, 5000); return false; }
   if (before) before();
   goToBuilder();
   return true;
@@ -358,8 +433,9 @@ function openShowcase(g, trigger){
 }
 
 /* модуль: рендер квадратный, поэтому оболочка уже — иначе картинка занимала бы
-   весь экран по высоте. Тут же полное описание, которого нет в карточке */
-function openModule(type, card, trigger){
+   весь экран по высоте. Тут же полное описание, которого нет в карточке.
+   canAdd=false — открыто из конструктора, см. KD.openModuleCard ниже */
+function openModule(type, card, trigger, canAdd){
   const m = KD.MODULES[type];
   lightbox.open({
     trigger, src: `assets/module-cards/${card}.jpg`, alt: `Модуль «${m.name}»`,
@@ -371,7 +447,7 @@ function openModule(type, card, trigger){
     /* в развёрнутом просмотре кнопка залита (btn-aka), а на карточке — ghost:
        здесь она одна на весь экран и ей положено быть главной. У сборки в
        витрине ровно так же — см. openShowcase() */
-    actions: [
+    actions: canAdd === false ? [] : [
       { label: "Добавить в конструктор", cls: "btn-aka",
         on: b => addFromCatalog(type, b, lightbox.close) }
     ]
@@ -380,11 +456,14 @@ function openModule(type, card, trigger){
 /* Ту же развёрнутую карточку открывает конструктор — кнопкой «Инфо» в меню
    модуля (см. .em-info в configurator.js). Описание, габариты и цена живут в
    одном месте: показывать их по второму разу отдельной вёрсткой внутри сцены
-   значило бы держать два текста про один модуль. */
+   значило бы держать два текста про один модуль.
+   Кнопки «Добавить в конструктор» здесь нет намеренно: карточку открыли кликом
+   по уже стоящему в сцене модулю, добавлять его некуда — предложение поставить
+   второй такой же читалось бы как «этого ещё нет». */
 KD.openModuleCard = (type, trigger) => {
   const c = KD.CATALOG.find(c => c.type === type);
   if (!c || !KD.MODULES[type]) return false;
-  openModule(type, c.card, trigger || null);
+  openModule(type, c.card, trigger || null, false);
   return true;
 };
 
